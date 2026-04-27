@@ -4,8 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Betting Dashboard</title>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
   :root {
     --bg:       #0f1117;
@@ -54,8 +52,10 @@
     border-radius: 8px;
     font-size: 13px;
     cursor: pointer;
+    transition: opacity 0.2s;
   }
   .refresh-btn:active { opacity: 0.7; }
+  .refresh-btn:disabled { opacity: 0.4; cursor: default; }
 
   /* ── Tabs ── */
   .tabs {
@@ -352,17 +352,48 @@
   </div>
 </div>
 
+<!-- Scripts al final para no bloquear el render del HTML inicial -->
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script>
 const API_URL = "https://betting-stats-bot-production.up.railway.app";
 const tg = window.Telegram?.WebApp;
 if (tg) { tg.ready(); tg.expand(); }
 
-let DATA = null;
+let DATA          = null;
 let filtroDeporte = "Todos";
-let mesActual = null;
+let mesActual     = null;
 let mesesDisponibles = [];
-let chartNeto = null;
-let chartDep  = null;
+let chartNeto     = null;
+let chartDep      = null;
+let tabActual     = "resumen";
+let cargando      = false;
+
+// ── Seguridad: escapa cualquier string que venga de la API antes de inyectarlo en HTML
+function esc(str) {
+  if (str === null || str === undefined) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+// ── Event delegation — sin onclick inline con datos de la API ─────────────────
+document.addEventListener("click", function(e) {
+  const chip = e.target.closest("[data-filtro-deporte]");
+  if (chip) { setFiltroDeporte(chip.dataset.filtroDeporte); return; }
+
+  const tabBtn = e.target.closest("[data-tab]");
+  if (tabBtn) { showTab(tabBtn.dataset.tab, tabBtn); return; }
+
+  const mesBtn = e.target.closest("[data-mes-dir]");
+  if (mesBtn) { cambiarMes(parseInt(mesBtn.dataset.mesDir, 10)); return; }
+
+  const actionBtn = e.target.closest("[data-action]");
+  if (actionBtn?.dataset.action === "recargar") { recargar(); return; }
+});
 
 // ── Fetch datos ───────────────────────────────────────────────────────────────
 async function cargarDatos() {
@@ -373,7 +404,6 @@ async function cargarDatos() {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     DATA = await res.json();
 
-    // Extraer meses disponibles
     mesesDisponibles = DATA.grafica_meses.map(m => m.mes);
     mesActual = mesesDisponibles[mesesDisponibles.length - 1] || null;
 
@@ -383,8 +413,8 @@ async function cargarDatos() {
       <div style="padding:16px">
         <div class="error-box">
           <p>❌ Error cargando datos</p>
-          <p style="margin-top:8px;font-size:12px;color:#94a3b8">${e.message}</p>
-          <button onclick="location.reload()" style="margin-top:12px;padding:8px 20px;background:#6c63ff;color:white;border:none;border-radius:8px;cursor:pointer">
+          <p style="margin-top:8px;font-size:12px;color:#94a3b8">${esc(e.message)}</p>
+          <button data-action="recargar" style="margin-top:12px;padding:8px 20px;background:#6c63ff;color:white;border:none;border-radius:8px;cursor:pointer">
             Reintentar
           </button>
         </div>
@@ -393,15 +423,15 @@ async function cargarDatos() {
 }
 
 // ── Formatear ─────────────────────────────────────────────────────────────────
-const fmt  = n => n === undefined || n === null ? "—" : `$${Number(n).toLocaleString("es-MX", {maximumFractionDigits:0})}`;
-const fmtp = n => n === undefined || n === null ? "—" : `${Number(n).toFixed(1)}%`;
-const fmts = n => Number(n) >= 0 ? `+${fmt(n)}` : fmt(n);
+const fmt  = n => (n === undefined || n === null) ? "—" : `$${Number(n).toLocaleString("es-MX", {maximumFractionDigits: 0})}`;
+const fmtp = n => (n === undefined || n === null) ? "—" : `${Number(n).toFixed(1)}%`;
+const fmts = n => (n === undefined || n === null) ? "—" : Number(n) >= 0 ? `+${fmt(n)}` : fmt(n);
 
 function mesLabel(mes) {
   if (!mes) return "—";
   const [y, m] = mes.split("-");
   const meses = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
-  return `${meses[parseInt(m)-1]} ${y}`;
+  return `${meses[parseInt(m, 10) - 1]} ${y}`;
 }
 
 // ── Render principal ──────────────────────────────────────────────────────────
@@ -410,36 +440,41 @@ function renderApp() {
     <div class="header">
       <div class="header-top">
         <h1>Betting <span>Stats</span></h1>
-        <button class="refresh-btn" onclick="recargar()">↻ Actualizar</button>
+        <button class="refresh-btn" data-action="recargar">↻ Actualizar</button>
       </div>
       <div class="tabs">
-        <button class="tab active" onclick="showTab('resumen',this)">📊 Resumen</button>
-        <button class="tab" onclick="showTab('mes',this)">📅 Por mes</button>
-        <button class="tab" onclick="showTab('deportes',this)">🏆 Deportes</button>
-        <button class="tab" onclick="showTab('capital',this)">💼 Capital</button>
-        <button class="tab" onclick="showTab('apuestas',this)">📋 Apuestas</button>
+        <button class="tab" data-tab="resumen">📊 Resumen</button>
+        <button class="tab" data-tab="mes">📅 Por mes</button>
+        <button class="tab" data-tab="deportes">🏆 Deportes</button>
+        <button class="tab" data-tab="capital">💼 Capital</button>
+        <button class="tab" data-tab="apuestas">📋 Apuestas</button>
       </div>
     </div>
     <div class="content">
-      <div id="resumen"  class="section active">${renderResumen()}</div>
+      <div id="resumen"  class="section">${renderResumen()}</div>
       <div id="mes"      class="section">${renderMes()}</div>
       <div id="deportes" class="section">${renderDeportes()}</div>
       <div id="capital"  class="section">${renderCapital()}</div>
       <div id="apuestas" class="section">${renderApuestas()}</div>
     </div>`;
-  setTimeout(() => { initCharts(); }, 100);
+
+  // Restaurar el tab activo (persiste al recargar datos)
+  const saved = tabActual;
+  setTimeout(() => {
+    const btn = document.querySelector(`[data-tab="${saved}"]`);
+    showTab(saved, btn);
+  }, 0);
 }
 
 // ── Tab Resumen ───────────────────────────────────────────────────────────────
 function renderResumen() {
-  const r = DATA.resumen;
-  const wr = r.winrate.toFixed(1);
-  const total = r.wins + r.losses + r.pending;
+  const r  = DATA.resumen;
+  const wr = (r.winrate ?? 0).toFixed(1);
 
   const rachaHtml = r.racha >= 2
-    ? `<div class="racha-badge ${r.tipo_racha === 'win' ? 'racha-win' : 'racha-loss'}">
-        ${r.tipo_racha === 'win' ? '🔥' : '🧊'} Racha: ${r.racha} ${r.tipo_racha === 'win' ? 'ganadas' : 'perdidas'} seguidas
-       </div>` : '';
+    ? `<div class="racha-badge ${r.tipo_racha === "win" ? "racha-win" : "racha-loss"}">
+        ${r.tipo_racha === "win" ? "🔥" : "🧊"} Racha: ${r.racha} ${r.tipo_racha === "win" ? "ganadas" : "perdidas"} seguidas
+       </div>` : "";
 
   return `
     <div class="stats-grid">
@@ -460,11 +495,11 @@ function renderResumen() {
     <div class="kpi-row">
       <div class="kpi">
         <div class="kpi-label">Neto total</div>
-        <div class="kpi-value ${r.neto >= 0 ? 'green' : 'red'}">${fmts(r.neto)}</div>
+        <div class="kpi-value ${(r.neto ?? 0) >= 0 ? "green" : "red"}">${fmts(r.neto)}</div>
       </div>
       <div class="kpi">
         <div class="kpi-label">ROI</div>
-        <div class="kpi-value ${r.roi >= 0 ? 'green' : 'red'}">${r.roi >= 0 ? '+' : ''}${fmtp(r.roi)}</div>
+        <div class="kpi-value ${(r.roi ?? 0) >= 0 ? "green" : "red"}">${(r.roi ?? 0) >= 0 ? "+" : ""}${fmtp(r.roi)}</div>
       </div>
     </div>
 
@@ -506,9 +541,9 @@ function renderResumen() {
 function renderMes() {
   return `
     <div class="mes-selector">
-      <button class="mes-nav" onclick="cambiarMes(-1)">‹</button>
+      <button class="mes-nav" data-mes-dir="-1">‹</button>
       <span class="mes-label" id="mesLabel">${mesLabel(mesActual)}</span>
-      <button class="mes-nav" onclick="cambiarMes(+1)">›</button>
+      <button class="mes-nav" data-mes-dir="1">›</button>
     </div>
     <div id="mesContent">${renderMesContent()}</div>`;
 }
@@ -516,15 +551,15 @@ function renderMes() {
 function renderMesContent() {
   if (!mesActual) return '<div class="empty">No hay datos este mes</div>';
   const apuestasMes = DATA.apuestas.filter(a => a.fecha && a.fecha.startsWith(mesActual));
-  let wins=0, losses=0, pend=0, apostado=0, ganado=0;
+  let wins = 0, losses = 0, pend = 0, apostado = 0, ganado = 0;
   apuestasMes.forEach(a => {
-    if (a.status==="win")     { wins++;   apostado+=a.monto; ganado+=a.ganancia||a.monto; }
-    else if (a.status==="loss"){ losses++; apostado+=a.monto; }
-    else                       { pend++; }
+    if (a.status === "win")       { wins++;   apostado += a.monto; ganado += a.ganancia ?? a.monto; }
+    else if (a.status === "loss") { losses++; apostado += a.monto; }
+    else                          { pend++; }
   });
   const neto = ganado - apostado;
-  const roi  = apostado > 0 ? (neto/apostado*100) : 0;
-  const wr   = (wins+losses) > 0 ? (wins/(wins+losses)*100).toFixed(1) : "N/A";
+  const roi  = apostado > 0 ? (neto / apostado * 100) : 0;
+  const wr   = (wins + losses) > 0 ? (wins / (wins + losses) * 100).toFixed(1) : "N/A";
 
   return `
     <div class="stats-grid">
@@ -533,8 +568,8 @@ function renderMesContent() {
       <div class="stat-card"><div class="stat-value yellow">${pend}</div><div class="stat-label">⏳ Pendientes</div></div>
     </div>
     <div class="kpi-row">
-      <div class="kpi"><div class="kpi-label">Neto</div><div class="kpi-value ${neto>=0?'green':'red'}">${fmts(neto)}</div></div>
-      <div class="kpi"><div class="kpi-label">ROI</div><div class="kpi-value ${roi>=0?'green':'red'}">${roi>=0?'+':''}${fmtp(roi)}</div></div>
+      <div class="kpi"><div class="kpi-label">Neto</div><div class="kpi-value ${neto >= 0 ? "green" : "red"}">${fmts(neto)}</div></div>
+      <div class="kpi"><div class="kpi-label">ROI</div><div class="kpi-value ${roi >= 0 ? "green" : "red"}">${roi >= 0 ? "+" : ""}${fmtp(roi)}</div></div>
     </div>
     <div class="kpi-row">
       <div class="kpi"><div class="kpi-label">Apostado</div><div class="kpi-value purple">${fmt(apostado)}</div></div>
@@ -559,22 +594,22 @@ function cambiarMes(dir) {
 
 // ── Tab Deportes ──────────────────────────────────────────────────────────────
 function renderDeportes() {
-  const deps = [...DATA.deportes].sort((a,b) => b.roi - a.roi);
+  const deps = [...DATA.deportes].sort((a, b) => b.roi - a.roi);
   if (!deps.length) return '<div class="empty">Sin datos de deportes</div>';
 
   const mejor = deps[0];
-  const peor  = deps[deps.length-1];
+  const peor  = deps[deps.length - 1];
 
   return `
     <div class="kpi-row" style="margin-bottom:12px">
       <div class="kpi">
         <div class="kpi-label">🟢 Mejor deporte</div>
-        <div class="kpi-value green" style="font-size:15px">${mejor.nombre}</div>
-        <div style="font-size:12px;color:#22c55e;margin-top:2px">${mejor.roi>=0?'+':''}${fmtp(mejor.roi)} ROI</div>
+        <div class="kpi-value green" style="font-size:15px">${esc(mejor.nombre)}</div>
+        <div style="font-size:12px;color:#22c55e;margin-top:2px">${mejor.roi >= 0 ? "+" : ""}${fmtp(mejor.roi)} ROI</div>
       </div>
       <div class="kpi">
         <div class="kpi-label">🔴 Peor deporte</div>
-        <div class="kpi-value red" style="font-size:15px">${peor.nombre}</div>
+        <div class="kpi-value red" style="font-size:15px">${esc(peor.nombre)}</div>
         <div style="font-size:12px;color:#ef4444;margin-top:2px">${fmtp(peor.roi)} ROI</div>
       </div>
     </div>
@@ -590,14 +625,14 @@ function renderDeportes() {
       <div class="card-title">Detalle por deporte</div>
       ${deps.map(d => {
         const total = d.wins + d.losses;
-        const wr = total > 0 ? (d.wins/total*100).toFixed(0) : 0;
+        const wr = total > 0 ? (d.wins / total * 100).toFixed(0) : 0;
         return `
           <div class="sport-item">
             <div>
-              <div class="sport-name">${d.nombre}</div>
+              <div class="sport-name">${esc(d.nombre)}</div>
               <div class="sport-sub">${d.wins}W - ${d.losses}L (${wr}% WR) · ${fmt(d.apostado)}</div>
             </div>
-            <div class="sport-roi ${d.roi>=0?'green':'red'}">${d.roi>=0?'+':''}${fmtp(d.roi)}</div>
+            <div class="sport-roi ${d.roi >= 0 ? "green" : "red"}">${d.roi >= 0 ? "+" : ""}${fmtp(d.roi)}</div>
           </div>`;
       }).join("")}
     </div>`;
@@ -624,7 +659,7 @@ function renderCapital() {
           <div class="capital-stat-lbl">Apuestas simultáneas máx</div>
         </div>
         <div class="capital-stat">
-          <div class="capital-stat-val">${c.promedio_dia.toFixed(1)}</div>
+          <div class="capital-stat-val">${(c.promedio_dia ?? 0).toFixed(1)}</div>
           <div class="capital-stat-lbl">Apuestas por día</div>
         </div>
         <div class="capital-stat">
@@ -654,22 +689,29 @@ function renderCapital() {
 }
 
 // ── Tab Apuestas ──────────────────────────────────────────────────────────────
+const LIMITE_APUESTAS = 50;
+
 function renderApuestas() {
   const deportesUnicos = ["Todos", ...new Set(DATA.apuestas.map(a => a.deporte).filter(Boolean))];
   const apuestasFiltradas = filtroDeporte === "Todos"
     ? DATA.apuestas
     : DATA.apuestas.filter(a => a.deporte === filtroDeporte);
-  const mostrar = [...apuestasFiltradas].reverse().slice(0, 50);
+
+  const total   = apuestasFiltradas.length;
+  const mostrar = [...apuestasFiltradas].reverse().slice(0, LIMITE_APUESTAS);
+  const hayMas  = total > LIMITE_APUESTAS;
 
   return `
     <div class="filter-row">
       ${deportesUnicos.map(d =>
-        `<button class="filter-chip ${d===filtroDeporte?'active':''}"
-          onclick="setFiltroDeporte('${d}')">${d}</button>`
+        `<button class="filter-chip ${d === filtroDeporte ? "active" : ""}" data-filtro-deporte="${esc(d)}">${esc(d)}</button>`
       ).join("")}
     </div>
     <div class="card">
-      <div class="card-title">${apuestasFiltradas.length} apuestas ${filtroDeporte !== "Todos" ? `· ${filtroDeporte}` : ""}</div>
+      <div class="card-title">
+        ${total} apuestas${filtroDeporte !== "Todos" ? ` · ${esc(filtroDeporte)}` : ""}
+        ${hayMas ? `<span style="font-weight:400;color:var(--muted)"> — mostrando las últimas ${LIMITE_APUESTAS}</span>` : ""}
+      </div>
       ${mostrar.length === 0
         ? '<div class="empty">Sin apuestas</div>'
         : mostrar.map(renderBetItem).join("")}
@@ -677,18 +719,18 @@ function renderApuestas() {
 }
 
 function renderBetItem(a) {
-  const iconMap = { win:"✅", loss:"❌", pending:"⏳" };
-  const colMap  = { win:"win", loss:"loss", pending:"pend" };
-  const resultText = a.status==="win"
+  const iconMap = { win: "✅", loss: "❌", pending: "⏳" };
+  const colMap  = { win: "win", loss: "loss", pending: "pend" };
+  const resultText = a.status === "win"
     ? `+${fmt(a.ganancia)}`
-    : a.status==="loss" ? `-${fmt(a.monto)}` : "⏳ Pendiente";
-  const resultColor = a.status==="win" ? "green" : a.status==="loss" ? "red" : "yellow";
+    : a.status === "loss" ? `-${fmt(a.monto)}` : "⏳ Pendiente";
+  const resultColor = a.status === "win" ? "green" : a.status === "loss" ? "red" : "yellow";
   return `
     <div class="bet-item">
-      <div class="bet-icon ${colMap[a.status]||'pend'}">${iconMap[a.status]||'⏳'}</div>
+      <div class="bet-icon ${colMap[a.status] || "pend"}">${iconMap[a.status] || "⏳"}</div>
       <div class="bet-info">
-        <div class="bet-teams">${a.equipo1} vs ${a.equipo2}</div>
-        <div class="bet-meta">${a.deporte} · ${a.tipo} @ ${a.cuota} · ${a.fecha?.slice(0,10)||''}</div>
+        <div class="bet-teams">${esc(a.equipo1 || "?")} vs ${esc(a.equipo2 || "?")}</div>
+        <div class="bet-meta">${esc(a.deporte)} · ${esc(a.tipo)} @ ${a.cuota} · ${a.fecha?.slice(0, 10) || ""}</div>
       </div>
       <div class="bet-amount">
         <div class="bet-monto">${fmt(a.monto)}</div>
@@ -703,92 +745,108 @@ function setFiltroDeporte(dep) {
   document.getElementById("apuestas").innerHTML = renderApuestas();
 }
 
-// ── Charts ────────────────────────────────────────────────────────────────────
+// ── Charts — solo inicializa la gráfica del tab visible ───────────────────────
+function fmtAxisMoney(v) {
+  const abs = Math.abs(v);
+  if (abs >= 1000) return `$${(v / 1000).toFixed(1)}k`;
+  return `$${v}`;
+}
+
+function initChartNeto() {
+  const canvas = document.getElementById("chartNeto");
+  if (!canvas || !DATA.grafica_meses.length) return;
+  if (chartNeto) { chartNeto.destroy(); chartNeto = null; }
+
+  const labels = DATA.grafica_meses.map(m => mesLabel(m.mes));
+  let acum = 0;
+  const netoAcum = DATA.grafica_meses.map(m => { acum += m.neto; return acum; });
+
+  chartNeto = new Chart(canvas, {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [{
+        label: "Neto acumulado",
+        data: netoAcum,
+        backgroundColor: netoAcum.map(v => v >= 0 ? "rgba(34,197,94,0.8)" : "rgba(239,68,68,0.8)"),
+        borderRadius: 6,
+        borderSkipped: false,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { color: "#2d3148" }, ticks: { font: { size: 10 } } },
+        y: { grid: { color: "#2d3148" }, ticks: { callback: fmtAxisMoney, font: { size: 10 } } }
+      }
+    }
+  });
+}
+
+function initChartDep() {
+  const canvas = document.getElementById("chartDep");
+  if (!canvas || !DATA.deportes.length) return;
+  if (chartDep) { chartDep.destroy(); chartDep = null; }
+
+  const deps = [...DATA.deportes].sort((a, b) => b.roi - a.roi);
+  chartDep = new Chart(canvas, {
+    type: "bar",
+    data: {
+      labels: deps.map(d => d.nombre),
+      datasets: [{
+        label: "ROI %",
+        data: deps.map(d => parseFloat(d.roi.toFixed(1))),
+        backgroundColor: deps.map(d => d.roi >= 0 ? "rgba(34,197,94,0.8)" : "rgba(239,68,68,0.8)"),
+        borderRadius: 6,
+        borderSkipped: false,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { color: "#2d3148" }, ticks: { font: { size: 10 } } },
+        y: { grid: { color: "#2d3148" }, ticks: { callback: v => `${v}%`, font: { size: 10 } } }
+      }
+    }
+  });
+}
+
 function initCharts() {
+  if (!DATA) return;
   Chart.defaults.color = "#64748b";
   Chart.defaults.borderColor = "#2d3148";
-
-  // Gráfica neto acumulado
-  const canvasNeto = document.getElementById("chartNeto");
-  if (canvasNeto && DATA.grafica_meses.length > 0) {
-    if (chartNeto) chartNeto.destroy();
-    const labels = DATA.grafica_meses.map(m => mesLabel(m.mes));
-    let acum = 0;
-    const netoAcum = DATA.grafica_meses.map(m => { acum += m.neto; return acum; });
-    const colores  = netoAcum.map(v => v >= 0 ? "rgba(34,197,94,0.8)" : "rgba(239,68,68,0.8)");
-    chartNeto = new Chart(canvasNeto, {
-      type: "bar",
-      data: {
-        labels,
-        datasets: [{
-          label: "Neto acumulado",
-          data: netoAcum,
-          backgroundColor: colores,
-          borderRadius: 6,
-          borderSkipped: false,
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
-        scales: {
-          x: { grid: { color: "#2d3148" }, ticks: { font: { size: 10 } } },
-          y: { grid: { color: "#2d3148" }, ticks: {
-            callback: v => `$${(v/1000).toFixed(0)}k`,
-            font: { size: 10 }
-          }}
-        }
-      }
-    });
-  }
-
-  // Gráfica ROI por deporte
-  const canvasDep = document.getElementById("chartDep");
-  if (canvasDep && DATA.deportes.length > 0) {
-    if (chartDep) chartDep.destroy();
-    const deps = [...DATA.deportes].sort((a,b) => b.roi - a.roi);
-    chartDep = new Chart(canvasDep, {
-      type: "bar",
-      data: {
-        labels: deps.map(d => d.nombre),
-        datasets: [{
-          label: "ROI %",
-          data: deps.map(d => d.roi.toFixed(1)),
-          backgroundColor: deps.map(d => d.roi >= 0 ? "rgba(34,197,94,0.8)" : "rgba(239,68,68,0.8)"),
-          borderRadius: 6,
-          borderSkipped: false,
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
-        scales: {
-          x: { grid: { color: "#2d3148" }, ticks: { font: { size: 10 } } },
-          y: { grid: { color: "#2d3148" }, ticks: {
-            callback: v => `${v}%`,
-            font: { size: 10 }
-          }}
-        }
-      }
-    });
-  }
+  if (tabActual === "resumen")   initChartNeto();
+  if (tabActual === "deportes")  initChartDep();
 }
 
 // ── Tabs ──────────────────────────────────────────────────────────────────────
 function showTab(id, btn) {
   document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
   document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
-  document.getElementById(id).classList.add("active");
-  btn.classList.add("active");
+  const section = document.getElementById(id);
+  if (section) section.classList.add("active");
+  if (btn) btn.classList.add("active");
+  tabActual = id;
   setTimeout(() => initCharts(), 100);
 }
 
+// ── Reload con debounce ───────────────────────────────────────────────────────
 async function recargar() {
+  if (cargando) return;
+  cargando = true;
+
+  const btn = document.querySelector("[data-action='recargar']");
+  if (btn) { btn.textContent = "↻ Cargando…"; btn.disabled = true; }
+
   document.getElementById("app").innerHTML = `
     <div class="loader"><div class="spinner"></div><p>Actualizando...</p></div>`;
+
   await cargarDatos();
+  cargando = false;
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────────
