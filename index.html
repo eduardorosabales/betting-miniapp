@@ -258,7 +258,7 @@
   .bet-icon.pend { background: rgba(234,179,8,0.15);  }
   .bet-info { flex: 1; min-width: 0; }
   .bet-teams { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .bet-meta  { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .bet-meta  { font-size: 11px; color: var(--muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .bet-amount { text-align: right; flex-shrink: 0; }
   .bet-monto  { font-size: 13px; font-weight: 700; }
   .bet-result { font-size: 11px; color: var(--muted); }
@@ -289,6 +289,22 @@
     border-color: var(--accent);
     color: white;
   }
+
+  /* ── Search input ── */
+  .search-input {
+    width: 100%;
+    padding: 10px 14px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-size: 14px;
+    margin-bottom: 10px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .search-input:focus { border-color: var(--accent); }
+  .search-input::placeholder { color: var(--muted); }
 
   /* ── Loader ── */
   .loader {
@@ -341,6 +357,13 @@
     cursor: pointer;
   }
   .mes-label { font-size: 15px; font-weight: 700; }
+
+  /* ── Divider ── */
+  .section-divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 4px 0 16px;
+  }
 </style>
 </head>
 <body>
@@ -352,7 +375,6 @@
   </div>
 </div>
 
-<!-- Scripts al final para no bloquear el render del HTML inicial -->
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script>
@@ -360,14 +382,16 @@ const API_URL = "https://betting-stats-bot-production.up.railway.app";
 const tg = window.Telegram?.WebApp;
 if (tg) { tg.ready(); tg.expand(); }
 
-let DATA          = null;
-let filtroDeporte = "Todos";
-let mesActual     = null;
+let DATA             = null;
+let filtroDeporte    = "Todos";
+let filtroEquipo     = "";
+let mesActual        = null;
 let mesesDisponibles = [];
-let chartNeto     = null;
-let chartDep      = null;
-let tabActual     = "resumen";
-let cargando      = false;
+let chartNeto        = null;
+let chartMeses       = null;
+let chartDep         = null;
+let tabActual        = "resumen";
+let cargando         = false;
 
 // ── Seguridad: escapa cualquier string que venga de la API antes de inyectarlo en HTML
 function esc(str) {
@@ -380,7 +404,7 @@ function esc(str) {
     .replace(/'/g, "&#39;");
 }
 
-// ── Event delegation — sin onclick inline con datos de la API ─────────────────
+// ── Event delegation ──────────────────────────────────────────────────────────
 document.addEventListener("click", function(e) {
   const chip = e.target.closest("[data-filtro-deporte]");
   if (chip) { setFiltroDeporte(chip.dataset.filtroDeporte); return; }
@@ -395,20 +419,38 @@ document.addEventListener("click", function(e) {
   if (actionBtn?.dataset.action === "recargar") { recargar(); return; }
 });
 
+document.addEventListener("input", function(e) {
+  const el = e.target.closest("[data-search-equipo]");
+  if (el) {
+    filtroEquipo = el.value;
+    const lista = document.getElementById("apuestasLista");
+    if (lista) lista.innerHTML = renderApuestasList();
+  }
+});
+
 // ── Fetch datos ───────────────────────────────────────────────────────────────
+let _fetchController = null;
+
 async function cargarDatos() {
+  if (_fetchController) _fetchController.abort();
+  _fetchController = new AbortController();
+  const timeout = setTimeout(() => _fetchController.abort(), 10000);
   try {
     const headers = {};
     if (tg?.initData) headers["X-Telegram-Init-Data"] = tg.initData;
-    const res = await fetch(`${API_URL}/api/stats`, { headers });
+    const res = await fetch(`${API_URL}/api/stats`, { headers, signal: _fetchController.signal });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    DATA = await res.json();
-
+    let json;
+    try { json = await res.json(); } catch { throw new Error("Respuesta inválida del servidor"); }
+    if (!json.resumen || !Array.isArray(json.apuestas) || !Array.isArray(json.grafica_meses) || !Array.isArray(json.deportes)) {
+      throw new Error("Estructura de datos inesperada");
+    }
+    DATA = json;
     mesesDisponibles = DATA.grafica_meses.map(m => m.mes);
     mesActual = mesesDisponibles[mesesDisponibles.length - 1] || null;
-
     renderApp();
   } catch(e) {
+    if (e.name === "AbortError") return;
     document.getElementById("app").innerHTML = `
       <div style="padding:16px">
         <div class="error-box">
@@ -419,6 +461,8 @@ async function cargarDatos() {
           </button>
         </div>
       </div>`;
+  } finally {
+    clearTimeout(timeout);
   }
 }
 
@@ -444,6 +488,7 @@ function renderApp() {
       </div>
       <div class="tabs">
         <button class="tab" data-tab="resumen">📊 Resumen</button>
+        <button class="tab" data-tab="semana">📅 7 días</button>
         <button class="tab" data-tab="mes">📅 Por mes</button>
         <button class="tab" data-tab="deportes">🏆 Deportes</button>
         <button class="tab" data-tab="capital">💼 Capital</button>
@@ -452,13 +497,13 @@ function renderApp() {
     </div>
     <div class="content">
       <div id="resumen"  class="section">${renderResumen()}</div>
+      <div id="semana"   class="section">${renderSemana()}</div>
       <div id="mes"      class="section">${renderMes()}</div>
       <div id="deportes" class="section">${renderDeportes()}</div>
       <div id="capital"  class="section">${renderCapital()}</div>
       <div id="apuestas" class="section">${renderApuestas()}</div>
     </div>`;
 
-  // Restaurar el tab activo (persiste al recargar datos)
   const saved = tabActual;
   setTimeout(() => {
     const btn = document.querySelector(`[data-tab="${saved}"]`);
@@ -534,16 +579,89 @@ function renderResumen() {
       <div class="chart-wrap">
         <canvas id="chartNeto"></canvas>
       </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Apostado vs Ganado por mes</div>
+      <div class="chart-wrap">
+        <canvas id="chartMeses"></canvas>
+      </div>
     </div>`;
+}
+
+// ── Tab 7 días ────────────────────────────────────────────────────────────────
+function renderSemana() {
+  const s = DATA.stats_semana;
+  if (!s) return '<div class="empty">Sin datos de los últimos 7 días</div>';
+  const wr = (s.winrate ?? 0).toFixed(1);
+
+  return `
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-value green">${s.wins}</div><div class="stat-label">✅ Ganadas</div></div>
+      <div class="stat-card"><div class="stat-value red">${s.losses}</div><div class="stat-label">❌ Perdidas</div></div>
+      <div class="stat-card"><div class="stat-value yellow">${s.pending}</div><div class="stat-label">⏳ Pendientes</div></div>
+    </div>
+
+    <div class="kpi-row">
+      <div class="kpi">
+        <div class="kpi-label">Neto 7 días</div>
+        <div class="kpi-value ${(s.neto ?? 0) >= 0 ? "green" : "red"}">${fmts(s.neto)}</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">ROI</div>
+        <div class="kpi-value ${(s.roi ?? 0) >= 0 ? "green" : "red"}">${(s.roi ?? 0) >= 0 ? "+" : ""}${fmtp(s.roi)}</div>
+      </div>
+    </div>
+
+    <div class="kpi-row">
+      <div class="kpi">
+        <div class="kpi-label">Total apostado</div>
+        <div class="kpi-value purple">${fmt(s.apostado)}</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Win rate</div>
+        <div class="kpi-value">${wr}%</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Win Rate — ${wr}%</div>
+      <div class="progress-wrap">
+        <div class="progress-label">
+          <span class="green">${s.wins}W</span>
+          <span class="red">${s.losses}L</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" style="width:${wr}%;background:linear-gradient(90deg,#22c55e,#6c63ff)"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Apuestas — últimos 7 días (${s.wins + s.losses + s.pending})</div>
+      ${renderApuestasSemana()}
+    </div>`;
+}
+
+function renderApuestasSemana() {
+  const hace7 = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  const ap7 = DATA.apuestas.filter(a => {
+    if (!a.fecha) return false;
+    const ts = new Date(a.fecha.replace(" ", "T") + "Z").getTime();
+    return ts >= hace7;
+  });
+  if (!ap7.length) return '<div class="empty">Sin apuestas esta semana</div>';
+  return [...ap7].reverse().map(renderBetItem).join("");
 }
 
 // ── Tab Por Mes ───────────────────────────────────────────────────────────────
 function renderMes() {
+  const idx = mesesDisponibles.indexOf(mesActual);
   return `
     <div class="mes-selector">
-      <button class="mes-nav" data-mes-dir="-1">‹</button>
+      <button class="mes-nav" data-mes-dir="-1"${idx <= 0 ? ' disabled style="opacity:0.3;cursor:default"' : ''}>‹</button>
       <span class="mes-label" id="mesLabel">${mesLabel(mesActual)}</span>
-      <button class="mes-nav" data-mes-dir="1">›</button>
+      <button class="mes-nav" data-mes-dir="1"${idx >= mesesDisponibles.length - 1 ? ' disabled style="opacity:0.3;cursor:default"' : ''}>›</button>
     </div>
     <div id="mesContent">${renderMesContent()}</div>`;
 }
@@ -590,6 +708,14 @@ function cambiarMes(dir) {
   mesActual = mesesDisponibles[nuevo];
   document.getElementById("mesLabel").textContent = mesLabel(mesActual);
   document.getElementById("mesContent").innerHTML = renderMesContent();
+  const newIdx = mesesDisponibles.indexOf(mesActual);
+  document.querySelectorAll("[data-mes-dir]").forEach(btn => {
+    const d = parseInt(btn.dataset.mesDir, 10);
+    const dis = (d === -1 && newIdx <= 0) || (d === 1 && newIdx >= mesesDisponibles.length - 1);
+    btn.disabled = dis;
+    btn.style.opacity = dis ? "0.3" : "";
+    btn.style.cursor = dis ? "default" : "";
+  });
 }
 
 // ── Tab Deportes ──────────────────────────────────────────────────────────────
@@ -640,12 +766,50 @@ function renderDeportes() {
 
 // ── Tab Capital ───────────────────────────────────────────────────────────────
 function renderCapital() {
-  const c = DATA.capital;
+  const c  = DATA.capital;
+  const cm = DATA.capital_mes;
   if (!c) return '<div class="empty">No hay suficientes datos para calcular el capital</div>';
+
+  const capitalMesHtml = cm ? `
+    <div class="card">
+      <div class="card-title">Capital — Este mes</div>
+      <div class="capital-main" style="padding:12px 0">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:8px">CAPITAL CÓMODO ESTE MES</div>
+        <div class="capital-amount" style="font-size:28px">${fmt(cm.capital_comodo)}</div>
+        <div class="capital-sub">Exposición del mes actual</div>
+      </div>
+      <div class="capital-grid">
+        <div class="capital-stat">
+          <div class="capital-stat-val yellow">${fmt(cm.capital_minimo)}</div>
+          <div class="capital-stat-lbl">Capital mínimo</div>
+        </div>
+        <div class="capital-stat">
+          <div class="capital-stat-val purple">${cm.max_simultaneas}</div>
+          <div class="capital-stat-lbl">Apuestas simultáneas</div>
+        </div>
+        <div class="capital-stat">
+          <div class="capital-stat-val">${(cm.promedio_dia ?? 0).toFixed(1)}</div>
+          <div class="capital-stat-lbl">Apuestas por día</div>
+        </div>
+        <div class="capital-stat">
+          <div class="capital-stat-val red">${cm.peor_racha}</div>
+          <div class="capital-stat-lbl">Peor racha perdedora</div>
+        </div>
+        <div class="capital-stat">
+          <div class="capital-stat-val">${fmt(cm.monto_promedio)}</div>
+          <div class="capital-stat-lbl">Monto promedio</div>
+        </div>
+        <div class="capital-stat">
+          <div class="capital-stat-val green">${cm.total_apuestas}</div>
+          <div class="capital-stat-lbl">Total apuestas</div>
+        </div>
+      </div>
+    </div>` : "";
+
   return `
     <div class="card">
       <div class="capital-main">
-        <div style="font-size:12px;color:var(--muted);margin-bottom:8px">CAPITAL CÓMODO RECOMENDADO</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:8px">CAPITAL CÓMODO RECOMENDADO (HISTÓRICO)</div>
         <div class="capital-amount">${fmt(c.capital_comodo)}</div>
         <div class="capital-sub">Para seguir este tipster sin riesgo</div>
       </div>
@@ -677,6 +841,8 @@ function renderCapital() {
       </div>
     </div>
 
+    ${capitalMesHtml}
+
     <div class="card">
       <div class="card-title">¿Cómo se calcula?</div>
       <p style="font-size:13px;color:var(--muted);line-height:1.6">
@@ -693,24 +859,38 @@ const LIMITE_APUESTAS = 50;
 
 function renderApuestas() {
   const deportesUnicos = ["Todos", ...new Set(DATA.apuestas.map(a => a.deporte).filter(Boolean))];
-  const apuestasFiltradas = filtroDeporte === "Todos"
-    ? DATA.apuestas
-    : DATA.apuestas.filter(a => a.deporte === filtroDeporte);
+  return `
+    <input
+      class="search-input"
+      placeholder="🔍 Buscar por equipo..."
+      data-search-equipo
+      value="${esc(filtroEquipo)}"
+    >
+    <div class="filter-row">
+      ${deportesUnicos.map(d =>
+        `<button class="filter-chip ${d === filtroDeporte ? "active" : ""}" data-filtro-deporte="${esc(d)}">${esc(d)}</button>`
+      ).join("")}
+    </div>
+    <div id="apuestasLista">${renderApuestasList()}</div>`;
+}
+
+function renderApuestasList() {
+  const term = filtroEquipo.toLowerCase().trim();
+  const apuestasFiltradas = DATA.apuestas
+    .filter(a => filtroDeporte === "Todos" || a.deporte === filtroDeporte)
+    .filter(a => !term ||
+      (a.equipo1 || "").toLowerCase().includes(term) ||
+      (a.equipo2 || "").toLowerCase().includes(term));
 
   const total   = apuestasFiltradas.length;
   const mostrar = [...apuestasFiltradas].reverse().slice(0, LIMITE_APUESTAS);
   const hayMas  = total > LIMITE_APUESTAS;
 
   return `
-    <div class="filter-row">
-      ${deportesUnicos.map(d =>
-        `<button class="filter-chip ${d === filtroDeporte ? "active" : ""}" data-filtro-deporte="${esc(d)}">${esc(d)}</button>`
-      ).join("")}
-    </div>
     <div class="card">
       <div class="card-title">
-        ${total} apuestas${filtroDeporte !== "Todos" ? ` · ${esc(filtroDeporte)}` : ""}
-        ${hayMas ? `<span style="font-weight:400;color:var(--muted)"> — mostrando las últimas ${LIMITE_APUESTAS}</span>` : ""}
+        ${total} apuesta${total !== 1 ? "s" : ""}${filtroDeporte !== "Todos" ? ` · ${esc(filtroDeporte)}` : ""}${term ? ` · "${esc(term)}"` : ""}
+        ${hayMas ? `<span style="font-weight:400;color:var(--muted)"> — últimas ${LIMITE_APUESTAS}</span>` : ""}
       </div>
       ${mostrar.length === 0
         ? '<div class="empty">Sin apuestas</div>'
@@ -719,18 +899,21 @@ function renderApuestas() {
 }
 
 function renderBetItem(a) {
-  const iconMap = { win: "✅", loss: "❌", pending: "⏳" };
-  const colMap  = { win: "win", loss: "loss", pending: "pend" };
+  const iconMap   = { win: "✅", loss: "❌", pending: "⏳" };
+  const colMap    = { win: "win", loss: "loss", pending: "pend" };
   const resultText = a.status === "win"
     ? `+${fmt(a.ganancia)}`
-    : a.status === "loss" ? `-${fmt(a.monto)}` : "⏳ Pendiente";
+    : a.status === "loss"
+      ? `-${fmt(a.monto)}`
+      : `⏳ Pot: ${fmt(a.potencial)}`;
   const resultColor = a.status === "win" ? "green" : a.status === "loss" ? "red" : "yellow";
+  const ligaPrefix  = a.liga ? `${esc(a.liga)} · ` : "";
   return `
     <div class="bet-item">
       <div class="bet-icon ${colMap[a.status] || "pend"}">${iconMap[a.status] || "⏳"}</div>
       <div class="bet-info">
         <div class="bet-teams">${esc(a.equipo1 || "?")} vs ${esc(a.equipo2 || "?")}</div>
-        <div class="bet-meta">${esc(a.deporte)} · ${esc(a.tipo)} @ ${a.cuota} · ${a.fecha?.slice(0, 10) || ""}</div>
+        <div class="bet-meta">${ligaPrefix}${esc(a.deporte)} · ${esc(a.tipo)} @ ${esc(a.cuota)} · ${a.fecha?.slice(0, 10) || ""}</div>
       </div>
       <div class="bet-amount">
         <div class="bet-monto">${fmt(a.monto)}</div>
@@ -742,10 +925,14 @@ function renderBetItem(a) {
 // ── Filtro deporte ────────────────────────────────────────────────────────────
 function setFiltroDeporte(dep) {
   filtroDeporte = dep;
-  document.getElementById("apuestas").innerHTML = renderApuestas();
+  document.querySelectorAll("[data-filtro-deporte]").forEach(c => {
+    c.classList.toggle("active", c.dataset.filtroDeporte === filtroDeporte);
+  });
+  const lista = document.getElementById("apuestasLista");
+  if (lista) lista.innerHTML = renderApuestasList();
 }
 
-// ── Charts — solo inicializa la gráfica del tab visible ───────────────────────
+// ── Charts ────────────────────────────────────────────────────────────────────
 function fmtAxisMoney(v) {
   const abs = Math.abs(v);
   if (abs >= 1000) return `$${(v / 1000).toFixed(1)}k`;
@@ -753,6 +940,7 @@ function fmtAxisMoney(v) {
 }
 
 function initChartNeto() {
+  if (typeof Chart === 'undefined') return;
   const canvas = document.getElementById("chartNeto");
   if (!canvas || !DATA.grafica_meses.length) return;
   if (chartNeto) { chartNeto.destroy(); chartNeto = null; }
@@ -785,7 +973,53 @@ function initChartNeto() {
   });
 }
 
+function initChartMeses() {
+  if (typeof Chart === 'undefined') return;
+  const canvas = document.getElementById("chartMeses");
+  if (!canvas || !DATA.grafica_meses.length) return;
+  if (chartMeses) { chartMeses.destroy(); chartMeses = null; }
+
+  const labels = DATA.grafica_meses.map(m => mesLabel(m.mes));
+  chartMeses = new Chart(canvas, {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [
+        {
+          label: "Apostado",
+          data: DATA.grafica_meses.map(m => m.apostado),
+          backgroundColor: "rgba(108,99,255,0.75)",
+          borderRadius: 4,
+          borderSkipped: false,
+        },
+        {
+          label: "Ganado",
+          data: DATA.grafica_meses.map(m => m.ganado),
+          backgroundColor: "rgba(34,197,94,0.75)",
+          borderRadius: 4,
+          borderSkipped: false,
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: true,
+          labels: { font: { size: 11 }, boxWidth: 12, padding: 10, color: "#64748b" }
+        }
+      },
+      scales: {
+        x: { grid: { color: "#2d3148" }, ticks: { font: { size: 10 } } },
+        y: { grid: { color: "#2d3148" }, ticks: { callback: fmtAxisMoney, font: { size: 10 } } }
+      }
+    }
+  });
+}
+
 function initChartDep() {
+  if (typeof Chart === 'undefined') return;
   const canvas = document.getElementById("chartDep");
   if (!canvas || !DATA.deportes.length) return;
   if (chartDep) { chartDep.destroy(); chartDep = null; }
@@ -819,8 +1053,8 @@ function initCharts() {
   if (!DATA) return;
   Chart.defaults.color = "#64748b";
   Chart.defaults.borderColor = "#2d3148";
-  if (tabActual === "resumen")   initChartNeto();
-  if (tabActual === "deportes")  initChartDep();
+  if (tabActual === "resumen")  { initChartNeto(); initChartMeses(); }
+  if (tabActual === "deportes") { initChartDep(); }
 }
 
 // ── Tabs ──────────────────────────────────────────────────────────────────────
@@ -845,8 +1079,11 @@ async function recargar() {
   document.getElementById("app").innerHTML = `
     <div class="loader"><div class="spinner"></div><p>Actualizando...</p></div>`;
 
-  await cargarDatos();
-  cargando = false;
+  try {
+    await cargarDatos();
+  } finally {
+    cargando = false;
+  }
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────────
