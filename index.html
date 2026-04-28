@@ -304,7 +304,7 @@ function calcRoiPorTipo(){
     else b.l++;
   });
   return Object.entries(bucket)
-    .filter(([,b])=>b.w+b.l>=2)
+    .filter(([,b])=>b.w+b.l>=1)
     .map(([tipo,b])=>{
       const total=b.w+b.l,neto=b.gan-b.apo;
       return{tipo,wins:b.w,losses:b.l,apo:b.apo,neto,roi:b.apo>0?neto/b.apo*100:0,wr:total>0?b.w/total*100:0,cuotaMedia:b.cuotas.length>0?b.cuotas.reduce((a,c)=>a+c,0)/b.cuotas.length:0};
@@ -505,23 +505,26 @@ function renderDeportes(){
 /* ── Tab: Tipos ── */
 function renderTipos(){
   const tipos=calcRoiPorTipo();
-  if(!tipos.length)return`<div class="section-header">ROI por <span>tipo de apuesta</span></div><div class="empty">Necesitas al menos 2 apuestas resueltas por tipo.</div>`;
+  if(!tipos.length)return`<div class="section-header">ROI por <span>tipo de apuesta</span></div><div class="empty">Aún no tienes apuestas resueltas (win/loss) para ver este análisis.</div>`;
   const maxAbsRoi=Math.max(...tipos.map(t=>Math.abs(t.roi)),1);
-  return`<div class="section-header">ROI por <span>tipo</span></div>
+  const kpisMejorPeor=tipos.length>1?`
     <div class="kpi-row">
       <div class="kpi"><div class="kpi-label">🏆 Mejor tipo</div><div class="kpi-value green" style="font-size:14px;margin-top:4px">${esc(tipos[0].tipo)}</div><div style="font-family:var(--font-num);font-size:12px;color:var(--win);margin-top:4px">${tipos[0].roi>=0?"+":""}${fmtp(tipos[0].roi)}</div></div>
       <div class="kpi"><div class="kpi-label">⚠️ Peor tipo</div><div class="kpi-value red" style="font-size:14px;margin-top:4px">${esc(tipos[tipos.length-1].tipo)}</div><div style="font-family:var(--font-num);font-size:12px;color:var(--loss);margin-top:4px">${fmtp(tipos[tipos.length-1].roi)}</div></div>
-    </div>
+    </div>`:"";
+  return`<div class="section-header">ROI por <span>tipo</span></div>
+    ${kpisMejorPeor}
     <div class="card"><div class="card-title">ROI por tipo</div><div class="chart-wrap"><canvas id="chartTipo"></canvas></div></div>
     <div class="card"><div class="card-title">Detalle completo</div>
       ${tipos.map(t=>{
         const barW=Math.min(100,Math.abs(t.roi)/maxAbsRoi*100);
         const barColor=t.roi>=0?"var(--win)":"var(--loss)";
         const cuotaTxt=t.cuotaMedia>0?`· cuota media ${t.cuotaMedia.toFixed(2)}`:"";
+        const muestraTxt=(t.wins+t.losses)<3?`<span style="font-size:10px;color:var(--text-2);font-weight:400"> · muestra pequeña</span>`:"";
         return`<div class="tipo-item">
           <div style="flex:1">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-              <span style="font-size:13px;font-weight:700">${esc(t.tipo)}</span>
+              <span style="font-size:13px;font-weight:700">${esc(t.tipo)}${muestraTxt}</span>
               <span style="font-family:var(--font-num);font-size:13px;font-weight:700;color:${barColor}">${t.roi>=0?"+":""}${t.roi.toFixed(1)}%</span>
             </div>
             <div style="font-size:11px;color:var(--text-2);margin-bottom:6px">${t.wins}W·${t.losses}L·WR ${t.wr.toFixed(0)}% ${cuotaTxt}</div>
