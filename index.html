@@ -283,12 +283,22 @@ async function cargarDatos(){
 function normalizaTipo(raw){
   const t=(raw||"").toLowerCase().trim();
   if(!t)return"Otro";
-  if(/moneyline|1x2|ml\b|ganador/.test(t))return"Moneyline";
-  if(/handicap|hcp|spread|asian/.test(t))return"Handicap";
-  if(/over|under|total|o\/u|más de|menos de/.test(t))return"Total O/U";
-  if(/ambos|btts|both teams/.test(t))return"BTTS";
-  if(/correct score|marcador exacto/.test(t))return"Marcador exacto";
-  if(/parlay|combo|acumulad|multi/.test(t))return"Parlay";
+  // Parlay — primero: puede contener "winner", "over", etc. en sus picks
+  if(/parlay|combo|acumulad|multi.?bet|\bsgp\b|same.?game/.test(t))return"Parlay";
+  // Futuro / Outright
+  if(/\boutright\b|futures?|to win the|championship|tournament winner|season (wins?|points?|goals?)|award|mvp|heisman|ballon/.test(t))return"Futuro";
+  // Moneyline / Ganador — DNB, to qualify, W1/W2, fight/race winner, MMA
+  if(/moneyline|\b1x2\b|\bml\b|ganador|team wins?|\bw[12]\b|\bwinner\b|to win\b|match result|draw no bet|\bdnb\b|to qualify|fight winner|race winner|series winner|method of victory|\bko\b|\btko\b|decision win|round betting|will win/.test(t))return"Moneyline";
+  // Handicap — puck line (NHL), run line (MLB), point spread, AH
+  if(/handicap|hcp|\bspread\b|\basian\b|puck line|run line|point spread|european handicap|\beh\b|alt(ernate)? spread/.test(t))return"Handicap";
+  // BTTS
+  if(/ambos|btts|both teams to score|\bgg\b|no goal/.test(t))return"BTTS";
+  // Marcador exacto
+  if(/correct score|marcador exacto|resultado exacto|exact score/.test(t))return"Marcador exacto";
+  // Props — va ANTES de Total O/U: "Player Points Over 25.5" debe ser Prop, no Total O/U
+  if(/\bplayer\b|\bprop\b|anytime (scorer|td|goal|basket|touchd)|first (goal|scorer|td|basket|pitch|serve|touchd)|last (goal|scorer|td|touchd)|to score\b|rushing yards|receiving yards|passing yards|\bassists?\b|\rebounds?\b|strikeouts?\b|home run|top (batsman|bowler|scorer)|fall of wicket|wickets?\b|century\b/.test(t))return"Props";
+  // Total O/U — \b evita "overtime", "overview", etc.
+  if(/\bover\b|\bunder\b|\btotal\b|\bo\/u\b|más de|menos de|alt(ernate)? total|half total|q[1-4] total/.test(t))return"Total O/U";
   return"Otro";
 }
 
