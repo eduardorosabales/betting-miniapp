@@ -17,7 +17,6 @@
   --border-hi:  rgba(0,205,150,0.25);
   --accent:     #00CD96;
   --accent-dim: rgba(0,205,150,0.12);
-  --accent-glow:rgba(0,205,150,0.08);
   --win:        #00CD96;
   --win-bg:     rgba(0,205,150,0.1);
   --loss:       #FF3D5A;
@@ -30,641 +29,189 @@
   --radius-sm:  8px;
   --radius-md:  12px;
   --radius-lg:  16px;
-  --radius-xl:  20px;
   --font-head:  'Syne', sans-serif;
   --font-num:   'Space Mono', monospace;
   --font-body:  'DM Sans', sans-serif;
   --nav-h:      72px;
 }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{height:100%}
+body{font-family:var(--font-body);background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:calc(var(--nav-h)+16px);overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");pointer-events:none;z-index:0;opacity:0.4}
+body::after{content:'';position:fixed;top:-200px;left:50%;transform:translateX(-50%);width:600px;height:400px;background:radial-gradient(ellipse,rgba(0,205,150,0.07) 0%,transparent 70%);pointer-events:none;z-index:0}
 
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+/* ── Header ── */
+.header{position:sticky;top:0;z-index:100;background:rgba(6,8,15,0.85);backdrop-filter:blur(20px) saturate(180%);border-bottom:1px solid var(--border);padding:14px 16px}
+.header-inner{display:flex;align-items:center;justify-content:space-between}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-icon{width:32px;height:32px;background:linear-gradient(135deg,var(--accent),#00A880);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.logo-text{font-family:var(--font-head);font-size:17px;font-weight:800;letter-spacing:-0.3px}
+.logo-text span{color:var(--accent)}
+.header-right{display:flex;align-items:center;gap:8px}
+.status-dot{width:7px;height:7px;background:var(--accent);border-radius:50%;animation:pulse-dot 2s ease-in-out infinite}
+@keyframes pulse-dot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(0.8)}}
+.refresh-btn{background:var(--card2);border:1px solid var(--border);color:var(--text-2);padding:6px 14px;border-radius:var(--radius-sm);font-family:var(--font-body);font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s;letter-spacing:0.2px}
+.refresh-btn:active{transform:scale(0.96)}
+.refresh-btn:disabled{opacity:0.4;cursor:default}
 
-html { height: 100%; }
+/* ── Content ── */
+.content{padding:16px;position:relative;z-index:1}
+.section{display:none}
+.section.active{display:block;animation:fadein 0.25s ease}
+@keyframes fadein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 
-body {
-  font-family: var(--font-body);
-  background: var(--bg);
-  color: var(--text);
-  min-height: 100vh;
-  padding-bottom: calc(var(--nav-h) + 16px);
-  overflow-x: hidden;
-}
+/* ── Bottom nav ── */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;height:var(--nav-h);background:rgba(10,14,28,0.92);backdrop-filter:blur(24px) saturate(200%);border-top:1px solid var(--border);display:flex;align-items:stretch;z-index:200;overflow-x:auto;scrollbar-width:none;padding-bottom:env(safe-area-inset-bottom,0px)}
+.bottom-nav::-webkit-scrollbar{display:none}
+.nav-item{min-width:64px;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;border:none;background:transparent;color:var(--text-3);padding:8px 4px;transition:color 0.2s;position:relative;-webkit-tap-highlight-color:transparent}
+.nav-item.active{color:var(--accent)}
+.nav-item.active::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:32px;height:2px;background:var(--accent);border-radius:0 0 4px 4px}
+.nav-icon{font-size:20px;line-height:1}
+.nav-label{font-size:10px;font-weight:600;letter-spacing:0.3px}
 
-/* ── Noise overlay ───────────────────────────────────────────────────────── */
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
-  pointer-events: none;
-  z-index: 0;
-  opacity: 0.4;
-}
+/* ── Cards ── */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;margin-bottom:10px;position:relative;overflow:hidden}
+.card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,0.02),transparent 60%);pointer-events:none}
+.card-title{font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:1px;margin-bottom:14px}
 
-/* ── Ambient glow ────────────────────────────────────────────────────────── */
-body::after {
-  content: '';
-  position: fixed;
-  top: -200px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 600px;
-  height: 400px;
-  background: radial-gradient(ellipse, rgba(0,205,150,0.07) 0%, transparent 70%);
-  pointer-events: none;
-  z-index: 0;
-}
+/* ── Stats grid ── */
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-md);padding:14px 10px;text-align:center;position:relative;overflow:hidden}
+.stat-card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;opacity:0;transition:opacity 0.2s}
+.stat-card.win-card::after{background:var(--win);opacity:1}
+.stat-card.loss-card::after{background:var(--loss);opacity:1}
+.stat-card.pend-card::after{background:var(--pend);opacity:1}
+.stat-value{font-family:var(--font-num);font-size:26px;font-weight:700;line-height:1;margin-bottom:5px}
+.stat-label{font-size:10px;color:var(--text-2);font-weight:600;letter-spacing:0.5px;text-transform:uppercase}
 
-/* ── Header ──────────────────────────────────────────────────────────────── */
-.header {
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  background: rgba(6,8,15,0.85);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border-bottom: 1px solid var(--border);
-  padding: 14px 16px;
-}
-.header-inner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-.logo {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.logo-icon {
-  width: 32px;
-  height: 32px;
-  background: linear-gradient(135deg, var(--accent), #00A880);
-  border-radius: 9px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  flex-shrink: 0;
-}
-.logo-text {
-  font-family: var(--font-head);
-  font-size: 17px;
-  font-weight: 800;
-  letter-spacing: -0.3px;
-}
-.logo-text span { color: var(--accent); }
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.status-dot {
-  width: 7px;
-  height: 7px;
-  background: var(--accent);
-  border-radius: 50%;
-  animation: pulse-dot 2s ease-in-out infinite;
-}
-@keyframes pulse-dot {
-  0%,100% { opacity: 1; transform: scale(1); }
-  50%      { opacity: 0.4; transform: scale(0.8); }
-}
-.refresh-btn {
-  background: var(--card2);
-  border: 1px solid var(--border);
-  color: var(--text-2);
-  padding: 6px 14px;
-  border-radius: var(--radius-sm);
-  font-family: var(--font-body);
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  letter-spacing: 0.2px;
-}
-.refresh-btn:active { transform: scale(0.96); }
-.refresh-btn:disabled { opacity: 0.4; cursor: default; }
+/* ── KPI ── */
+.kpi-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-md);padding:14px}
+.kpi-label{font-size:10px;color:var(--text-2);font-weight:600;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px}
+.kpi-value{font-family:var(--font-num);font-size:21px;font-weight:700;letter-spacing:-0.5px}
 
-/* ── Content ─────────────────────────────────────────────────────────────── */
-.content {
-  padding: 16px;
-  position: relative;
-  z-index: 1;
-}
-.section { display: none; }
-.section.active {
-  display: block;
-  animation: fadein 0.25s ease;
-}
-@keyframes fadein {
-  from { opacity: 0; transform: translateY(6px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
+/* ── Colors ── */
+.green{color:var(--win)}.red{color:var(--loss)}.yellow{color:var(--pend)}.accent{color:var(--accent)}.muted{color:var(--text-2)}
 
-/* ── Bottom navigation ───────────────────────────────────────────────────── */
-.bottom-nav {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: var(--nav-h);
-  background: rgba(10,14,28,0.92);
-  backdrop-filter: blur(24px) saturate(200%);
-  -webkit-backdrop-filter: blur(24px) saturate(200%);
-  border-top: 1px solid var(--border);
-  display: flex;
-  align-items: stretch;
-  z-index: 200;
-  padding: 0 4px;
-  padding-bottom: env(safe-area-inset-bottom, 0px);
-}
-.nav-item {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  cursor: pointer;
-  border: none;
-  background: transparent;
-  color: var(--text-3);
-  padding: 8px 4px;
-  transition: color 0.2s;
-  position: relative;
-  -webkit-tap-highlight-color: transparent;
-}
-.nav-item.active { color: var(--accent); }
-.nav-item.active::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 32px;
-  height: 2px;
-  background: var(--accent);
-  border-radius: 0 0 4px 4px;
-}
-.nav-icon { font-size: 20px; line-height: 1; }
-.nav-label { font-size: 10px; font-weight: 600; letter-spacing: 0.3px; }
+/* ── Progress ── */
+.progress-wrap{margin-bottom:4px}
+.progress-labels{display:flex;justify-content:space-between;font-size:12px;font-weight:700;margin-bottom:8px}
+.progress-track{height:6px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden}
+.progress-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--win),var(--accent));transition:width 0.8s cubic-bezier(0.4,0,0.2,1)}
 
-/* ── Cards ───────────────────────────────────────────────────────────────── */
-.card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 16px;
-  margin-bottom: 10px;
-  position: relative;
-  overflow: hidden;
-}
-.card::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, rgba(255,255,255,0.02), transparent 60%);
-  pointer-events: none;
-}
-.card-title {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text-3);
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  margin-bottom: 14px;
-}
+/* ── Chart ── */
+.chart-wrap{position:relative;height:180px;margin-bottom:4px}
+.chart-wrap-tall{position:relative;height:220px;margin-bottom:4px}
 
-/* ── Stat grid ───────────────────────────────────────────────────────────── */
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-  margin-bottom: 10px;
-}
-.stat-card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  padding: 14px 10px;
-  text-align: center;
-  position: relative;
-  overflow: hidden;
-}
-.stat-card::after {
-  content: '';
-  position: absolute;
-  bottom: 0; left: 0; right: 0;
-  height: 2px;
-  opacity: 0;
-  transition: opacity 0.2s;
-}
-.stat-card.win-card::after  { background: var(--win);  opacity: 1; }
-.stat-card.loss-card::after { background: var(--loss); opacity: 1; }
-.stat-card.pend-card::after { background: var(--pend); opacity: 1; }
-.stat-value {
-  font-family: var(--font-num);
-  font-size: 26px;
-  font-weight: 700;
-  line-height: 1;
-  margin-bottom: 5px;
-}
-.stat-label {
-  font-size: 10px;
-  color: var(--text-2);
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-}
+/* ── Sport items ── */
+.sport-item{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border)}
+.sport-item:last-child{border-bottom:none}
+.sport-name{font-size:14px;font-weight:600}
+.sport-sub{font-size:11px;color:var(--text-2);margin-top:2px}
+.sport-roi{font-family:var(--font-num);font-size:16px;font-weight:700}
 
-/* ── KPI ─────────────────────────────────────────────────────────────────── */
-.kpi-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  margin-bottom: 10px;
-}
-.kpi {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  padding: 14px;
-}
-.kpi-label {
-  font-size: 10px;
-  color: var(--text-2);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-  margin-bottom: 6px;
-}
-.kpi-value {
-  font-family: var(--font-num);
-  font-size: 21px;
-  font-weight: 700;
-  letter-spacing: -0.5px;
-}
+/* ── Capital ── */
+.capital-hero{text-align:center;padding:24px 0 16px}
+.capital-label{font-size:10px;font-weight:700;color:var(--text-2);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px}
+.capital-amount{font-family:var(--font-head);font-size:42px;font-weight:800;color:var(--accent);line-height:1;letter-spacing:-1px}
+.capital-sub{font-size:12px;color:var(--text-2);margin-top:8px;font-weight:500}
+.cap-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:16px}
+.cap-stat{background:var(--card2);border-radius:var(--radius-md);padding:14px 12px;text-align:center;border:1px solid var(--border)}
+.cap-stat-val{font-family:var(--font-num);font-size:18px;font-weight:700;margin-bottom:4px}
+.cap-stat-lbl{font-size:10px;color:var(--text-2);font-weight:600;text-transform:uppercase;letter-spacing:0.5px}
 
-/* ── Colors ──────────────────────────────────────────────────────────────── */
-.green  { color: var(--win); }
-.red    { color: var(--loss); }
-.yellow { color: var(--pend); }
-.accent { color: var(--accent); }
-.muted  { color: var(--text-2); }
+/* ── Bet items ── */
+.bet-item{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}
+.bet-item:last-child{border-bottom:none}
+.bet-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.bet-dot.win{background:var(--win);box-shadow:0 0 6px rgba(0,205,150,0.5)}
+.bet-dot.loss{background:var(--loss);box-shadow:0 0 6px rgba(255,61,90,0.5)}
+.bet-dot.pend{background:var(--pend);box-shadow:0 0 6px rgba(245,166,35,0.5)}
+.bet-info{flex:1;min-width:0}
+.bet-teams{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px}
+.bet-meta{font-size:11px;color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bet-right{text-align:right;flex-shrink:0}
+.bet-monto{font-family:var(--font-num);font-size:13px;font-weight:700}
+.bet-result{font-family:var(--font-num);font-size:11px;margin-top:1px}
 
-/* ── Racha badge ──────────────────────────────────────────────────────────── */
-.racha-badge {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 14px;
-  border-radius: var(--radius-md);
-  font-size: 13px;
-  font-weight: 700;
-  margin-bottom: 10px;
-  letter-spacing: 0.2px;
-}
-.racha-win  { background: var(--win-bg);  color: var(--win);  border: 1px solid rgba(0,205,150,0.2); }
-.racha-loss { background: var(--loss-bg); color: var(--loss); border: 1px solid rgba(255,61,90,0.2); }
-.racha-icon { font-size: 18px; }
+/* ── Filters ── */
+.filter-row{display:flex;gap:6px;overflow-x:auto;margin-bottom:12px;scrollbar-width:none;padding-bottom:2px}
+.filter-row::-webkit-scrollbar{display:none}
+.filter-chip{padding:6px 14px;border-radius:99px;font-size:12px;font-weight:700;border:1px solid var(--border);background:var(--card);color:var(--text-2);cursor:pointer;white-space:nowrap;transition:all 0.15s;letter-spacing:0.2px}
+.filter-chip.active{background:var(--accent-dim);border-color:var(--border-hi);color:var(--accent)}
 
-/* ── Progress ─────────────────────────────────────────────────────────────── */
-.progress-wrap { margin-bottom: 4px; }
-.progress-labels {
-  display: flex;
-  justify-content: space-between;
-  font-size: 12px;
-  font-weight: 700;
-  margin-bottom: 8px;
-}
-.progress-track {
-  height: 6px;
-  background: rgba(255,255,255,0.06);
-  border-radius: 3px;
-  overflow: hidden;
-}
-.progress-fill {
-  height: 100%;
-  border-radius: 3px;
-  background: linear-gradient(90deg, var(--win), var(--accent));
-  transition: width 0.8s cubic-bezier(0.4,0,0.2,1);
-}
+/* ── Search ── */
+.search-wrap{position:relative;margin-bottom:10px}
+.search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:14px;pointer-events:none;color:var(--text-2)}
+.search-input{width:100%;padding:10px 14px 10px 36px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-md);color:var(--text);font-family:var(--font-body);font-size:14px;outline:none;transition:border-color 0.2s}
+.search-input:focus{border-color:rgba(0,205,150,0.35)}
+.search-input::placeholder{color:var(--text-3)}
 
-/* ── Chart ────────────────────────────────────────────────────────────────── */
-.chart-wrap {
-  position: relative;
-  height: 180px;
-  margin-bottom: 4px;
-}
+/* ── Mes selector ── */
+.mes-selector{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-md);padding:10px 14px}
+.mes-nav{background:var(--card2);border:1px solid var(--border);color:var(--text-2);width:32px;height:32px;border-radius:var(--radius-sm);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s}
+.mes-nav:active{transform:scale(0.92)}
+.mes-label{font-family:var(--font-head);font-size:16px;font-weight:700}
 
-/* ── Sport items ──────────────────────────────────────────────────────────── */
-.sport-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 0;
-  border-bottom: 1px solid var(--border);
-}
-.sport-item:last-child { border-bottom: none; }
-.sport-name { font-size: 14px; font-weight: 600; }
-.sport-sub  { font-size: 11px; color: var(--text-2); margin-top: 2px; }
-.sport-roi  { font-family: var(--font-num); font-size: 16px; font-weight: 700; }
+/* ── Racha badge ── */
+.racha-badge{display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:var(--radius-md);font-size:13px;font-weight:700;margin-bottom:10px;letter-spacing:0.2px}
+.racha-win{background:var(--win-bg);color:var(--win);border:1px solid rgba(0,205,150,0.2)}
+.racha-loss{background:var(--loss-bg);color:var(--loss);border:1px solid rgba(255,61,90,0.2)}
+.racha-icon{font-size:18px}
 
-/* ── Capital ──────────────────────────────────────────────────────────────── */
-.capital-hero {
-  text-align: center;
-  padding: 24px 0 16px;
-}
-.capital-label {
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--text-2);
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
-  margin-bottom: 10px;
-}
-.capital-amount {
-  font-family: var(--font-head);
-  font-size: 42px;
-  font-weight: 800;
-  color: var(--accent);
-  line-height: 1;
-  letter-spacing: -1px;
-}
-.capital-sub {
-  font-size: 12px;
-  color: var(--text-2);
-  margin-top: 8px;
-  font-weight: 500;
-}
-.cap-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
-  margin-top: 16px;
-}
-.cap-stat {
-  background: var(--card2);
-  border-radius: var(--radius-md);
-  padding: 14px 12px;
-  text-align: center;
-  border: 1px solid var(--border);
-}
-.cap-stat-val {
-  font-family: var(--font-num);
-  font-size: 18px;
-  font-weight: 700;
-  margin-bottom: 4px;
-}
-.cap-stat-lbl {
-  font-size: 10px;
-  color: var(--text-2);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
+/* ── Loader ── */
+.loader{display:flex;flex-direction:column;align-items:center;justify-content:center;height:70vh;gap:20px}
+.loader-logo{font-family:var(--font-head);font-size:32px;font-weight:800;letter-spacing:-0.5px;animation:loader-pulse 1.5s ease-in-out infinite}
+.loader-logo span{color:var(--accent)}
+@keyframes loader-pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+.loader-bar{width:80px;height:2px;background:var(--card2);border-radius:1px;overflow:hidden}
+.loader-bar-fill{height:100%;background:var(--accent);border-radius:1px;animation:loader-slide 1.5s ease-in-out infinite}
+@keyframes loader-slide{0%{width:0%;margin-left:0}50%{width:60%;margin-left:20%}100%{width:0%;margin-left:100%}}
+.loader p{font-size:13px;color:var(--text-2);font-weight:500}
 
-/* ── Bet items ────────────────────────────────────────────────────────────── */
-.bet-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 0;
-  border-bottom: 1px solid var(--border);
-}
-.bet-item:last-child { border-bottom: none; }
-.bet-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-.bet-dot.win  { background: var(--win);  box-shadow: 0 0 6px rgba(0,205,150,0.5); }
-.bet-dot.loss { background: var(--loss); box-shadow: 0 0 6px rgba(255,61,90,0.5); }
-.bet-dot.pend { background: var(--pend); box-shadow: 0 0 6px rgba(245,166,35,0.5); }
-.bet-info { flex: 1; min-width: 0; }
-.bet-teams {
-  font-size: 13px;
-  font-weight: 600;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  margin-bottom: 2px;
-}
-.bet-meta {
-  font-size: 11px;
-  color: var(--text-2);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.bet-right { text-align: right; flex-shrink: 0; }
-.bet-monto {
-  font-family: var(--font-num);
-  font-size: 13px;
-  font-weight: 700;
-}
-.bet-result {
-  font-family: var(--font-num);
-  font-size: 11px;
-  margin-top: 1px;
-}
+/* ── Error ── */
+.error-box{background:var(--loss-bg);border:1px solid rgba(255,61,90,0.25);border-radius:var(--radius-lg);padding:24px 20px;text-align:center;margin:20px 0}
+.error-box p{color:var(--loss);font-size:14px;font-weight:600}
+.error-box small{color:var(--text-2);font-size:12px}
+.retry-btn{margin-top:14px;padding:9px 22px;background:var(--accent);color:#000;border:none;border-radius:var(--radius-md);font-family:var(--font-body);font-size:13px;font-weight:700;cursor:pointer;letter-spacing:0.2px}
 
-/* ── Filters ──────────────────────────────────────────────────────────────── */
-.filter-row {
-  display: flex;
-  gap: 6px;
-  overflow-x: auto;
-  margin-bottom: 12px;
-  scrollbar-width: none;
-  padding-bottom: 2px;
-}
-.filter-row::-webkit-scrollbar { display: none; }
-.filter-chip {
-  padding: 6px 14px;
-  border-radius: 99px;
-  font-size: 12px;
-  font-weight: 700;
-  border: 1px solid var(--border);
-  background: var(--card);
-  color: var(--text-2);
-  cursor: pointer;
-  white-space: nowrap;
-  transition: all 0.15s;
-  letter-spacing: 0.2px;
-}
-.filter-chip.active {
-  background: var(--accent-dim);
-  border-color: var(--border-hi);
-  color: var(--accent);
-}
+/* ── Empty / Explainer ── */
+.empty{text-align:center;padding:30px 20px;color:var(--text-2);font-size:13px}
+.divider{border:none;border-top:1px solid var(--border);margin:4px 0 12px}
+.section-header{font-family:var(--font-head);font-size:20px;font-weight:800;letter-spacing:-0.3px;margin-bottom:14px;color:var(--text)}
+.section-header span{color:var(--accent)}
+.explainer{font-size:12px;color:var(--text-2);line-height:1.6;padding:12px 14px;background:var(--card2);border-radius:var(--radius-md);border-left:2px solid var(--accent);margin-top:8px}
+.explainer strong{color:var(--text);font-weight:600}
 
-/* ── Search ───────────────────────────────────────────────────────────────── */
-.search-wrap {
-  position: relative;
-  margin-bottom: 10px;
-}
-.search-icon {
-  position: absolute;
-  left: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 14px;
-  pointer-events: none;
-  color: var(--text-2);
-}
-.search-input {
-  width: 100%;
-  padding: 10px 14px 10px 36px;
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  color: var(--text);
-  font-family: var(--font-body);
-  font-size: 14px;
-  outline: none;
-  transition: border-color 0.2s;
-}
-.search-input:focus { border-color: rgba(0,205,150,0.35); }
-.search-input::placeholder { color: var(--text-3); }
+/* ── Tipo row ── */
+.tipo-item{display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--border)}
+.tipo-item:last-child{border-bottom:none}
+.tipo-bar-wrap{height:4px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden;margin-top:6px;width:100%}
+.tipo-bar-fill{height:100%;border-radius:2px;transition:width 0.8s cubic-bezier(0.4,0,0.2,1)}
 
-/* ── Mes selector ─────────────────────────────────────────────────────────── */
-.mes-selector {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 12px;
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  padding: 10px 14px;
-}
-.mes-nav {
-  background: var(--card2);
-  border: 1px solid var(--border);
-  color: var(--text-2);
-  width: 32px;
-  height: 32px;
-  border-radius: var(--radius-sm);
-  font-size: 16px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.15s;
-}
-.mes-nav:active { transform: scale(0.92); }
-.mes-label {
-  font-family: var(--font-head);
-  font-size: 16px;
-  font-weight: 700;
-}
+/* ── Rolling chart ── */
+.rolling-kpi{display:flex;gap:8px;margin-bottom:10px}
+.rolling-kpi-item{flex:1;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-md);padding:12px;text-align:center}
+.rolling-kpi-val{font-family:var(--font-num);font-size:20px;font-weight:700}
+.rolling-kpi-lbl{font-size:10px;color:var(--text-2);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-top:4px}
 
-/* ── Loader ───────────────────────────────────────────────────────────────── */
-.loader {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 70vh;
-  gap: 20px;
-}
-.loader-logo {
-  font-family: var(--font-head);
-  font-size: 32px;
-  font-weight: 800;
-  letter-spacing: -0.5px;
-  animation: loader-pulse 1.5s ease-in-out infinite;
-}
-.loader-logo span { color: var(--accent); }
-@keyframes loader-pulse {
-  0%,100% { opacity: 1; }
-  50%      { opacity: 0.4; }
-}
-.loader-bar {
-  width: 80px;
-  height: 2px;
-  background: var(--card2);
-  border-radius: 1px;
-  overflow: hidden;
-}
-.loader-bar-fill {
-  height: 100%;
-  background: var(--accent);
-  border-radius: 1px;
-  animation: loader-slide 1.5s ease-in-out infinite;
-}
-@keyframes loader-slide {
-  0%   { width: 0%;   margin-left: 0; }
-  50%  { width: 60%;  margin-left: 20%; }
-  100% { width: 0%;   margin-left: 100%; }
-}
-.loader p { font-size: 13px; color: var(--text-2); font-weight: 500; }
+/* ── Kelly meter ── */
+.kelly-meter{height:12px;background:rgba(255,255,255,0.06);border-radius:6px;overflow:hidden;margin:10px 0}
+.kelly-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--win),#F5A623);transition:width 0.8s cubic-bezier(0.4,0,0.2,1)}
+.kelly-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.kelly-card{background:var(--card2);border-radius:var(--radius-md);padding:14px;text-align:center;border:1px solid var(--border)}
+.kelly-card-pct{font-family:var(--font-num);font-size:22px;font-weight:700;color:var(--accent)}
+.kelly-card-lbl{font-size:10px;color:var(--text-2);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-top:4px}
+.kelly-card-sub{font-size:11px;color:var(--text-3);margin-top:3px}
 
-/* ── Error ────────────────────────────────────────────────────────────────── */
-.error-box {
-  background: var(--loss-bg);
-  border: 1px solid rgba(255,61,90,0.25);
-  border-radius: var(--radius-lg);
-  padding: 24px 20px;
-  text-align: center;
-  margin: 20px 0;
-}
-.error-box p { color: var(--loss); font-size: 14px; font-weight: 600; }
-.error-box small { color: var(--text-2); font-size: 12px; }
-.retry-btn {
-  margin-top: 14px;
-  padding: 9px 22px;
-  background: var(--accent);
-  color: #000;
-  border: none;
-  border-radius: var(--radius-md);
-  font-family: var(--font-body);
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-  letter-spacing: 0.2px;
-}
-
-/* ── Empty ────────────────────────────────────────────────────────────────── */
-.empty {
-  text-align: center;
-  padding: 30px 20px;
-  color: var(--text-2);
-  font-size: 13px;
-}
-
-/* ── Divider ──────────────────────────────────────────────────────────────── */
-.divider {
-  border: none;
-  border-top: 1px solid var(--border);
-  margin: 4px 0 12px;
-}
-
-/* ── Section header ───────────────────────────────────────────────────────── */
-.section-header {
-  font-family: var(--font-head);
-  font-size: 20px;
-  font-weight: 800;
-  letter-spacing: -0.3px;
-  margin-bottom: 14px;
-  color: var(--text);
-}
-.section-header span { color: var(--accent); }
-
-/* ── Explainer text ───────────────────────────────────────────────────────── */
-.explainer {
-  font-size: 12px;
-  color: var(--text-2);
-  line-height: 1.6;
-  padding: 12px 14px;
-  background: var(--card2);
-  border-radius: var(--radius-md);
-  border-left: 2px solid var(--accent);
-  margin-top: 8px;
-}
-.explainer strong { color: var(--text); font-weight: 600; }
+/* ── Temporal ── */
+.dia-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)}
+.dia-row:last-child{border-bottom:none}
+.dia-label{font-size:12px;font-weight:700;width:36px;flex-shrink:0;color:var(--text-2)}
+.dia-bar-wrap{flex:1;height:6px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden}
+.dia-bar-fill{height:100%;border-radius:3px;transition:width 0.8s cubic-bezier(0.4,0,0.2,1)}
+.dia-roi{font-family:var(--font-num);font-size:11px;font-weight:700;width:52px;text-align:right;flex-shrink:0}
+.dia-wl{font-size:10px;color:var(--text-2);width:56px;text-align:right;flex-shrink:0}
 </style>
 </head>
 <body>
@@ -676,8 +223,6 @@ body::after {
     <p>Cargando datos...</p>
   </div>
 </div>
-
-<!-- Bottom nav rendered after data loads -->
 <nav class="bottom-nav" id="bottomNav" style="display:none"></nav>
 
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -687,84 +232,151 @@ const API_URL = "https://betting-stats-bot-production.up.railway.app";
 const tg = window.Telegram?.WebApp;
 if (tg) { tg.ready(); tg.expand(); }
 
-let DATA             = null;
-let filtroDeporte    = "Todos";
-let filtroEquipo     = "";
-let mesActual        = null;
-let mesesDisponibles = [];
-let charts           = {};
-let tabActual        = "resumen";
-let cargando         = false;
+let DATA = null, filtroDeporte = "Todos", filtroEquipo = "";
+let mesActual = null, mesesDisponibles = [];
+let charts = {}, tabActual = "resumen", cargando = false;
 
 const NAV_ITEMS = [
-  { id:"resumen",  icon:"📊", label:"Resumen" },
-  { id:"semana",   icon:"📅", label:"7 días"  },
-  { id:"mes",      icon:"🗓", label:"Mes"     },
-  { id:"deportes", icon:"🏆", label:"Deportes"},
-  { id:"capital",  icon:"💼", label:"Capital" },
-  { id:"apuestas", icon:"📋", label:"Bets"    },
+  { id:"resumen",   icon:"📊", label:"General"  },
+  { id:"semana",    icon:"📅", label:"7 días"   },
+  { id:"mes",       icon:"🗓", label:"Mes"      },
+  { id:"deportes",  icon:"🏆", label:"Deportes" },
+  { id:"tipos",     icon:"🎯", label:"Tipos"    },
+  { id:"temporal",  icon:"⏱", label:"Timing"   },
+  { id:"rolling",   icon:"📈", label:"Tendencia"},
+  { id:"kelly",     icon:"🧮", label:"Kelly"    },
+  { id:"capital",   icon:"💼", label:"Capital"  },
+  { id:"apuestas",  icon:"📋", label:"Bets"     },
 ];
 
-function esc(s) {
-  if (s == null) return "";
-  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");
-}
+function esc(s){ return s==null?"":String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;")}
+const fmt  = n => n==null?"—":`$${Number(n).toLocaleString("es-MX",{maximumFractionDigits:0})}`;
+const fmtp = n => n==null?"—":`${Number(n).toFixed(1)}%`;
+const fmts = n => n==null?"—":Number(n)>=0?`+${fmt(n)}`:fmt(n);
+const signColor = n => Number(n)>=0?"green":"red";
+function mesLabel(m){if(!m)return"—";const[y,mo]=m.split("-");return["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"][parseInt(mo,10)-1]+" "+y}
 
-const fmt  = n => n == null ? "—" : `$${Number(n).toLocaleString("es-MX",{maximumFractionDigits:0})}`;
-const fmtp = n => n == null ? "—" : `${Number(n).toFixed(1)}%`;
-const fmts = n => n == null ? "—" : Number(n)>=0 ? `+${fmt(n)}` : fmt(n);
-const fmtM = n => n == null ? "—" : `$${Math.abs(Number(n))>=1000 ? (Number(n)/1000).toFixed(1)+"k" : Number(n).toFixed(0)}`;
-const signColor = n => Number(n) >= 0 ? "green" : "red";
-
-function mesLabel(m) {
-  if (!m) return "—";
-  const [y,mo] = m.split("-");
-  return ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"][parseInt(mo,10)-1]+" "+y;
-}
-
-/* ── Fetch ─────────────────────────────────────────────────────────────── */
-let _ctrl = null;
-async function cargarDatos() {
-  if (_ctrl) _ctrl.abort();
-  _ctrl = new AbortController();
-  const timeout = setTimeout(()=>_ctrl.abort(), 12000);
-  try {
-    const hdrs = {};
-    if (tg?.initData) hdrs["X-Telegram-Init-Data"] = tg.initData;
-    const res = await fetch(`${API_URL}/api/stats`, { headers:hdrs, signal:_ctrl.signal });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const json = await res.json();
-    if (!json.resumen || !Array.isArray(json.apuestas)) throw new Error("Datos inesperados");
-    DATA = json;
-    mesesDisponibles = DATA.grafica_meses.map(m=>m.mes);
-    mesActual = mesesDisponibles[mesesDisponibles.length-1] || null;
+/* ── Fetch ── */
+let _ctrl=null;
+async function cargarDatos(){
+  if(_ctrl)_ctrl.abort();
+  _ctrl=new AbortController();
+  const timeout=setTimeout(()=>_ctrl.abort(),12000);
+  try{
+    const hdrs={};
+    if(tg?.initData)hdrs["X-Telegram-Init-Data"]=tg.initData;
+    const res=await fetch(`${API_URL}/api/stats`,{headers:hdrs,signal:_ctrl.signal});
+    if(!res.ok)throw new Error(`HTTP ${res.status}`);
+    const json=await res.json();
+    if(!json.resumen||!Array.isArray(json.apuestas))throw new Error("Datos inesperados");
+    DATA=json;
+    mesesDisponibles=DATA.grafica_meses.map(m=>m.mes);
+    mesActual=mesesDisponibles[mesesDisponibles.length-1]||null;
     renderApp();
-  } catch(e) {
-    if (e.name==="AbortError") return;
-    document.getElementById("app").innerHTML = `
-      <div style="padding:20px">
-        <div class="error-box">
-          <p>Sin conexión</p>
-          <br><small>${esc(e.message)}</small>
-          <br><button class="retry-btn" data-action="recargar">↻ Reintentar</button>
-        </div>
-      </div>`;
-  } finally { clearTimeout(timeout); }
+  }catch(e){
+    if(e.name==="AbortError")return;
+    document.getElementById("app").innerHTML=`<div style="padding:20px"><div class="error-box"><p>Sin conexión</p><br><small>${esc(e.message)}</small><br><button class="retry-btn" data-action="recargar">↻ Reintentar</button></div></div>`;
+  }finally{clearTimeout(timeout);}
 }
 
-/* ── Render App ─────────────────────────────────────────────────────────── */
-function renderApp() {
-  document.getElementById("app").innerHTML = `
+/* ── Analytics helpers (client-side) ── */
+function normalizaTipo(raw){
+  const t=(raw||"").toLowerCase().trim();
+  if(!t)return"Otro";
+  if(/moneyline|1x2|ml\b|ganador/.test(t))return"Moneyline";
+  if(/handicap|hcp|spread|asian/.test(t))return"Handicap";
+  if(/over|under|total|o\/u|más de|menos de/.test(t))return"Total O/U";
+  if(/ambos|btts|both teams/.test(t))return"BTTS";
+  if(/correct score|marcador exacto/.test(t))return"Marcador exacto";
+  if(/parlay|combo|acumulad|multi/.test(t))return"Parlay";
+  return"Otro";
+}
+
+function calcRoiPorTipo(){
+  const bucket={};
+  DATA.apuestas.filter(a=>a.status==="win"||a.status==="loss").forEach(a=>{
+    const t=normalizaTipo(a.tipo);
+    if(!bucket[t])bucket[t]={w:0,l:0,apo:0,gan:0,cuotas:[]};
+    const b=bucket[t];
+    b.apo+=a.monto||0;
+    if(parseFloat(a.cuota)>1.01)b.cuotas.push(parseFloat(a.cuota));
+    if(a.status==="win"){b.w++;b.gan+=a.ganancia||a.monto||0;}
+    else b.l++;
+  });
+  return Object.entries(bucket)
+    .filter(([,b])=>b.w+b.l>=2)
+    .map(([tipo,b])=>{
+      const total=b.w+b.l,neto=b.gan-b.apo;
+      return{tipo,wins:b.w,losses:b.l,apo:b.apo,neto,roi:b.apo>0?neto/b.apo*100:0,wr:total>0?b.w/total*100:0,cuotaMedia:b.cuotas.length>0?b.cuotas.reduce((a,c)=>a+c,0)/b.cuotas.length:0};
+    })
+    .sort((a,b)=>b.roi-a.roi);
+}
+
+function calcTemporal(){
+  const DIAS=["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"];
+  const FRANJAS=["00-06","06-10","10-14","14-18","18-22","22-00"];
+  const db={},hb={};
+  DIAS.forEach(d=>{db[d]={w:0,l:0,apo:0,gan:0}});
+  FRANJAS.forEach(f=>{hb[f]={w:0,l:0,apo:0,gan:0}});
+  DATA.apuestas.filter(a=>(a.status==="win"||a.status==="loss")&&a.fecha).forEach(a=>{
+    const dt=new Date(a.fecha.replace(" ","T")+"Z");
+    if(isNaN(dt))return;
+    const dia=DIAS[dt.getDay()===0?6:dt.getDay()-1];
+    const h=dt.getUTCHours();
+    const franja=h<6?"00-06":h<10?"06-10":h<14?"10-14":h<18?"14-18":h<22?"18-22":"22-00";
+    [db[dia],hb[franja]].forEach(b=>{
+      b.apo+=a.monto||0;
+      if(a.status==="win"){b.w++;b.gan+=a.ganancia||a.monto||0;}
+      else b.l++;
+    });
+  });
+  const toStats=(label,b)=>{const total=b.w+b.l,neto=b.gan-b.apo;return{label,wins:b.w,losses:b.l,neto,roi:b.apo>0?neto/b.apo*100:0,wr:total>0?b.w/total*100:0,total}};
+  return{
+    porDia:DIAS.map(d=>toStats(d,db[d])).filter(x=>x.total>0),
+    porHora:FRANJAS.map(f=>toStats(f,hb[f])).filter(x=>x.total>0)
+  };
+}
+
+function calcRolling(ventana=20){
+  const res=DATA.apuestas.filter(a=>a.status==="win"||a.status==="loss");
+  if(res.length<ventana)return[];
+  const points=[];
+  let netoAcum=0;
+  for(let i=0;i<res.length;i++){
+    const a=res[i];
+    if(a.status==="win")netoAcum+=(a.ganancia||a.monto||0)-(a.monto||0);
+    else netoAcum-=a.monto||0;
+    if(i<ventana-1)continue;
+    const win=res.slice(i-ventana+1,i+1);
+    const w=win.filter(x=>x.status==="win").length;
+    const apo=win.reduce((s,x)=>s+(x.monto||0),0);
+    const gan=win.reduce((s,x)=>x.status==="win"?s+(x.ganancia||x.monto||0):s,0);
+    const roi=apo>0?(gan-apo)/apo*100:0;
+    points.push({i,roi,wr:w/ventana*100,netoAcum});
+  }
+  return points;
+}
+
+function calcKelly(){
+  const res=DATA.apuestas.filter(a=>a.status==="win"||a.status==="loss");
+  if(res.length<10)return null;
+  const p=res.filter(a=>a.status==="win").length/res.length;
+  const cuotas=DATA.apuestas.map(a=>parseFloat(a.cuota)).filter(c=>c>1.01);
+  if(!cuotas.length)return null;
+  const b=cuotas.reduce((s,c)=>s+c,0)/cuotas.length-1;
+  if(b<=0)return null;
+  const f=Math.max(0,Math.min((p*(b+1)-1)/b,0.25));
+  const ev=p*b-(1-p);
+  return{f,fMedio:f/2,fCuarto:f/4,p:p*100,cuotaMedia:b+1,ev};
+}
+
+/* ── Render App ── */
+function renderApp(){
+  document.getElementById("app").innerHTML=`
     <div class="header">
       <div class="header-inner">
-        <div class="logo">
-          <div class="logo-icon">📈</div>
-          <div class="logo-text">Bet<span>Stats</span></div>
-        </div>
-        <div class="header-right">
-          <div class="status-dot"></div>
-          <button class="refresh-btn" data-action="recargar">↻</button>
-        </div>
+        <div class="logo"><div class="logo-icon">📈</div><div class="logo-text">Bet<span>Stats</span></div></div>
+        <div class="header-right"><div class="status-dot"></div><button class="refresh-btn" data-action="recargar">↻</button></div>
       </div>
     </div>
     <div class="content">
@@ -772,102 +384,54 @@ function renderApp() {
       <div id="semana"   class="section">${renderSemana()}</div>
       <div id="mes"      class="section">${renderMes()}</div>
       <div id="deportes" class="section">${renderDeportes()}</div>
+      <div id="tipos"    class="section">${renderTipos()}</div>
+      <div id="temporal" class="section">${renderTemporal()}</div>
+      <div id="rolling"  class="section">${renderRolling()}</div>
+      <div id="kelly"    class="section">${renderKelly()}</div>
       <div id="capital"  class="section">${renderCapital()}</div>
       <div id="apuestas" class="section">${renderApuestas()}</div>
     </div>`;
-
-  const nav = document.getElementById("bottomNav");
-  nav.style.display = "flex";
-  nav.innerHTML = NAV_ITEMS.map(n=>`
-    <button class="nav-item" data-tab="${n.id}">
-      <span class="nav-icon">${n.icon}</span>
-      <span class="nav-label">${n.label}</span>
-    </button>`).join("");
-
-  const saved = tabActual;
-  setTimeout(()=>{
-    const btn = nav.querySelector(`[data-tab="${saved}"]`);
-    showTab(saved, btn);
-  }, 0);
+  const nav=document.getElementById("bottomNav");
+  nav.style.display="flex";
+  nav.innerHTML=NAV_ITEMS.map(n=>`<button class="nav-item" data-tab="${n.id}"><span class="nav-icon">${n.icon}</span><span class="nav-label">${n.label}</span></button>`).join("");
+  const saved=tabActual;
+  setTimeout(()=>{const btn=nav.querySelector(`[data-tab="${saved}"]`);showTab(saved,btn);},0);
 }
 
-/* ── Tab: Resumen ───────────────────────────────────────────────────────── */
-function renderResumen() {
-  const r = DATA.resumen;
-  const wr = ((r.winrate??0)).toFixed(1);
-  const rachaHtml = r.racha>=2 ? `
-    <div class="racha-badge ${r.tipo_racha==="win"?"racha-win":"racha-loss"}">
-      <span class="racha-icon">${r.tipo_racha==="win"?"🔥":"🧊"}</span>
-      Racha de ${r.racha} ${r.tipo_racha==="win"?"victorias":"derrotas"} seguidas
-    </div>` : "";
-
-  return `
-    <div class="section-header">General <span>·</span> Todo el historial</div>
+/* ── Tab: Resumen ── */
+function renderResumen(){
+  const r=DATA.resumen;
+  const wr=((r.winrate??0)).toFixed(1);
+  const rachaHtml=r.racha>=2?`<div class="racha-badge ${r.tipo_racha==="win"?"racha-win":"racha-loss"}"><span class="racha-icon">${r.tipo_racha==="win"?"🔥":"🧊"}</span>Racha de ${r.racha} ${r.tipo_racha==="win"?"victorias":"derrotas"} seguidas</div>`:"";
+  return`<div class="section-header">General <span>·</span> Historial</div>
     <div class="stats-grid">
-      <div class="stat-card win-card">
-        <div class="stat-value green">${r.wins}</div>
-        <div class="stat-label">Ganadas</div>
-      </div>
-      <div class="stat-card loss-card">
-        <div class="stat-value red">${r.losses}</div>
-        <div class="stat-label">Perdidas</div>
-      </div>
-      <div class="stat-card pend-card">
-        <div class="stat-value yellow">${r.pending}</div>
-        <div class="stat-label">Pendientes</div>
-      </div>
+      <div class="stat-card win-card"><div class="stat-value green">${r.wins}</div><div class="stat-label">Ganadas</div></div>
+      <div class="stat-card loss-card"><div class="stat-value red">${r.losses}</div><div class="stat-label">Perdidas</div></div>
+      <div class="stat-card pend-card"><div class="stat-value yellow">${r.pending}</div><div class="stat-label">Pendientes</div></div>
     </div>
     <div class="kpi-row">
-      <div class="kpi">
-        <div class="kpi-label">Neto total</div>
-        <div class="kpi-value ${signColor(r.neto)}">${fmts(r.neto)}</div>
-      </div>
-      <div class="kpi">
-        <div class="kpi-label">ROI</div>
-        <div class="kpi-value ${signColor(r.roi)}">${(r.roi??0)>=0?"+":""}${fmtp(r.roi)}</div>
-      </div>
+      <div class="kpi"><div class="kpi-label">Neto total</div><div class="kpi-value ${signColor(r.neto)}">${fmts(r.neto)}</div></div>
+      <div class="kpi"><div class="kpi-label">ROI</div><div class="kpi-value ${signColor(r.roi)}">${(r.roi??0)>=0?"+":""}${fmtp(r.roi)}</div></div>
     </div>
     <div class="kpi-row">
-      <div class="kpi">
-        <div class="kpi-label">Total apostado</div>
-        <div class="kpi-value accent">${fmt(r.apostado)}</div>
-      </div>
-      <div class="kpi">
-        <div class="kpi-label">Total cobrado</div>
-        <div class="kpi-value">${fmt(r.ganado)}</div>
-      </div>
+      <div class="kpi"><div class="kpi-label">Total apostado</div><div class="kpi-value accent">${fmt(r.apostado)}</div></div>
+      <div class="kpi"><div class="kpi-label">Total cobrado</div><div class="kpi-value">${fmt(r.ganado)}</div></div>
     </div>
     ${rachaHtml}
-    <div class="card">
-      <div class="card-title">Win rate — ${wr}%</div>
-      <div class="progress-wrap">
-        <div class="progress-labels">
-          <span class="green">${r.wins}W</span>
-          <span class="muted">${wr}%</span>
-          <span class="red">${r.losses}L</span>
-        </div>
-        <div class="progress-track">
-          <div class="progress-fill" style="width:${wr}%"></div>
-        </div>
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-title">Neto acumulado</div>
-      <div class="chart-wrap"><canvas id="chartNeto"></canvas></div>
-    </div>
-    <div class="card">
-      <div class="card-title">Apostado vs Ganado</div>
-      <div class="chart-wrap"><canvas id="chartMeses"></canvas></div>
-    </div>`;
+    <div class="card"><div class="card-title">Win rate — ${wr}%</div>
+      <div class="progress-wrap"><div class="progress-labels"><span class="green">${r.wins}W</span><span class="muted">${wr}%</span><span class="red">${r.losses}L</span></div>
+      <div class="progress-track"><div class="progress-fill" style="width:${wr}%"></div></div></div></div>
+    <div class="card"><div class="card-title">Neto acumulado</div><div class="chart-wrap"><canvas id="chartNeto"></canvas></div></div>
+    <div class="card"><div class="card-title">Apostado vs Ganado</div><div class="chart-wrap"><canvas id="chartMeses"></canvas></div></div>`;
 }
 
-/* ── Tab: Semana ────────────────────────────────────────────────────────── */
-function renderSemana() {
-  const s = DATA.stats_semana;
-  if (!s) return '<div class="empty">Sin datos esta semana</div>';
-  const wr = ((s.winrate??0)).toFixed(1);
-  return `
-    <div class="section-header">Últimos <span>7 días</span></div>
+/* ── Tab: Semana ── */
+function renderSemana(){
+  const s=DATA.stats_semana;
+  if(!s)return'<div class="empty">Sin datos esta semana</div>';
+  const wr=((s.winrate??0)).toFixed(1);
+  const ap7=DATA.apuestas.filter(a=>{if(!a.fecha)return false;return new Date(a.fecha.replace(" ","T")+"Z").getTime()>=Date.now()-7*24*3600*1000;});
+  return`<div class="section-header">Últimos <span>7 días</span></div>
     <div class="stats-grid">
       <div class="stat-card win-card"><div class="stat-value green">${s.wins}</div><div class="stat-label">Ganadas</div></div>
       <div class="stat-card loss-card"><div class="stat-value red">${s.losses}</div><div class="stat-label">Perdidas</div></div>
@@ -881,54 +445,26 @@ function renderSemana() {
       <div class="kpi"><div class="kpi-label">Apostado</div><div class="kpi-value accent">${fmt(s.apostado)}</div></div>
       <div class="kpi"><div class="kpi-label">Win rate</div><div class="kpi-value">${wr}%</div></div>
     </div>
-    <div class="card">
-      <div class="card-title">Win rate — ${wr}%</div>
-      <div class="progress-wrap">
-        <div class="progress-labels"><span class="green">${s.wins}W</span><span class="muted">${wr}%</span><span class="red">${s.losses}L</span></div>
-        <div class="progress-track"><div class="progress-fill" style="width:${wr}%"></div></div>
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-title">Apuestas esta semana</div>
-      ${renderApuestasSemana()}
-    </div>`;
+    <div class="card"><div class="card-title">Apuestas (${ap7.length})</div>${ap7.length===0?'<div class="empty">Sin apuestas</div>':[...ap7].reverse().map(renderBetItem).join("")}</div>`;
 }
 
-function renderApuestasSemana() {
-  const hace7 = Date.now() - 7*24*3600*1000;
-  const ap7 = DATA.apuestas.filter(a => {
-    if (!a.fecha) return false;
-    return new Date(a.fecha.replace(" ","T")+"Z").getTime() >= hace7;
-  });
-  if (!ap7.length) return '<div class="empty">Sin apuestas esta semana</div>';
-  return [...ap7].reverse().map(renderBetItem).join("");
+/* ── Tab: Mes ── */
+function renderMes(){
+  const idx=mesesDisponibles.indexOf(mesActual);
+  return`<div class="mes-selector">
+    <button class="mes-nav" data-mes-dir="-1" ${idx<=0?"disabled style='opacity:0.3;cursor:default'":""}>‹</button>
+    <span class="mes-label" id="mesLabel">${mesLabel(mesActual)}</span>
+    <button class="mes-nav" data-mes-dir="1" ${idx>=mesesDisponibles.length-1?"disabled style='opacity:0.3;cursor:default'":""}>›</button>
+  </div>
+  <div id="mesContent">${renderMesContent()}</div>`;
 }
-
-/* ── Tab: Mes ───────────────────────────────────────────────────────────── */
-function renderMes() {
-  const idx = mesesDisponibles.indexOf(mesActual);
-  return `
-    <div class="mes-selector">
-      <button class="mes-nav" data-mes-dir="-1" ${idx<=0?"disabled style='opacity:0.3;cursor:default'":""}>‹</button>
-      <span class="mes-label" id="mesLabel">${mesLabel(mesActual)}</span>
-      <button class="mes-nav" data-mes-dir="1" ${idx>=mesesDisponibles.length-1?"disabled style='opacity:0.3;cursor:default'":""}>›</button>
-    </div>
-    <div id="mesContent">${renderMesContent()}</div>`;
-}
-
-function renderMesContent() {
-  if (!mesActual) return '<div class="empty">No hay datos este mes</div>';
-  const ap = DATA.apuestas.filter(a => a.fecha?.startsWith(mesActual));
+function renderMesContent(){
+  if(!mesActual)return'<div class="empty">No hay datos este mes</div>';
+  const ap=DATA.apuestas.filter(a=>a.fecha?.startsWith(mesActual));
   let w=0,l=0,p=0,apo=0,gan=0;
-  ap.forEach(a=>{
-    if(a.status==="win"){w++;apo+=a.monto;gan+=a.ganancia??a.monto;}
-    else if(a.status==="loss"){l++;apo+=a.monto;}
-    else p++;
-  });
-  const neto=gan-apo, roi=apo>0?neto/apo*100:0;
-  const wr=(w+l)>0?(w/(w+l)*100).toFixed(1):"N/A";
-  return `
-    <div class="stats-grid">
+  ap.forEach(a=>{if(a.status==="win"){w++;apo+=a.monto;gan+=a.ganancia??a.monto;}else if(a.status==="loss"){l++;apo+=a.monto;}else p++;});
+  const neto=gan-apo,roi=apo>0?neto/apo*100:0,wr=(w+l)>0?(w/(w+l)*100).toFixed(1):"N/A";
+  return`<div class="stats-grid">
       <div class="stat-card win-card"><div class="stat-value green">${w}</div><div class="stat-label">Ganadas</div></div>
       <div class="stat-card loss-card"><div class="stat-value red">${l}</div><div class="stat-label">Perdidas</div></div>
       <div class="stat-card pend-card"><div class="stat-value yellow">${p}</div><div class="stat-label">Pendientes</div></div>
@@ -941,310 +477,295 @@ function renderMesContent() {
       <div class="kpi"><div class="kpi-label">Apostado</div><div class="kpi-value accent">${fmt(apo)}</div></div>
       <div class="kpi"><div class="kpi-label">Win rate</div><div class="kpi-value">${wr}%</div></div>
     </div>
-    <div class="card">
-      <div class="card-title">Apuestas del mes (${ap.length})</div>
-      ${ap.length===0?'<div class="empty">Sin apuestas este mes</div>':ap.slice(-12).reverse().map(renderBetItem).join("")}
-    </div>`;
+    <div class="card"><div class="card-title">Apuestas (${ap.length})</div>${ap.length===0?'<div class="empty">Sin apuestas</div>':ap.slice(-12).reverse().map(renderBetItem).join("")}</div>`;
+}
+function cambiarMes(dir){
+  const idx=mesesDisponibles.indexOf(mesActual),nuevo=idx+dir;
+  if(nuevo<0||nuevo>=mesesDisponibles.length)return;
+  mesActual=mesesDisponibles[nuevo];
+  document.getElementById("mesLabel").textContent=mesLabel(mesActual);
+  document.getElementById("mesContent").innerHTML=renderMesContent();
+  const ni=mesesDisponibles.indexOf(mesActual);
+  document.querySelectorAll("[data-mes-dir]").forEach(btn=>{const d=parseInt(btn.dataset.mesDir,10),dis=(d===-1&&ni<=0)||(d===1&&ni>=mesesDisponibles.length-1);btn.disabled=dis;btn.style.opacity=dis?"0.3":"";btn.style.cursor=dis?"default":"";});
 }
 
-function cambiarMes(dir) {
-  const idx = mesesDisponibles.indexOf(mesActual);
-  const nuevo = idx+dir;
-  if (nuevo<0||nuevo>=mesesDisponibles.length) return;
-  mesActual = mesesDisponibles[nuevo];
-  document.getElementById("mesLabel").textContent = mesLabel(mesActual);
-  document.getElementById("mesContent").innerHTML = renderMesContent();
-  const ni = mesesDisponibles.indexOf(mesActual);
-  document.querySelectorAll("[data-mes-dir]").forEach(btn=>{
-    const d=parseInt(btn.dataset.mesDir,10);
-    const dis=(d===-1&&ni<=0)||(d===1&&ni>=mesesDisponibles.length-1);
-    btn.disabled=dis; btn.style.opacity=dis?"0.3":""; btn.style.cursor=dis?"default":"";
-  });
-}
-
-/* ── Tab: Deportes ──────────────────────────────────────────────────────── */
-function renderDeportes() {
-  const deps = [...DATA.deportes].sort((a,b)=>b.roi-a.roi);
-  if (!deps.length) return '<div class="empty">Sin datos</div>';
-  const mejor=deps[0], peor=deps[deps.length-1];
-  return `
-    <div class="section-header">ROI por <span>deporte</span></div>
+/* ── Tab: Deportes ── */
+function renderDeportes(){
+  const deps=[...DATA.deportes].sort((a,b)=>b.roi-a.roi);
+  if(!deps.length)return'<div class="empty">Sin datos</div>';
+  return`<div class="section-header">ROI por <span>deporte</span></div>
     <div class="kpi-row">
-      <div class="kpi">
-        <div class="kpi-label">🟢 Mejor</div>
-        <div class="kpi-value green" style="font-size:14px;margin-top:4px">${esc(mejor.nombre)}</div>
-        <div style="font-family:var(--font-num);font-size:12px;color:var(--win);margin-top:4px">${mejor.roi>=0?"+":""}${fmtp(mejor.roi)}</div>
-      </div>
-      <div class="kpi">
-        <div class="kpi-label">🔴 Peor</div>
-        <div class="kpi-value red" style="font-size:14px;margin-top:4px">${esc(peor.nombre)}</div>
-        <div style="font-family:var(--font-num);font-size:12px;color:var(--loss);margin-top:4px">${fmtp(peor.roi)}</div>
-      </div>
+      <div class="kpi"><div class="kpi-label">🟢 Mejor</div><div class="kpi-value green" style="font-size:14px;margin-top:4px">${esc(deps[0].nombre)}</div><div style="font-family:var(--font-num);font-size:12px;color:var(--win);margin-top:4px">${deps[0].roi>=0?"+":""}${fmtp(deps[0].roi)}</div></div>
+      <div class="kpi"><div class="kpi-label">🔴 Peor</div><div class="kpi-value red" style="font-size:14px;margin-top:4px">${esc(deps[deps.length-1].nombre)}</div><div style="font-family:var(--font-num);font-size:12px;color:var(--loss);margin-top:4px">${fmtp(deps[deps.length-1].roi)}</div></div>
     </div>
-    <div class="card">
-      <div class="card-title">ROI comparativo</div>
-      <div class="chart-wrap"><canvas id="chartDep"></canvas></div>
+    <div class="card"><div class="card-title">ROI comparativo</div><div class="chart-wrap"><canvas id="chartDep"></canvas></div></div>
+    <div class="card"><div class="card-title">Desglose</div>${deps.map(d=>{const total=d.wins+d.losses,wr=total>0?(d.wins/total*100).toFixed(0):0;return`<div class="sport-item"><div><div class="sport-name">${esc(d.nombre)}</div><div class="sport-sub">${d.wins}W·${d.losses}L·${wr}%WR·${fmt(d.apostado)}</div></div><div class="sport-roi ${d.roi>=0?"green":"red"}">${d.roi>=0?"+":""}${fmtp(d.roi)}</div></div>`;}).join("")}</div>`;
+}
+
+/* ── Tab: Tipos ── */
+function renderTipos(){
+  const tipos=calcRoiPorTipo();
+  if(!tipos.length)return`<div class="section-header">ROI por <span>tipo de apuesta</span></div><div class="empty">Necesitas al menos 2 apuestas resueltas por tipo.</div>`;
+  const maxAbsRoi=Math.max(...tipos.map(t=>Math.abs(t.roi)),1);
+  return`<div class="section-header">ROI por <span>tipo</span></div>
+    <div class="kpi-row">
+      <div class="kpi"><div class="kpi-label">🏆 Mejor tipo</div><div class="kpi-value green" style="font-size:14px;margin-top:4px">${esc(tipos[0].tipo)}</div><div style="font-family:var(--font-num);font-size:12px;color:var(--win);margin-top:4px">${tipos[0].roi>=0?"+":""}${fmtp(tipos[0].roi)}</div></div>
+      <div class="kpi"><div class="kpi-label">⚠️ Peor tipo</div><div class="kpi-value red" style="font-size:14px;margin-top:4px">${esc(tipos[tipos.length-1].tipo)}</div><div style="font-family:var(--font-num);font-size:12px;color:var(--loss);margin-top:4px">${fmtp(tipos[tipos.length-1].roi)}</div></div>
     </div>
-    <div class="card">
-      <div class="card-title">Desglose completo</div>
-      ${deps.map(d=>{
-        const total=d.wins+d.losses;
-        const wr=total>0?(d.wins/total*100).toFixed(0):0;
-        return `<div class="sport-item">
-          <div>
-            <div class="sport-name">${esc(d.nombre)}</div>
-            <div class="sport-sub">${d.wins}W · ${d.losses}L · ${wr}% WR · ${fmt(d.apostado)}</div>
+    <div class="card"><div class="card-title">ROI por tipo</div><div class="chart-wrap"><canvas id="chartTipo"></canvas></div></div>
+    <div class="card"><div class="card-title">Detalle completo</div>
+      ${tipos.map(t=>{
+        const barW=Math.min(100,Math.abs(t.roi)/maxAbsRoi*100);
+        const barColor=t.roi>=0?"var(--win)":"var(--loss)";
+        const cuotaTxt=t.cuotaMedia>0?`· cuota media ${t.cuotaMedia.toFixed(2)}`:"";
+        return`<div class="tipo-item">
+          <div style="flex:1">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+              <span style="font-size:13px;font-weight:700">${esc(t.tipo)}</span>
+              <span style="font-family:var(--font-num);font-size:13px;font-weight:700;color:${barColor}">${t.roi>=0?"+":""}${t.roi.toFixed(1)}%</span>
+            </div>
+            <div style="font-size:11px;color:var(--text-2);margin-bottom:6px">${t.wins}W·${t.losses}L·WR ${t.wr.toFixed(0)}% ${cuotaTxt}</div>
+            <div style="font-size:11px;color:${barColor};margin-bottom:6px">Neto: ${t.neto>=0?"+":""}${fmt(t.neto)}</div>
+            <div class="tipo-bar-wrap"><div class="tipo-bar-fill" style="width:${barW}%;background:${barColor}"></div></div>
           </div>
-          <div class="sport-roi ${d.roi>=0?"green":"red"}">${d.roi>=0?"+":""}${fmtp(d.roi)}</div>
         </div>`;
       }).join("")}
-    </div>`;
+    </div>
+    <div class="explainer"><strong>Tip:</strong> Enfoca tu capital en los tipos de apuesta con ROI positivo consistente. Si un tipo tiene &lt;5 apuestas, el ROI puede ser engañoso.</div>`;
 }
 
-/* ── Tab: Capital ───────────────────────────────────────────────────────── */
-function renderCapital() {
-  const c=DATA.capital, cm=DATA.capital_mes;
-  if (!c) return '<div class="empty">Faltan datos para calcular</div>';
-  const capMesHtml = cm ? `
-    <div class="card" style="margin-top:10px">
-      <div class="card-title">Capital — Este mes</div>
-      <div class="capital-hero" style="padding:12px 0 8px">
-        <div class="capital-label">Capital cómodo del mes</div>
-        <div class="capital-amount" style="font-size:30px">${fmt(cm.capital_comodo)}</div>
-      </div>
-      <div class="cap-grid">
-        <div class="cap-stat"><div class="cap-stat-val yellow">${fmt(cm.capital_minimo)}</div><div class="cap-stat-lbl">Mínimo</div></div>
-        <div class="cap-stat"><div class="cap-stat-val accent">${cm.max_simultaneas}</div><div class="cap-stat-lbl">Simultáneas</div></div>
-        <div class="cap-stat"><div class="cap-stat-val">${(cm.promedio_dia??0).toFixed(1)}</div><div class="cap-stat-lbl">Bets/día</div></div>
-        <div class="cap-stat"><div class="cap-stat-val red">${cm.peor_racha}</div><div class="cap-stat-lbl">Peor racha</div></div>
-      </div>
-    </div>` : "";
-  return `
-    <div class="section-header">Gestión de <span>capital</span></div>
+/* ── Tab: Temporal ── */
+function renderTemporal(){
+  const data=calcTemporal();
+  if(!data.porDia.length&&!data.porHora.length)return`<div class="section-header">Análisis <span>temporal</span></div><div class="empty">No hay suficientes datos con fechas registradas.</div>`;
+  const maxAbsDia=Math.max(...data.porDia.map(d=>Math.abs(d.roi)),1);
+  const maxAbsHora=Math.max(...data.porHora.map(d=>Math.abs(d.roi)),1);
+  return`<div class="section-header">¿Cuándo <span>rinde más</span>?</div>
+    ${data.porDia.length?`
     <div class="card">
-      <div class="capital-hero">
-        <div class="capital-label">Capital cómodo recomendado</div>
-        <div class="capital-amount">${fmt(c.capital_comodo)}</div>
-        <div class="capital-sub">Para seguir al tipster sin riesgo de ruina</div>
-      </div>
-      <div class="cap-grid">
-        <div class="cap-stat"><div class="cap-stat-val yellow">${fmt(c.capital_minimo)}</div><div class="cap-stat-lbl">Capital mínimo</div></div>
-        <div class="cap-stat"><div class="cap-stat-val accent">${c.max_simultaneas}</div><div class="cap-stat-lbl">Máx simultáneas</div></div>
-        <div class="cap-stat"><div class="cap-stat-val">${(c.promedio_dia??0).toFixed(1)}</div><div class="cap-stat-lbl">Bets/día prom.</div></div>
-        <div class="cap-stat"><div class="cap-stat-val red">${c.peor_racha}</div><div class="cap-stat-lbl">Peor racha</div></div>
-        <div class="cap-stat"><div class="cap-stat-val">${fmt(c.monto_promedio)}</div><div class="cap-stat-lbl">Monto prom.</div></div>
-        <div class="cap-stat"><div class="cap-stat-val green">${c.total_apuestas}</div><div class="cap-stat-lbl">Total bets</div></div>
-      </div>
-    </div>
-    ${capMesHtml}
-    <div class="explainer">
-      El <strong>capital mínimo</strong> es la exposición máxima simultánea histórica.<br><br>
-      El <strong>capital cómodo</strong> añade un 50% como colchón ante rachas negativas.
-    </div>`;
+      <div class="card-title">Por día de la semana</div>
+      ${data.porDia.map(d=>{
+        const barW=Math.min(100,Math.abs(d.roi)/maxAbsDia*100);
+        const col=d.roi>=0?"var(--win)":"var(--loss)";
+        const best=d.roi===Math.max(...data.porDia.map(x=>x.roi));
+        return`<div class="dia-row">
+          <span class="dia-label" style="color:${best?"var(--accent)":"var(--text-2)"}">${d.label}${best?" ⭐":""}</span>
+          <div class="dia-bar-wrap"><div class="dia-bar-fill" style="width:${barW}%;background:${col}"></div></div>
+          <span class="dia-roi" style="color:${col}">${d.roi>=0?"+":""}${d.roi.toFixed(1)}%</span>
+          <span class="dia-wl">${d.wins}W-${d.losses}L</span>
+        </div>`;}).join("")}
+    </div>`:""}
+    ${data.porHora.length?`
+    <div class="card">
+      <div class="card-title">Por franja horaria (hora registro)</div>
+      ${data.porHora.map(d=>{
+        const barW=Math.min(100,Math.abs(d.roi)/maxAbsHora*100);
+        const col=d.roi>=0?"var(--win)":"var(--loss)";
+        const best=d.roi===Math.max(...data.porHora.map(x=>x.roi));
+        return`<div class="dia-row">
+          <span class="dia-label" style="color:${best?"var(--accent)":"var(--text-2)"};font-size:10px">${d.label}${best?" ⭐":""}</span>
+          <div class="dia-bar-wrap"><div class="dia-bar-fill" style="width:${barW}%;background:${col}"></div></div>
+          <span class="dia-roi" style="color:${col}">${d.roi>=0?"+":""}${d.roi.toFixed(1)}%</span>
+          <span class="dia-wl">${d.wins}W-${d.losses}L</span>
+        </div>`;}).join("")}
+    </div>`:""}
+    <div class="explainer"><strong>Nota:</strong> La franja horaria es cuando se registró la apuesta (UTC), no cuando empieza el partido. Con más datos este análisis se vuelve más preciso.</div>`;
 }
 
-/* ── Tab: Apuestas ──────────────────────────────────────────────────────── */
-const LIMITE = 50;
-function renderApuestas() {
-  const deportesUnicos = ["Todos",...new Set(DATA.apuestas.map(a=>a.deporte).filter(Boolean))];
-  return `
-    <div class="section-header">Historial de <span>bets</span></div>
-    <div class="search-wrap">
-      <span class="search-icon">🔍</span>
-      <input class="search-input" placeholder="Buscar por equipo..." data-search-equipo value="${esc(filtroEquipo)}">
+/* ── Tab: Rolling ROI ── */
+function renderRolling(){
+  const VENTANA=20;
+  const points=calcRolling(VENTANA);
+  const res=DATA.apuestas.filter(a=>a.status==="win"||a.status==="loss").length;
+  if(!points.length)return`<div class="section-header">ROI <span>rodante</span></div><div class="empty">Necesitas al menos ${VENTANA} apuestas resueltas. Tienes ${res}.</div>`;
+  const ultimo=points[points.length-1];
+  const tendencia=points.length>=3?(()=>{const t=points.slice(-3).map(p=>p.roi);return t[2]>t[0]+3?"📈 Mejorando":t[2]<t[0]-3?"📉 Empeorando":"➡️ Estable";})():"—";
+  return`<div class="section-header">ROI <span>rodante</span></div>
+    <div class="rolling-kpi">
+      <div class="rolling-kpi-item">
+        <div class="rolling-kpi-val ${signColor(ultimo.roi)}">${ultimo.roi>=0?"+":""}${ultimo.roi.toFixed(1)}%</div>
+        <div class="rolling-kpi-lbl">ROI últimas ${VENTANA}</div>
+      </div>
+      <div class="rolling-kpi-item">
+        <div class="rolling-kpi-val">${ultimo.wr.toFixed(0)}%</div>
+        <div class="rolling-kpi-lbl">Win rate</div>
+      </div>
+      <div class="rolling-kpi-item">
+        <div class="rolling-kpi-val ${signColor(ultimo.netoAcum)}">${fmts(ultimo.netoAcum)}</div>
+        <div class="rolling-kpi-lbl">Neto total</div>
+      </div>
     </div>
-    <div class="filter-row">
-      ${deportesUnicos.map(d=>`<button class="filter-chip ${d===filtroDeporte?"active":""}" data-filtro-deporte="${esc(d)}">${esc(d)}</button>`).join("")}
+    <div class="card" style="margin-bottom:8px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:6px">Tendencia reciente</div>
+      <div style="font-size:24px">${tendencia.split(" ")[0]} <span style="font-size:14px;color:var(--text-2)">${tendencia.split(" ").slice(1).join(" ")}</span></div>
     </div>
+    <div class="card"><div class="card-title">ROI rodante (ventana ${VENTANA})</div><div class="chart-wrap-tall"><canvas id="chartRolling"></canvas></div></div>
+    <div class="explainer"><strong>ROI rodante:</strong> Calcula el rendimiento de las últimas ${VENTANA} apuestas cerradas. Si la línea sube, el tipster está mejorando. Si baja, hay una racha negativa real — no solo mala suerte en 1-2 apuestas.</div>`;
+}
+
+/* ── Tab: Kelly ── */
+function renderKelly(){
+  const k=calcKelly();
+  if(!k)return`<div class="section-header">Kelly <span>Criterion</span></div><div class="empty">Necesitas al menos 10 apuestas con cuota registrada.</div>`;
+  const evColor=k.ev>0?"green":"red";
+  const evEmoji=k.ev>0?"✅":"❌";
+  const kellyPct=Math.min(k.f*100,25);
+  return`<div class="section-header">Kelly <span>Criterion</span></div>
+    <div class="card">
+      <div class="card-title">Valor esperado (EV)</div>
+      <div style="font-family:var(--font-num);font-size:32px;font-weight:700;color:var(--${evColor});margin-bottom:8px">${evEmoji} ${k.ev>=0?"+":""}${k.ev.toFixed(3)}</div>
+      <div style="font-size:12px;color:var(--text-2)">Por unidad apostada. Positivo = ventaja estadística sobre la casa.</div>
+    </div>
+    <div class="kpi-row">
+      <div class="kpi"><div class="kpi-label">Win rate histórico</div><div class="kpi-value">${k.p.toFixed(1)}%</div></div>
+      <div class="kpi"><div class="kpi-label">Cuota media</div><div class="kpi-value accent">${k.cuotaMedia.toFixed(2)}</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Fracción Kelly óptima: ${kellyPct.toFixed(1)}% del capital</div>
+      <div class="kelly-meter"><div class="kelly-fill" style="width:${(kellyPct/25)*100}%"></div></div>
+      <div class="kelly-grid">
+        <div class="kelly-card">
+          <div class="kelly-card-pct green">${(k.f*100).toFixed(1)}%</div>
+          <div class="kelly-card-lbl">Kelly completo</div>
+          <div class="kelly-card-sub">Alta volatilidad</div>
+        </div>
+        <div class="kelly-card" style="border-color:var(--border-hi)">
+          <div class="kelly-card-pct accent">${(k.fMedio*100).toFixed(1)}%</div>
+          <div class="kelly-card-lbl">Kelly medio ⭐</div>
+          <div class="kelly-card-sub">Recomendado</div>
+        </div>
+        <div class="kelly-card">
+          <div class="kelly-card-pct">${(k.fCuarto*100).toFixed(1)}%</div>
+          <div class="kelly-card-lbl">Kelly/4</div>
+          <div class="kelly-card-sub">Ultra-seguro</div>
+        </div>
+      </div>
+    </div>
+    <div class="explainer"><strong>Kelly Criterion</strong> calcula el tamaño óptimo de apuesta para maximizar el crecimiento del capital a largo plazo sin riesgo de ruina. <strong>Kelly medio</strong> es el balance ideal entre crecimiento y seguridad. Los porcentajes son sobre tu capital total disponible.</div>`;
+}
+
+/* ── Tab: Capital ── */
+function renderCapital(){
+  const c=DATA.capital,cm=DATA.capital_mes;
+  if(!c)return'<div class="empty">Faltan datos</div>';
+  const capMesHtml=cm?`<div class="card" style="margin-top:10px"><div class="card-title">Capital — Este mes</div><div class="capital-hero" style="padding:12px 0 8px"><div class="capital-label">Capital cómodo</div><div class="capital-amount" style="font-size:30px">${fmt(cm.capital_comodo)}</div></div><div class="cap-grid"><div class="cap-stat"><div class="cap-stat-val yellow">${fmt(cm.capital_minimo)}</div><div class="cap-stat-lbl">Mínimo</div></div><div class="cap-stat"><div class="cap-stat-val accent">${cm.max_simultaneas}</div><div class="cap-stat-lbl">Simultáneas</div></div><div class="cap-stat"><div class="cap-stat-val">${(cm.promedio_dia??0).toFixed(1)}</div><div class="cap-stat-lbl">Bets/día</div></div><div class="cap-stat"><div class="cap-stat-val red">${cm.peor_racha}</div><div class="cap-stat-lbl">Peor racha</div></div></div></div>`:"";
+  return`<div class="section-header">Gestión de <span>capital</span></div>
+    <div class="card"><div class="capital-hero"><div class="capital-label">Capital cómodo recomendado</div><div class="capital-amount">${fmt(c.capital_comodo)}</div><div class="capital-sub">Para seguir al tipster sin riesgo de ruina</div></div>
+      <div class="cap-grid"><div class="cap-stat"><div class="cap-stat-val yellow">${fmt(c.capital_minimo)}</div><div class="cap-stat-lbl">Capital mínimo</div></div><div class="cap-stat"><div class="cap-stat-val accent">${c.max_simultaneas}</div><div class="cap-stat-lbl">Máx simultáneas</div></div><div class="cap-stat"><div class="cap-stat-val">${(c.promedio_dia??0).toFixed(1)}</div><div class="cap-stat-lbl">Bets/día prom.</div></div><div class="cap-stat"><div class="cap-stat-val red">${c.peor_racha}</div><div class="cap-stat-lbl">Peor racha</div></div><div class="cap-stat"><div class="cap-stat-val">${fmt(c.monto_promedio)}</div><div class="cap-stat-lbl">Monto prom.</div></div><div class="cap-stat"><div class="cap-stat-val green">${c.total_apuestas}</div><div class="cap-stat-lbl">Total bets</div></div></div>
+    </div>${capMesHtml}
+    <div class="explainer">El <strong>capital mínimo</strong> es la exposición máxima simultánea histórica. El <strong>capital cómodo</strong> añade un 50% como colchón.</div>`;
+}
+
+/* ── Tab: Apuestas ── */
+function renderApuestas(){
+  const deportesUnicos=["Todos",...new Set(DATA.apuestas.map(a=>a.deporte).filter(Boolean))];
+  return`<div class="section-header">Historial de <span>bets</span></div>
+    <div class="search-wrap"><span class="search-icon">🔍</span><input class="search-input" placeholder="Buscar por equipo..." data-search-equipo value="${esc(filtroEquipo)}"></div>
+    <div class="filter-row">${deportesUnicos.map(d=>`<button class="filter-chip ${d===filtroDeporte?"active":""}" data-filtro-deporte="${esc(d)}">${esc(d)}</button>`).join("")}</div>
     <div id="apuestasLista">${renderApuestasList()}</div>`;
 }
-
-function renderApuestasList() {
-  const term = filtroEquipo.toLowerCase().trim();
-  const filt = DATA.apuestas
-    .filter(a=>filtroDeporte==="Todos"||a.deporte===filtroDeporte)
-    .filter(a=>!term||(a.equipo1||"").toLowerCase().includes(term)||(a.equipo2||"").toLowerCase().includes(term));
-  const total=filt.length, mostrar=[...filt].reverse().slice(0,LIMITE);
-  return `
-    <div class="card">
-      <div class="card-title">${total} apuesta${total!==1?"s":""}${filtroDeporte!=="Todos"?` · ${esc(filtroDeporte)}`:""}${term?` · "${esc(term)}"`:""}</div>
-      ${mostrar.length===0?'<div class="empty">Sin resultados</div>':mostrar.map(renderBetItem).join("")}
-    </div>`;
+function renderApuestasList(){
+  const term=filtroEquipo.toLowerCase().trim();
+  const filt=DATA.apuestas.filter(a=>filtroDeporte==="Todos"||a.deporte===filtroDeporte).filter(a=>!term||(a.equipo1||"").toLowerCase().includes(term)||(a.equipo2||"").toLowerCase().includes(term));
+  const mostrar=[...filt].reverse().slice(0,50);
+  return`<div class="card"><div class="card-title">${filt.length} apuesta${filt.length!==1?"s":""}</div>${mostrar.length===0?'<div class="empty">Sin resultados</div>':mostrar.map(renderBetItem).join("")}</div>`;
+}
+function renderBetItem(a){
+  const icon=a.status==="win"?"win":a.status==="loss"?"loss":"pend";
+  const res=a.status==="win"?`+${fmt(a.ganancia)}`:a.status==="loss"?`-${fmt(a.monto)}`:`⏳ ${fmt(a.potencial)}`;
+  const rc=a.status==="win"?"green":a.status==="loss"?"red":"yellow";
+  return`<div class="bet-item"><div class="bet-dot ${icon}"></div><div class="bet-info"><div class="bet-teams">${esc(a.equipo1||"?")} vs ${esc(a.equipo2||"?")}</div><div class="bet-meta">${esc(a.deporte)} · ${esc(a.tipo)} @ ${esc(a.cuota)} · ${a.fecha?.slice(0,10)||""}</div></div><div class="bet-right"><div class="bet-monto">${fmt(a.monto)}</div><div class="bet-result ${rc}">${res}</div></div></div>`;
 }
 
-function renderBetItem(a) {
-  const icon = a.status==="win"?"win":a.status==="loss"?"loss":"pend";
-  const res  = a.status==="win"?`+${fmt(a.ganancia)}`:a.status==="loss"?`-${fmt(a.monto)}`:`⏳ ${fmt(a.potencial)}`;
-  const rc   = a.status==="win"?"green":a.status==="loss"?"red":"yellow";
-  return `
-    <div class="bet-item">
-      <div class="bet-dot ${icon}"></div>
-      <div class="bet-info">
-        <div class="bet-teams">${esc(a.equipo1||"?")} vs ${esc(a.equipo2||"?")}</div>
-        <div class="bet-meta">${esc(a.deporte)} · ${esc(a.tipo)} @ ${esc(a.cuota)} · ${a.fecha?.slice(0,10)||""}</div>
-      </div>
-      <div class="bet-right">
-        <div class="bet-monto">${fmt(a.monto)}</div>
-        <div class="bet-result ${rc}">${res}</div>
-      </div>
-    </div>`;
-}
+/* ── Charts ── */
+function axisM(v){const a=Math.abs(v);return a>=1000?`$${(v/1000).toFixed(1)}k`:`$${v}`}
+function destroyChart(k){if(charts[k]){charts[k].destroy();delete charts[k];}}
 
-/* ── Event delegation ───────────────────────────────────────────────────── */
-document.addEventListener("click", e=>{
-  const chip = e.target.closest("[data-filtro-deporte]");
-  if (chip) { setFiltroDeporte(chip.dataset.filtroDeporte); return; }
-  const tabBtn = e.target.closest("[data-tab]");
-  if (tabBtn) { showTab(tabBtn.dataset.tab, tabBtn); return; }
-  const mesBtn = e.target.closest("[data-mes-dir]");
-  if (mesBtn) { cambiarMes(parseInt(mesBtn.dataset.mesDir,10)); return; }
-  const action = e.target.closest("[data-action]");
-  if (action?.dataset.action==="recargar") { recargar(); return; }
-});
-document.addEventListener("input", e=>{
-  const el = e.target.closest("[data-search-equipo]");
-  if (el) {
-    filtroEquipo = el.value;
-    const lista = document.getElementById("apuestasLista");
-    if (lista) lista.innerHTML = renderApuestasList();
-  }
-});
-
-/* ── Filtro ─────────────────────────────────────────────────────────────── */
-function setFiltroDeporte(dep) {
-  filtroDeporte = dep;
-  document.querySelectorAll("[data-filtro-deporte]").forEach(c=>{
-    c.classList.toggle("active", c.dataset.filtroDeporte===filtroDeporte);
-  });
-  const lista = document.getElementById("apuestasLista");
-  if (lista) lista.innerHTML = renderApuestasList();
-}
-
-/* ── Charts ─────────────────────────────────────────────────────────────── */
-function axisM(v) {
-  const a=Math.abs(v);
-  return a>=1000?`$${(v/1000).toFixed(1)}k`:`$${v}`;
-}
-
-function destroyChart(key) {
-  if (charts[key]) { charts[key].destroy(); delete charts[key]; }
-}
-
-function makeChartNeto() {
-  if (typeof Chart==="undefined") return;
-  const c = document.getElementById("chartNeto");
-  if (!c||!DATA.grafica_meses.length) return;
+function makeChartNeto(){
+  const c=document.getElementById("chartNeto");
+  if(!c||!DATA.grafica_meses.length)return;
   destroyChart("neto");
   let acum=0;
-  const labels=DATA.grafica_meses.map(m=>mesLabel(m.mes));
-  const vals=DATA.grafica_meses.map(m=>{acum+=m.neto;return acum;});
-  charts.neto = new Chart(c,{
-    type:"bar",
-    data:{ labels, datasets:[{
-      label:"Neto acumulado", data:vals,
-      backgroundColor:vals.map(v=>v>=0?"rgba(0,205,150,0.75)":"rgba(255,61,90,0.75)"),
-      borderRadius:5, borderSkipped:false,
-    }]},
-    options:{
-      responsive:true, maintainAspectRatio:false,
-      plugins:{legend:{display:false}},
-      scales:{
-        x:{grid:{color:"rgba(255,255,255,0.04)"},ticks:{font:{size:10,family:"Space Mono"},color:"#4A5568"}},
-        y:{grid:{color:"rgba(255,255,255,0.04)"},ticks:{callback:axisM,font:{size:10,family:"Space Mono"},color:"#4A5568"}}
-      }
-    }
-  });
+  charts.neto=new Chart(c,{type:"bar",data:{labels:DATA.grafica_meses.map(m=>mesLabel(m.mes)),datasets:[{label:"Neto acumulado",data:DATA.grafica_meses.map(m=>{acum+=m.neto;return acum;}),backgroundColor:DATA.grafica_meses.map((_,i,arr)=>{let s=0;arr.slice(0,i+1).forEach(x=>s+=x.neto);return s>=0?"rgba(0,205,150,0.75)":"rgba(255,61,90,0.75)"}),borderRadius:5,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:"rgba(255,255,255,0.04)"},ticks:{font:{size:10,family:"Space Mono"},color:"#4A5568"}},y:{grid:{color:"rgba(255,255,255,0.04)"},ticks:{callback:axisM,font:{size:10,family:"Space Mono"},color:"#4A5568"}}}}});
 }
 
-function makeChartMeses() {
-  if (typeof Chart==="undefined") return;
-  const c = document.getElementById("chartMeses");
-  if (!c||!DATA.grafica_meses.length) return;
+function makeChartMeses(){
+  const c=document.getElementById("chartMeses");
+  if(!c||!DATA.grafica_meses.length)return;
   destroyChart("meses");
-  charts.meses = new Chart(c,{
-    type:"bar",
-    data:{
-      labels:DATA.grafica_meses.map(m=>mesLabel(m.mes)),
-      datasets:[
-        {label:"Apostado",data:DATA.grafica_meses.map(m=>m.apostado),backgroundColor:"rgba(108,99,255,0.6)",borderRadius:4,borderSkipped:false},
-        {label:"Ganado",  data:DATA.grafica_meses.map(m=>m.ganado),  backgroundColor:"rgba(0,205,150,0.6)",borderRadius:4,borderSkipped:false},
-      ]
-    },
-    options:{
-      responsive:true, maintainAspectRatio:false,
-      plugins:{legend:{display:true,labels:{font:{size:11,family:"DM Sans"},boxWidth:10,padding:10,color:"#8896A8"}}},
-      scales:{
-        x:{grid:{color:"rgba(255,255,255,0.04)"},ticks:{font:{size:10,family:"Space Mono"},color:"#4A5568"}},
-        y:{grid:{color:"rgba(255,255,255,0.04)"},ticks:{callback:axisM,font:{size:10,family:"Space Mono"},color:"#4A5568"}}
-      }
-    }
-  });
+  charts.meses=new Chart(c,{type:"bar",data:{labels:DATA.grafica_meses.map(m=>mesLabel(m.mes)),datasets:[{label:"Apostado",data:DATA.grafica_meses.map(m=>m.apostado),backgroundColor:"rgba(108,99,255,0.6)",borderRadius:4,borderSkipped:false},{label:"Ganado",data:DATA.grafica_meses.map(m=>m.ganado),backgroundColor:"rgba(0,205,150,0.6)",borderRadius:4,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,labels:{font:{size:11,family:"DM Sans"},boxWidth:10,padding:10,color:"#8896A8"}}},scales:{x:{grid:{color:"rgba(255,255,255,0.04)"},ticks:{font:{size:10,family:"Space Mono"},color:"#4A5568"}},y:{grid:{color:"rgba(255,255,255,0.04)"},ticks:{callback:axisM,font:{size:10,family:"Space Mono"},color:"#4A5568"}}}}});
 }
 
-function makeChartDep() {
-  if (typeof Chart==="undefined") return;
-  const c = document.getElementById("chartDep");
-  if (!c||!DATA.deportes.length) return;
+function makeChartDep(){
+  const c=document.getElementById("chartDep");
+  if(!c||!DATA.deportes.length)return;
   destroyChart("dep");
   const deps=[...DATA.deportes].sort((a,b)=>b.roi-a.roi);
-  charts.dep = new Chart(c,{
-    type:"bar",
-    data:{
-      labels:deps.map(d=>d.nombre),
-      datasets:[{
-        label:"ROI %", data:deps.map(d=>parseFloat(d.roi.toFixed(1))),
-        backgroundColor:deps.map(d=>d.roi>=0?"rgba(0,205,150,0.75)":"rgba(255,61,90,0.75)"),
-        borderRadius:5, borderSkipped:false,
-      }]
-    },
-    options:{
-      responsive:true, maintainAspectRatio:false,
-      plugins:{legend:{display:false}},
-      scales:{
-        x:{grid:{color:"rgba(255,255,255,0.04)"},ticks:{font:{size:10,family:"Space Mono"},color:"#4A5568"}},
-        y:{grid:{color:"rgba(255,255,255,0.04)"},ticks:{callback:v=>`${v}%`,font:{size:10,family:"Space Mono"},color:"#4A5568"}}
-      }
-    }
-  });
+  charts.dep=new Chart(c,{type:"bar",data:{labels:deps.map(d=>d.nombre),datasets:[{label:"ROI %",data:deps.map(d=>parseFloat(d.roi.toFixed(1))),backgroundColor:deps.map(d=>d.roi>=0?"rgba(0,205,150,0.75)":"rgba(255,61,90,0.75)"),borderRadius:5,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:"rgba(255,255,255,0.04)"},ticks:{font:{size:10,family:"Space Mono"},color:"#4A5568"}},y:{grid:{color:"rgba(255,255,255,0.04)"},ticks:{callback:v=>`${v}%`,font:{size:10,family:"Space Mono"},color:"#4A5568"}}}}});
 }
 
-function initCharts() {
-  if (!DATA) return;
+function makeChartTipo(){
+  const c=document.getElementById("chartTipo");
+  if(!c)return;
+  destroyChart("tipo");
+  const tipos=calcRoiPorTipo();
+  if(!tipos.length)return;
+  charts.tipo=new Chart(c,{type:"bar",data:{labels:tipos.map(t=>t.tipo),datasets:[{label:"ROI %",data:tipos.map(t=>parseFloat(t.roi.toFixed(1))),backgroundColor:tipos.map(t=>t.roi>=0?"rgba(0,205,150,0.75)":"rgba(255,61,90,0.75)"),borderRadius:5,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:"rgba(255,255,255,0.04)"},ticks:{font:{size:10,family:"Space Mono"},color:"#4A5568"}},y:{grid:{color:"rgba(255,255,255,0.04)"},ticks:{callback:v=>`${v}%`,font:{size:10,family:"Space Mono"},color:"#4A5568"}}}}});
+}
+
+function makeChartRolling(){
+  const c=document.getElementById("chartRolling");
+  if(!c)return;
+  destroyChart("rolling");
+  const points=calcRolling(20);
+  if(!points.length)return;
+  charts.rolling=new Chart(c,{type:"line",data:{labels:points.map(p=>`#${p.i+1}`),datasets:[{label:"ROI rodante",data:points.map(p=>parseFloat(p.roi.toFixed(2))),borderColor:"var(--accent)",backgroundColor:"rgba(0,205,150,0.08)",borderWidth:2,pointRadius:0,fill:true,tension:0.3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.parsed.y>=0?"+":""}${ctx.parsed.y.toFixed(1)}%`}}},scales:{x:{grid:{color:"rgba(255,255,255,0.04)"},ticks:{display:false}},y:{grid:{color:"rgba(255,255,255,0.04)"},ticks:{callback:v=>`${v>=0?"+":""}${v}%`,font:{size:10,family:"Space Mono"},color:"#4A5568"},afterDataLimits:scale=>{const pad=Math.abs(scale.max-scale.min)*0.15;scale.max+=pad;scale.min-=pad;}}}}});
+}
+
+function initCharts(){
+  if(!DATA||typeof Chart==="undefined")return;
   Chart.defaults.color="#8896A8";
   Chart.defaults.borderColor="rgba(255,255,255,0.04)";
-  if (tabActual==="resumen")  { makeChartNeto(); makeChartMeses(); }
-  if (tabActual==="deportes") { makeChartDep(); }
+  if(tabActual==="resumen"){makeChartNeto();makeChartMeses();}
+  if(tabActual==="deportes"){makeChartDep();}
+  if(tabActual==="tipos"){makeChartTipo();}
+  if(tabActual==="rolling"){makeChartRolling();}
 }
 
-/* ── Tab switching ──────────────────────────────────────────────────────── */
-function showTab(id, btn) {
+/* ── Events ── */
+document.addEventListener("click",e=>{
+  const chip=e.target.closest("[data-filtro-deporte]");
+  if(chip){filtroDeporte=chip.dataset.filtroDeporte;document.querySelectorAll("[data-filtro-deporte]").forEach(c=>c.classList.toggle("active",c.dataset.filtroDeporte===filtroDeporte));const l=document.getElementById("apuestasLista");if(l)l.innerHTML=renderApuestasList();return;}
+  const tab=e.target.closest("[data-tab]");
+  if(tab){showTab(tab.dataset.tab,tab);return;}
+  const mes=e.target.closest("[data-mes-dir]");
+  if(mes){cambiarMes(parseInt(mes.dataset.mesDir,10));return;}
+  const act=e.target.closest("[data-action]");
+  if(act?.dataset.action==="recargar"){recargar();return;}
+});
+document.addEventListener("input",e=>{
+  const el=e.target.closest("[data-search-equipo]");
+  if(el){filtroEquipo=el.value;const l=document.getElementById("apuestasLista");if(l)l.innerHTML=renderApuestasList();}
+});
+
+function showTab(id,btn){
   document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));
   document.querySelectorAll(".nav-item").forEach(t=>t.classList.remove("active"));
-  const sec = document.getElementById(id);
-  if (sec) sec.classList.add("active");
-  if (btn) btn.classList.add("active");
-  else {
-    const nb = document.querySelector(`.nav-item[data-tab="${id}"]`);
-    if (nb) nb.classList.add("active");
-  }
-  tabActual = id;
-  setTimeout(initCharts, 80);
+  const sec=document.getElementById(id);
+  if(sec)sec.classList.add("active");
+  if(btn)btn.classList.add("active");
+  else{const nb=document.querySelector(`.nav-item[data-tab="${id}"]`);if(nb)nb.classList.add("active");}
+  tabActual=id;
+  setTimeout(initCharts,80);
 }
 
-/* ── Reload ─────────────────────────────────────────────────────────────── */
-async function recargar() {
-  if (cargando) return;
-  cargando = true;
-  document.getElementById("app").innerHTML = `
-    <div class="loader">
-      <div class="loader-logo">Bet<span>Stats</span></div>
-      <div class="loader-bar"><div class="loader-bar-fill"></div></div>
-      <p>Actualizando...</p>
-    </div>`;
-  const nav = document.getElementById("bottomNav");
-  if (nav) nav.style.display="none";
-  try { await cargarDatos(); }
-  finally { cargando=false; }
+async function recargar(){
+  if(cargando)return;
+  cargando=true;
+  document.getElementById("app").innerHTML=`<div class="loader"><div class="loader-logo">Bet<span>Stats</span></div><div class="loader-bar"><div class="loader-bar-fill"></div></div><p>Actualizando...</p></div>`;
+  const nav=document.getElementById("bottomNav");
+  if(nav)nav.style.display="none";
+  try{await cargarDatos();}finally{cargando=false;}
 }
 
 cargarDatos();
