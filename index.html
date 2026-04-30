@@ -403,24 +403,34 @@ function calcTemporal(){
   DIAS.forEach(d=>{db[d]={w:0,l:0,apo:0,gan:0}});
   FRANJAS.forEach(f=>{hb[f]={w:0,l:0,apo:0,gan:0}});
 
-  DATA.apuestas.filter(a=>(a.status==="win"||a.status==="loss")&&a.fecha).forEach(a=>{
-    const dtUTC = new Date(a.fecha.replace(" ","T")+"Z");
-    if(isNaN(dtUTC)) return;
+  DATA.apuestas.filter(a=>(a.status==="win"||a.status==="loss")&&(a.fecha_partido||a.fecha)).forEach(a=>{
 
-    const { dow, hour } = toMXParts(dtUTC);   // ← ahora todo en CDMX
+    // ── DÍA DE SEMANA: usa fecha del EVENTO (no de registro) ──
+    const fechaEvento = a.fecha_partido
+      ? new Date(a.fecha_partido + "T12:00:00")   // mediodía local, sin desplazamiento UTC
+      : new Date(a.fecha.replace(" ","T")+"Z");
+    if(isNaN(fechaEvento)) return;
 
-    // dow: 0=Dom,1=Lun…6=Sáb → mapear a índice DIAS (0=Lun…6=Dom)
-    const diaIdx = dow === 0 ? 6 : dow - 1;
-    const dia    = DIAS[diaIdx];
+    const dowEvento = fechaEvento.getDay();         // 0=Dom … 6=Sáb
+    const diaIdx    = dowEvento === 0 ? 6 : dowEvento - 1;
+    const dia       = DIAS[diaIdx];
 
-    const franja = hour<6?"00-06":hour<10?"06-10":hour<14?"10-14":
-                   hour<18?"14-18":hour<22?"18-22":"22-00";
+    db[dia].apo += a.monto||0;
+    if(a.status==="win"){db[dia].w++;db[dia].gan+=a.ganancia||a.monto||0;}
+    else db[dia].l++;
 
-    [db[dia], hb[franja]].forEach(b=>{
-      b.apo += a.monto||0;
-      if(a.status==="win"){b.w++;b.gan+=a.ganancia||a.monto||0;}
-      else b.l++;
-    });
+    // ── FRANJA HORARIA: usa fecha/hora de REGISTRO ──
+    if(a.fecha){
+      const dtReg = new Date(a.fecha.replace(" ","T")+"Z");
+      if(!isNaN(dtReg)){
+        const { hour } = toMXParts(dtReg);
+        const franja = hour<6?"00-06":hour<10?"06-10":hour<14?"10-14":
+                       hour<18?"14-18":hour<22?"18-22":"22-00";
+        hb[franja].apo += a.monto||0;
+        if(a.status==="win"){hb[franja].w++;hb[franja].gan+=a.ganancia||a.monto||0;}
+        else hb[franja].l++;
+      }
+    }
   });
 
   const toStats=(label,b)=>{
@@ -659,7 +669,7 @@ function renderTemporal(){
     </div>`:""}
     ${data.porHora.length?`
     <div class="card">
-      <div class="card-title">Por franja horaria (hora registro)</div>
+      <div class="card-title">Por franja horaria (hora de registro)</div>
       ${data.porHora.map(d=>{
         const barW=Math.min(100,Math.abs(d.roi)/maxAbsHora*100);
         const col=d.roi>=0?"var(--win)":"var(--loss)";
@@ -671,7 +681,7 @@ function renderTemporal(){
           <span class="dia-wl">${d.wins}W-${d.losses}L</span>
         </div>`;}).join("")}
     </div>`:""}
-    <div class="explainer"><strong>Nota:</strong> La franja horaria es cuando se registró la apuesta (UTC), no cuando empieza el partido. Con más datos este análisis se vuelve más preciso.</div>`;
+    <div class="explainer"><strong>Nota:</strong> El día de semana usa la fecha del evento. La franja horaria usa cuándo registraste la apuesta (hora CDMX). Con más datos este análisis se vuelve más preciso.</div>`;
 }
 
 /* ── Tab: Rolling ROI ── */
