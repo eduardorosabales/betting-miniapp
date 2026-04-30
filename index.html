@@ -226,8 +226,12 @@ body::after{content:'';position:fixed;top:-200px;left:50%;transform:translateX(-
 .btn-del{background:rgba(255,61,90,0.12);color:var(--loss);border:1px solid rgba(255,61,90,0.2);border-radius:var(--radius-sm);padding:6px 9px;font-size:13px;cursor:pointer}
 /* Modal */
 .m-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.72);z-index:300;display:flex;align-items:flex-end;justify-content:center}
-.m-sheet{background:var(--surface);border-radius:20px 20px 0 0;padding:20px 16px 32px;width:100%;max-width:520px;max-height:94dvh;overflow-y:auto}
-.m-title{font-family:var(--font-head);font-size:17px;font-weight:800;display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+/* Modal — estructura flexbox con footer sticky */
+.m-sheet{background:var(--surface);border-radius:20px 20px 0 0;width:100%;max-width:520px;max-height:92dvh;display:flex;flex-direction:column;overflow:hidden}
+.m-head{padding:16px 16px 12px;flex-shrink:0;border-bottom:1px solid var(--border)}
+.m-body{flex:1;overflow-y:auto;padding:14px 16px 4px;-webkit-overflow-scrolling:touch}
+.m-foot{flex-shrink:0;padding:10px 16px calc(env(safe-area-inset-bottom,0px) + 14px);background:var(--surface);border-top:1px solid var(--border)}
+.m-title{font-family:var(--font-head);font-size:17px;font-weight:800;display:flex;justify-content:space-between;align-items:center}
 .m-close{background:var(--card2);border:1px solid var(--border);color:var(--text-2);width:32px;height:32px;border-radius:var(--radius-sm);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center}
 .m-label{display:block;font-size:10px;font-weight:700;color:var(--text-2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px}
 .m-input{width:100%;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:var(--font-body);font-size:14px;padding:9px 12px;outline:none;box-sizing:border-box;transition:border-color .2s}
@@ -236,9 +240,10 @@ body::after{content:'';position:fixed;top:-200px;left:50%;transform:translateX(-
 .m-group{margin-bottom:11px}
 .m-date-row{display:flex;gap:8px;align-items:center;margin-bottom:6px}
 .m-now-btn{flex-shrink:0;background:var(--accent);color:#000;border:none;border-radius:var(--radius-sm);padding:8px 12px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap}
-.m-submit{display:block;width:100%;background:var(--accent);color:#000;border:none;border-radius:var(--radius-md);padding:13px;font-family:var(--font-head);font-size:15px;font-weight:800;cursor:pointer;margin-top:4px;letter-spacing:.2px}
-.m-submit:active{opacity:.85}
-.m-err{font-size:12px;color:var(--loss);margin-bottom:10px;display:none}
+.m-submit{display:block;width:100%;background:var(--accent);color:#000;border:none;border-radius:var(--radius-md);padding:14px;font-family:var(--font-head);font-size:15px;font-weight:800;cursor:pointer;letter-spacing:.2px;transition:opacity .15s}
+.m-submit:active,.m-submit:disabled{opacity:.6}
+.m-submit:disabled{cursor:not-allowed}
+.m-err{font-size:12px;color:var(--loss);margin-bottom:8px;display:none;padding:8px 10px;background:rgba(255,80,80,.08);border-radius:6px;border:1px solid rgba(255,80,80,.2)}
 /* Upload zone */
 .u-zone{border:2px dashed var(--border);border-radius:var(--radius-md);padding:22px 16px;text-align:center;cursor:pointer;margin-bottom:12px;transition:border-color .2s}
 .u-zone:hover,.u-zone.drag{border-color:var(--accent)}
@@ -930,53 +935,59 @@ function openModal(rowId,idx){
   document.getElementById("gModal").innerHTML=`
   <div class="m-overlay" id="mOverlay" onclick="if(event.target===this)closeModal()">
     <div class="m-sheet">
-      <div class="m-title">
-        <span>${rowId===null?"➕ Nueva apuesta":"✏️ Editar apuesta"}</span>
-        <button class="m-close" onclick="closeModal()">✕</button>
-      </div>
-      ${rowId===null?`
-      <div class="u-zone" id="uZone"
-           onclick="document.getElementById('uInput').click()"
-           ondragover="event.preventDefault();this.classList.add('drag')"
-           ondragleave="this.classList.remove('drag')"
-           ondrop="handleDrop(event)">
-        <div class="u-icon">📸</div>
-        <div class="u-text">Foto del ticket → auto-rellena el formulario</div>
-        <div class="u-sub">Toca o arrastra la imagen</div>
-      </div>
-      <input id="uInput" type="file" accept="image/*" style="display:none" onchange="analyzeTicket(this.files[0])">
-      <div class="u-analyzing" id="uAn">⏳ Analizando con IA…</div>`:""}
-      <div class="m-row">
-        <div class="m-group"><label class="m-label">Equipo 1</label><input id="mEq1" class="m-input" value="${esc(v.eq1)}" placeholder="Real Madrid"></div>
-        <div class="m-group"><label class="m-label">Equipo 2</label><input id="mEq2" class="m-input" value="${esc(v.eq2)}" placeholder="Barcelona"></div>
-      </div>
-      <div class="m-group"><label class="m-label">Tipo de apuesta</label><input id="mTipo" class="m-input" value="${esc(v.tipo)}" placeholder="moneyline, handicap, total over 2.5…"></div>
-      <div class="m-row">
-        <div class="m-group"><label class="m-label">Cuota</label><input id="mCuota" class="m-input" type="number" step="0.01" value="${esc(String(v.cuota))}" placeholder="1.85"></div>
-        <div class="m-group"><label class="m-label">Monto ($)</label><input id="mMonto" class="m-input" type="number" value="${esc(String(v.monto))}" placeholder="100"></div>
-      </div>
-      <div class="m-row">
-        <div class="m-group"><label class="m-label">Deporte</label><input id="mDep" class="m-input" value="${esc(v.dep)}" placeholder="Football…"></div>
-        <div class="m-group"><label class="m-label">Liga</label><input id="mLiga" class="m-input" value="${esc(v.liga)}" placeholder="Opcional"></div>
-      </div>
-      <div class="m-group">
-        <label class="m-label">Fecha del partido</label>
-        <div class="m-date-row">
-          <button class="m-now-btn" onclick="setFechaNow()">📅 Ahora</button>
-          <input id="mFecha" class="m-input" type="date" value="${esc(v.fecha)}" style="flex:1">
+      <div class="m-head">
+        <div class="m-title">
+          <span>${rowId===null?"➕ Nueva apuesta":"✏️ Editar apuesta"}</span>
+          <button class="m-close" onclick="closeModal()">✕</button>
         </div>
-        <input id="mHora" class="m-input" type="time" value="${esc(v.hora)}" style="margin-top:6px">
       </div>
-      ${rowId!==null?`
-      <div class="m-group"><label class="m-label">Resultado</label>
-        <select id="mStatus" class="m-input">
-          <option value="pending" ${v.status==="pending"?"selected":""}>⏳ Pendiente</option>
-          <option value="win"     ${v.status==="win"?"selected":""}>✅ Win</option>
-          <option value="loss"    ${v.status==="loss"?"selected":""}>❌ Loss</option>
-          <option value="void"    ${v.status==="void"?"selected":""}>🔄 Void</option>
-        </select></div>`:""}
-      <div class="m-err" id="mErr"></div>
-      <button class="m-submit" onclick="submitBet()">${rowId===null?"✅ Registrar apuesta":"💾 Guardar cambios"}</button>
+      <div class="m-body">
+        ${rowId===null?`
+        <div class="u-zone" id="uZone"
+             onclick="document.getElementById('uInput').click()"
+             ondragover="event.preventDefault();this.classList.add('drag')"
+             ondragleave="this.classList.remove('drag')"
+             ondrop="handleDrop(event)">
+          <div class="u-icon">📸</div>
+          <div class="u-text">Foto del ticket → auto-rellena el formulario</div>
+          <div class="u-sub">Toca o arrastra la imagen</div>
+        </div>
+        <input id="uInput" type="file" accept="image/*" style="display:none" onchange="analyzeTicket(this.files[0])">
+        <div class="u-analyzing" id="uAn">⏳ Analizando con IA…</div>`:""}
+        <div class="m-row">
+          <div class="m-group"><label class="m-label">Equipo 1</label><input id="mEq1" class="m-input" value="${esc(v.eq1)}" placeholder="Real Madrid"></div>
+          <div class="m-group"><label class="m-label">Equipo 2</label><input id="mEq2" class="m-input" value="${esc(v.eq2)}" placeholder="Barcelona"></div>
+        </div>
+        <div class="m-group"><label class="m-label">Tipo de apuesta</label><input id="mTipo" class="m-input" value="${esc(v.tipo)}" placeholder="moneyline, handicap, total over 2.5…"></div>
+        <div class="m-row">
+          <div class="m-group"><label class="m-label">Cuota</label><input id="mCuota" class="m-input" type="number" step="0.01" value="${esc(String(v.cuota))}" placeholder="1.85"></div>
+          <div class="m-group"><label class="m-label">Monto ($)</label><input id="mMonto" class="m-input" type="number" value="${esc(String(v.monto))}" placeholder="100"></div>
+        </div>
+        <div class="m-row">
+          <div class="m-group"><label class="m-label">Deporte</label><input id="mDep" class="m-input" value="${esc(v.dep)}" placeholder="Football…"></div>
+          <div class="m-group"><label class="m-label">Liga</label><input id="mLiga" class="m-input" value="${esc(v.liga)}" placeholder="Opcional"></div>
+        </div>
+        <div class="m-group">
+          <label class="m-label">Fecha del partido</label>
+          <div class="m-date-row">
+            <button class="m-now-btn" onclick="setFechaNow()">📅 Ahora</button>
+            <input id="mFecha" class="m-input" type="date" value="${esc(v.fecha)}" style="flex:1">
+          </div>
+          <input id="mHora" class="m-input" type="time" value="${esc(v.hora)}" style="margin-top:6px">
+        </div>
+        ${rowId!==null?`
+        <div class="m-group"><label class="m-label">Resultado</label>
+          <select id="mStatus" class="m-input">
+            <option value="pending" ${v.status==="pending"?"selected":""}>⏳ Pendiente</option>
+            <option value="win"     ${v.status==="win"?"selected":""}>✅ Win</option>
+            <option value="loss"    ${v.status==="loss"?"selected":""}>❌ Loss</option>
+            <option value="void"    ${v.status==="void"?"selected":""}>🔄 Void</option>
+          </select></div>`:""}
+      </div>
+      <div class="m-foot">
+        <div class="m-err" id="mErr"></div>
+        <button class="m-submit" id="mSubmitBtn" onclick="submitBet()">${rowId===null?"✅ Registrar apuesta":"💾 Guardar cambios"}</button>
+      </div>
     </div>
   </div>`;
 }
@@ -1015,7 +1026,7 @@ async function analyzeTicket(file){
 }
 
 async function submitBet(){
-  if(!getSecret()){ showErr("Configura la clave de API."); return; }
+  if(!getSecret()){ showErr("🔑 Configura la clave de API primero (ajustes de Railway)."); return; }
   const eq1=document.getElementById("mEq1")?.value.trim();
   const eq2=document.getElementById("mEq2")?.value.trim();
   const tipo=document.getElementById("mTipo")?.value.trim();
@@ -1026,7 +1037,10 @@ async function submitBet(){
   const fecha=document.getElementById("mFecha")?.value.trim();
   const hora=document.getElementById("mHora")?.value.trim();
   const st=document.getElementById("mStatus")?.value||"pending";
-  if(!eq1||!eq2||!tipo||!cuota||!monto){ showErr("Completa: equipos, tipo, cuota y monto."); return; }
+  if(!eq1||!eq2||!tipo||!cuota||!monto){ showErr("⚠️ Completa: equipos, tipo, cuota y monto."); return; }
+  const btn=document.getElementById("mSubmitBtn");
+  const originalTxt=btn?.textContent||"";
+  if(btn){ btn.disabled=true; btn.textContent="⏳ Guardando…"; }
   try{
     let resp;
     if(_editRowId===null){
@@ -1037,11 +1051,14 @@ async function submitBet(){
       resp=await fetch(`${API_URL}/api/bets/${_editRowId}`,{method:"PUT",headers:apiHeaders(),body:JSON.stringify(body)});
     }
     const j=await resp.json();
-    if(!j.ok) throw new Error(j.error||"Error del servidor");
+    if(!j.ok) throw new Error(j.error||`Error ${resp.status} del servidor`);
     closeModal();
     await recargar();
     showTab("gestion",document.querySelector('[data-tab="gestion"]'));
-  }catch(err){ showErr("❌ "+err.message); }
+  }catch(err){
+    showErr("❌ "+err.message);
+    if(btn){ btn.disabled=false; btn.textContent=originalTxt; }
+  }
 }
 
 function confirmDel(rowId,label){
