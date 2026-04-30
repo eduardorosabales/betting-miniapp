@@ -366,28 +366,63 @@ function calcRoiPorTipo(){
     .sort((a,b)=>b.roi-a.roi);
 }
 
+/* ── Helper: convierte un Date UTC a sus componentes en hora CDMX ── */
+function toMXParts(dt) {
+  try {
+    const parts = new Intl.DateTimeFormat("en-US", {
+      timeZone: "America/Mexico_City",
+      weekday: "short",       // "Mon", "Tue"…
+      hour:    "numeric",
+      hour12:  false
+    }).formatToParts(dt);
+    const get = t => parts.find(p => p.type === t)?.value ?? "0";
+    const WEEK_SHORT = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+    return {
+      dow:  WEEK_SHORT.indexOf(get("weekday")),   // 0=Dom … 6=Sáb
+      hour: parseInt(get("hour"), 10)              // 0-23
+    };
+  } catch(e) {
+    // Fallback: UTC-6 fijo (funciona sin soporte de Intl avanzado)
+    const local = new Date(dt.getTime() - 6 * 3600000);
+    return { dow: local.getUTCDay(), hour: local.getUTCHours() };
+  }
+}
+
 function calcTemporal(){
-  const DIAS=["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"];
-  const FRANJAS=["00-06","06-10","10-14","14-18","18-22","22-00"];
-  const db={},hb={};
+  const DIAS   = ["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"];
+  const FRANJAS = ["00-06","06-10","10-14","14-18","18-22","22-00"];
+  const db={}, hb={};
   DIAS.forEach(d=>{db[d]={w:0,l:0,apo:0,gan:0}});
   FRANJAS.forEach(f=>{hb[f]={w:0,l:0,apo:0,gan:0}});
+
   DATA.apuestas.filter(a=>(a.status==="win"||a.status==="loss")&&a.fecha).forEach(a=>{
-    const dt=new Date(a.fecha.replace(" ","T")+"Z");
-    if(isNaN(dt))return;
-    const dia=DIAS[dt.getDay()===0?6:dt.getDay()-1];
-    const h=dt.getUTCHours();
-    const franja=h<6?"00-06":h<10?"06-10":h<14?"10-14":h<18?"14-18":h<22?"18-22":"22-00";
-    [db[dia],hb[franja]].forEach(b=>{
-      b.apo+=a.monto||0;
+    const dtUTC = new Date(a.fecha.replace(" ","T")+"Z");
+    if(isNaN(dtUTC)) return;
+
+    const { dow, hour } = toMXParts(dtUTC);   // ← ahora todo en CDMX
+
+    // dow: 0=Dom,1=Lun…6=Sáb → mapear a índice DIAS (0=Lun…6=Dom)
+    const diaIdx = dow === 0 ? 6 : dow - 1;
+    const dia    = DIAS[diaIdx];
+
+    const franja = hour<6?"00-06":hour<10?"06-10":hour<14?"10-14":
+                   hour<18?"14-18":hour<22?"18-22":"22-00";
+
+    [db[dia], hb[franja]].forEach(b=>{
+      b.apo += a.monto||0;
       if(a.status==="win"){b.w++;b.gan+=a.ganancia||a.monto||0;}
       else b.l++;
     });
   });
-  const toStats=(label,b)=>{const total=b.w+b.l,neto=b.gan-b.apo;return{label,wins:b.w,losses:b.l,neto,roi:b.apo>0?neto/b.apo*100:0,wr:total>0?b.w/total*100:0,total}};
+
+  const toStats=(label,b)=>{
+    const total=b.w+b.l, neto=b.gan-b.apo;
+    return{label,wins:b.w,losses:b.l,neto,roi:b.apo>0?neto/b.apo*100:0,
+           wr:total>0?b.w/total*100:0,total};
+  };
   return{
-    porDia:DIAS.map(d=>toStats(d,db[d])).filter(x=>x.total>0),
-    porHora:FRANJAS.map(f=>toStats(f,hb[f])).filter(x=>x.total>0)
+    porDia:  DIAS.map(d=>toStats(d,db[d])).filter(x=>x.total>0),
+    porHora: FRANJAS.map(f=>toStats(f,hb[f])).filter(x=>x.total>0)
   };
 }
 
