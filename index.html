@@ -917,7 +917,8 @@ function renderGLista(){
       <div class="g-card-head">
         <div>
           <div class="g-teams">${si} ${esc(a.equipo1)} vs ${esc(a.equipo2)}</div>
-          <div class="g-meta">${esc(a.deporte||"")}${a.deporte?" · ":""}${esc(a.tipo||"")} @ ${esc(String(a.cuota||""))} · ${fmt(a.monto)}${gStr}${a.fecha?" · 📅 "+a.fecha.slice(0,10):""}</div>
+          // archivo: index.html — renderGestionCards (~línea 920)
+<div class="g-meta">${esc(a.deporte||"")}${a.deporte?" · ":""}${esc(a.tipo||"")} @ ${esc(String(a.cuota||""))} · ${fmt(a.monto)}${gStr}${a.fecha_partido?" · 📅 "+a.fecha_partido:""}</div>
         </div>
         <div class="g-actions">
           <button class="btn-edit" onclick="openModal(${rowId},${idx})">✏️</button>
@@ -957,7 +958,8 @@ function openModal(rowId,idx){
   const v={
     eq1:a.equipo1||"",eq2:a.equipo2||"",tipo:a.tipo||"",cuota:a.cuota||"",
     monto:a.monto||"",dep:a.deporte||"",liga:a.liga||"",
-    fecha:a.fecha?(a.fecha.slice(0,10)):"",hora:a.fecha?(a.fecha.slice(11,16)||""):"",
+    fecha:a.fecha_partido||"",
+    hora:a.hora_partido||"",
     status:a.status||"pending",
   };
   document.getElementById("gModal").innerHTML=`
