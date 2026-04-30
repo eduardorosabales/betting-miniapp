@@ -898,7 +898,7 @@ function renderGLista(){
   if(!DATA?.apuestas?.length) return '<div class="empty">Sin apuestas registradas</div>';
   const total = DATA.apuestas.length;
   return [...DATA.apuestas].reverse().slice(0,40).map((a,idx)=>{
-    const rowId = total - idx;
+    const rowId = a.row_id ?? (total - idx);
     const si = a.status==="win"?"✅":a.status==="loss"?"❌":a.status==="void"?"🔄":"⏳";
     const gStr = a.status==="win"?` → +${fmt(a.ganancia)}`:a.status==="loss"?` → -${fmt(a.monto)}`:"";
     return `<div class="g-card">
