@@ -33,10 +33,11 @@
   --font-num:   'Space Mono', monospace;
   --font-body:  'DM Sans', sans-serif;
   --nav-h:      72px;
+  --safe-b:     env(safe-area-inset-bottom, 0px);
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{height:100%}
-body{font-family:var(--font-body);background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:calc(var(--nav-h)+16px);overflow-x:hidden}
+body{font-family:var(--font-body);background:var(--bg);color:var(--text);min-height:100svh;min-height:100vh;padding-bottom:calc(var(--nav-h) + 20px);overflow-x:hidden}
 body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");pointer-events:none;z-index:0;opacity:0.4}
 body::after{content:'';position:fixed;top:-200px;left:50%;transform:translateX(-50%);width:600px;height:400px;background:radial-gradient(ellipse,rgba(0,205,150,0.07) 0%,transparent 70%);pointer-events:none;z-index:0}
 
@@ -225,12 +226,13 @@ body::after{content:'';position:fixed;top:-200px;left:50%;transform:translateX(-
 .btn-edit{background:rgba(255,255,255,0.07);color:var(--text-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:6px 9px;font-size:13px;cursor:pointer}
 .btn-del{background:rgba(255,61,90,0.12);color:var(--loss);border:1px solid rgba(255,61,90,0.2);border-radius:var(--radius-sm);padding:6px 9px;font-size:13px;cursor:pointer}
 /* Modal */
-.m-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.72);z-index:300;display:flex;align-items:flex-end;justify-content:center}
+.m-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.72);z-index:300;display:flex;align-items:flex-end;justify-content:center;will-change:height,top}
 /* Modal — estructura flexbox con footer sticky */
-.m-sheet{background:var(--surface);border-radius:20px 20px 0 0;width:100%;max-width:520px;max-height:var(--modal-h,88vh);display:flex;flex-direction:column;overflow:hidden}
-.m-head{padding:16px 16px 12px;flex-shrink:0;border-bottom:1px solid var(--border)}
-.m-body{flex:1;min-height:0;overflow-y:auto;padding:14px 16px 4px;-webkit-overflow-scrolling:touch}
-.m-foot{flex-shrink:0;padding:10px 16px calc(env(safe-area-inset-bottom,0px) + 14px);background:var(--surface);border-top:1px solid var(--border)}
+.m-sheet{background:var(--surface);border-radius:20px 20px 0 0;width:100%;max-width:520px;max-height:90%;display:flex;flex-direction:column;overflow:hidden;transition:max-height 0.15s ease}
+.m-handle{width:36px;height:4px;background:rgba(255,255,255,0.15);border-radius:2px;margin:10px auto 0;flex-shrink:0}
+.m-head{padding:12px 16px 12px;flex-shrink:0;border-bottom:1px solid var(--border)}
+.m-body{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding:14px 16px 8px;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+.m-foot{flex-shrink:0;padding:12px 16px;padding-bottom:calc(env(safe-area-inset-bottom,0px) + 14px);background:var(--surface);border-top:1px solid var(--border)}
 .m-title{font-family:var(--font-head);font-size:17px;font-weight:800;display:flex;justify-content:space-between;align-items:center}
 .m-close{background:var(--card2);border:1px solid var(--border);color:var(--text-2);width:32px;height:32px;border-radius:var(--radius-sm);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center}
 .m-label{display:block;font-size:10px;font-weight:700;color:var(--text-2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px}
@@ -923,9 +925,30 @@ function saveSecret(){
   location.reload();
 }
 
+/* ── Viewport helper: usa visualViewport > tg.viewportStableHeight > innerHeight ── */
+function getVH(){
+  if(window.visualViewport)return window.visualViewport.height;
+  if(tg?.viewportStableHeight&&tg.viewportStableHeight>100)return tg.viewportStableHeight;
+  return window.innerHeight;
+}
+
+/* ── Sincroniza overlay y sheet al viewport visual (teclado abierto/cerrado) ── */
+function syncModalToViewport(){
+  const overlay=document.getElementById("mOverlay");
+  if(!overlay)return;
+  const vv=window.visualViewport;
+  if(vv){
+    overlay.style.top    = vv.offsetTop+"px";
+    overlay.style.left   = vv.offsetLeft+"px";
+    overlay.style.width  = vv.width+"px";
+    overlay.style.height = vv.height+"px";
+    const sheet=overlay.querySelector(".m-sheet");
+    if(sheet) sheet.style.maxHeight = Math.floor(vv.height*0.92)+"px";
+  }
+}
+
 function openModal(rowId,idx){
   _editRowId=rowId;
-  document.documentElement.style.setProperty('--modal-h', (window.innerHeight * 0.90) + 'px');
   const a=(rowId!==null&&DATA?.apuestas)?[...DATA.apuestas].reverse()[idx]:{};
   const v={
     eq1:a.equipo1||"",eq2:a.equipo2||"",tipo:a.tipo||"",cuota:a.cuota||"",
@@ -935,7 +958,8 @@ function openModal(rowId,idx){
   };
   document.getElementById("gModal").innerHTML=`
   <div class="m-overlay" id="mOverlay" onclick="if(event.target===this)closeModal()">
-    <div class="m-sheet">
+    <div class="m-sheet" id="mSheet" style="max-height:${Math.floor(getVH()*0.92)}px">
+      <div class="m-handle"></div>
       <div class="m-head">
         <div class="m-title">
           <span>${rowId===null?"➕ Nueva apuesta":"✏️ Editar apuesta"}</span>
@@ -991,9 +1015,23 @@ function openModal(rowId,idx){
       </div>
     </div>
   </div>`;
+  /* Escuchar cambios de viewport (teclado) */
+  if(window.visualViewport){
+    window.visualViewport.addEventListener("resize",syncModalToViewport);
+    window.visualViewport.addEventListener("scroll",syncModalToViewport);
+  }
+  /* Ajuste inicial */
+  syncModalToViewport();
 }
 
-function closeModal(){ document.getElementById("gModal").innerHTML=""; _editRowId=null; }
+function closeModal(){
+  if(window.visualViewport){
+    window.visualViewport.removeEventListener("resize",syncModalToViewport);
+    window.visualViewport.removeEventListener("scroll",syncModalToViewport);
+  }
+  document.getElementById("gModal").innerHTML="";
+  _editRowId=null;
+}
 function setFechaNow(){ const n=new Date(); document.getElementById("mFecha").value=n.toISOString().slice(0,10); document.getElementById("mHora").value=n.toTimeString().slice(0,5); }
 
 function handleDrop(e){
