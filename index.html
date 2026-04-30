@@ -229,7 +229,7 @@ body::after{content:'';position:fixed;top:-200px;left:50%;transform:translateX(-
 /* Modal — estructura flexbox con footer sticky */
 .m-sheet{background:var(--surface);border-radius:20px 20px 0 0;width:100%;max-width:520px;max-height:var(--modal-h,88vh);display:flex;flex-direction:column;overflow:hidden}
 .m-head{padding:16px 16px 12px;flex-shrink:0;border-bottom:1px solid var(--border)}
-.m-body{flex:1;overflow-y:auto;padding:14px 16px 4px;-webkit-overflow-scrolling:touch}
+.m-body{flex:1;min-height:0;overflow-y:auto;padding:14px 16px 4px;-webkit-overflow-scrolling:touch}
 .m-foot{flex-shrink:0;padding:10px 16px calc(env(safe-area-inset-bottom,0px) + 14px);background:var(--surface);border-top:1px solid var(--border)}
 .m-title{font-family:var(--font-head);font-size:17px;font-weight:800;display:flex;justify-content:space-between;align-items:center}
 .m-close{background:var(--card2);border:1px solid var(--border);color:var(--text-2);width:32px;height:32px;border-radius:var(--radius-sm);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center}
