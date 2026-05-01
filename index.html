@@ -770,7 +770,7 @@ function renderCapital(){
         <span style="font-family:var(--font-num);color:var(--text)">${fmt(c.exp_maxima)}</span>
       </div>
       <div style="display:flex;justify-content:space-between;font-size:12px">
-        <span style="color:var(--text-2)">Drawdown peor racha (${c.peor_racha} × ${fmt(c.monto_promedio)})</span>
+        <span style="color:var(--text-2)">Drawdown peor racha (${c.peor_racha} × ${fmt(c.monto_racha_prom ?? c.monto_promedio)})</span>
         <span style="font-family:var(--font-num);color:var(--loss)">${fmt(c.drawdown_racha)}</span>
       </div>
     </div>` : "";
