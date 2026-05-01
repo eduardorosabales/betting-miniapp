@@ -539,7 +539,13 @@ function renderSemana(){
   const s=DATA.stats_semana;
   if(!s)return'<div class="empty">Sin datos esta semana</div>';
   const wr=((s.winrate??0)).toFixed(1);
-  const ap7=DATA.apuestas.filter(a=>{if(!a.fecha)return false;return new Date(a.fecha.replace(" ","T")+"Z").getTime()>=Date.now()-7*24*3600*1000;});
+  const ap7 = DATA.apuestas.filter(a => {
+  const f = a.fecha_partido || a.fecha;
+  if (!f) return false;
+  // fecha_partido es YYYY-MM-DD, fecha_reg es YYYY-MM-DD HH:MM (UTC)
+  const iso = f.length === 10 ? f + "T12:00:00" : f.replace(" ", "T") + "Z";
+  return new Date(iso).getTime() >= Date.now() - 7 * 24 * 3600 * 1000;
+});
   return`<div class="section-header">Últimos <span>7 días</span></div>
     <div class="stats-grid">
       <div class="stat-card win-card"><div class="stat-value green">${s.wins}</div><div class="stat-label">Ganadas</div></div>
@@ -569,7 +575,7 @@ function renderMes(){
 }
 function renderMesContent(){
   if(!mesActual)return'<div class="empty">No hay datos este mes</div>';
-  const ap=DATA.apuestas.filter(a=>a.fecha?.startsWith(mesActual));
+  const ap=DATA.apuestas.filter(a=>(a.fecha_partido||a.fecha)?.startsWith(mesActual));
   let w=0,l=0,p=0,apo=0,gan=0;
   ap.forEach(a=>{if(a.status==="win"){w++;apo+=a.monto;gan+=a.ganancia||a.monto||0;}else if(a.status==="loss"){l++;apo+=a.monto;}else p++;});
   const neto=gan-apo,roi=apo>0?neto/apo*100:0,wr=(w+l)>0?(w/(w+l)*100).toFixed(1):"N/A";
@@ -834,7 +840,7 @@ function renderBetItem(a){
   const rc=a.status==="win"?"green":a.status==="loss"?"red":a.status==="void"?"accent":"yellow";
   const esParlay=(a.equipo2||"").startsWith("PARLAY");
   const teamsLabel=esParlay?`🎯 Parlay · ${esc(a.equipo2||"")}`:  `${esc(a.equipo1||"?")} vs ${esc(a.equipo2||"?")}`;
-  const metaLabel=esParlay?`${esc(a.deporte)} · Acumulador @ ${esc(a.cuota)} · ${a.fecha?.slice(0,10)||""}`:  `${esc(a.deporte)} · ${esc(a.tipo)} @ ${esc(a.cuota)} · ${a.fecha?.slice(0,10)||""}`;
+  const metaLabel=esParlay?`${esc(a.deporte)} · Acumulador @ ${esc(a.cuota)} · ${(a.fecha_partido||a.fecha)?.slice(0,10)||""}`:  `${esc(a.deporte)} · ${esc(a.tipo)} @ ${esc(a.cuota)} · ${(a.fecha_partido||a.fecha)?.slice(0,10)||""}`;
   return`<div class="bet-item"><div class="bet-dot ${icon}"></div><div class="bet-info"><div class="bet-teams">${teamsLabel}</div><div class="bet-meta">${metaLabel}</div></div><div class="bet-right"><div class="bet-monto">${fmt(a.monto)}</div><div class="bet-result ${rc}">${res}</div></div></div>`;
 }
 
