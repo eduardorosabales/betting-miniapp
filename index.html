@@ -964,6 +964,7 @@ function openModal(rowId,idx){
     hora:a.hora_partido||"",
     status:a.status||"pending",
   };
+  // archivo: index.html — dentro de openModal()
   document.getElementById("gModal").innerHTML=`
   <div class="m-overlay" id="mOverlay" onclick="if(event.target===this)closeModal()">
     <div class="m-sheet" id="mSheet" style="max-height:${Math.floor((getVH()-72)*0.94)}px">
@@ -987,15 +988,69 @@ function openModal(rowId,idx){
         </div>
         <input id="uInput" type="file" accept="image/*" style="display:none" onchange="analyzeTicket(this.files[0])">
         <div class="u-analyzing" id="uAn">⏳ Analizando con IA…</div>`:""}
-        <div class="m-row">
-          <div class="m-group"><label class="m-label">Equipo 1</label><input id="mEq1" class="m-input" value="${esc(v.eq1)}" placeholder="Real Madrid"></div>
-          <div class="m-group"><label class="m-label">Equipo 2</label><input id="mEq2" class="m-input" value="${esc(v.eq2)}" placeholder="Barcelona"></div>
+
+        <!-- Toggle Parlay (solo en creación nueva) -->
+        ${rowId===null?`
+        <div class="m-group" style="display:flex;align-items:center;gap:10px;margin-top:8px">
+          <label class="m-label" style="margin:0;flex:1">🎯 Es Parlay / Acumulador</label>
+          <label style="position:relative;display:inline-block;width:44px;height:24px">
+            <input type="checkbox" id="mEsParlay" onchange="toggleParlay(this.checked)"
+                   style="opacity:0;width:0;height:0">
+            <span id="parlaySlider" style="
+              position:absolute;cursor:pointer;inset:0;border-radius:24px;
+              background:var(--border);transition:.3s;
+            "></span>
+            <span id="parlayThumb" style="
+              position:absolute;top:3px;left:3px;width:18px;height:18px;
+              border-radius:50%;background:#fff;transition:.3s;
+            "></span>
+          </label>
+        </div>`:""}
+
+        <!-- Campos apuesta simple (ocultos en modo parlay) -->
+        <div id="simpleFields">
+          <div class="m-row">
+            <div class="m-group"><label class="m-label">Equipo 1</label><input id="mEq1" class="m-input" value="${esc(v.eq1)}" placeholder="Real Madrid"></div>
+            <div class="m-group"><label class="m-label">Equipo 2</label><input id="mEq2" class="m-input" value="${esc(v.eq2)}" placeholder="Barcelona"></div>
+          </div>
+          <div class="m-group"><label class="m-label">Tipo de apuesta</label><input id="mTipo" class="m-input" value="${esc(v.tipo)}" placeholder="moneyline, handicap, total over 2.5…"></div>
+          <div class="m-row">
+            <div class="m-group"><label class="m-label">Cuota</label><input id="mCuota" class="m-input" type="number" step="0.01" value="${esc(String(v.cuota))}" placeholder="1.85"></div>
+            <div class="m-group"><label class="m-label">Monto ($)</label><input id="mMonto" class="m-input" type="number" value="${esc(String(v.monto))}" placeholder="100"></div>
+          </div>
         </div>
-        <div class="m-group"><label class="m-label">Tipo de apuesta</label><input id="mTipo" class="m-input" value="${esc(v.tipo)}" placeholder="moneyline, handicap, total over 2.5…"></div>
-        <div class="m-row">
-          <div class="m-group"><label class="m-label">Cuota</label><input id="mCuota" class="m-input" type="number" step="0.01" value="${esc(String(v.cuota))}" placeholder="1.85"></div>
-          <div class="m-group"><label class="m-label">Monto ($)</label><input id="mMonto" class="m-input" type="number" value="${esc(String(v.monto))}" placeholder="100"></div>
+
+        <!-- Sección Parlay (visible solo en modo parlay) -->
+        <div id="parlaySection" style="display:none">
+          <div class="m-group" style="background:var(--surface-2,#1e2235);border-radius:10px;padding:10px">
+            <div style="font-size:12px;color:var(--accent);font-weight:700;margin-bottom:8px">🎯 PICKS DEL PARLAY</div>
+            <div id="picksContainer"></div>
+            <button onclick="addParlayPick()"
+                    style="width:100%;margin-top:8px;padding:8px;border:1px dashed var(--accent);
+                           border-radius:8px;background:transparent;color:var(--accent);
+                           font-size:13px;cursor:pointer">
+              ➕ Agregar pick
+            </button>
+          </div>
+          <div class="m-row" style="margin-top:8px">
+            <div class="m-group">
+              <label class="m-label">Cuota total</label>
+              <div style="display:flex;gap:6px;align-items:center">
+                <input id="mCuotaTotal" class="m-input" type="number" step="0.001" placeholder="Auto" style="flex:1"
+                       oninput="document.getElementById('cuotaAutoMsg').style.display='none'">
+                <button onclick="calcCuotaAuto()"
+                        style="padding:8px 10px;border-radius:8px;background:var(--accent);
+                               color:#fff;border:none;cursor:pointer;white-space:nowrap;font-size:12px">
+                  🔄 Calcular
+                </button>
+              </div>
+              <div id="cuotaAutoMsg" style="font-size:11px;color:var(--text-2);margin-top:4px;display:none"></div>
+            </div>
+            <div class="m-group"><label class="m-label">Monto ($)</label><input id="mMonto" class="m-input" type="number" value="${esc(String(v.monto))}" placeholder="100"></div>
+          </div>
         </div>
+
+        <!-- Campos comunes (deporte, liga, fecha, hora) -->
         <div class="m-row">
           <div class="m-group"><label class="m-label">Deporte</label><input id="mDep" class="m-input" value="${esc(v.dep)}" placeholder="Football…"></div>
           <div class="m-group"><label class="m-label">Liga</label><input id="mLiga" class="m-input" value="${esc(v.liga)}" placeholder="Opcional"></div>
@@ -1008,6 +1063,10 @@ function openModal(rowId,idx){
           </div>
           <input id="mHora" class="m-input" type="time" value="${esc(v.hora)}" style="margin-top:6px">
           <input id="mNotas" type="hidden" value="">
+        </div>
+        <div class="m-group">
+          <label class="m-label">Notas (opcional)</label>
+          <input id="mNotasVisible" class="m-input" value="" placeholder="Notas adicionales…">
         </div>
         ${rowId!==null?`
         <div class="m-group"><label class="m-label">Resultado</label>
@@ -1033,13 +1092,77 @@ function openModal(rowId,idx){
   syncModalToViewport();
 }
 
+// archivo: index.html
 function closeModal(){
   if(window.visualViewport){
     window.visualViewport.removeEventListener("resize",syncModalToViewport);
     window.visualViewport.removeEventListener("scroll",syncModalToViewport);
   }
   document.getElementById("gModal").innerHTML="";
-  _editRowId=null;
+  _editRowId   = null;
+  _parlayPicks = [];  // ← limpiar picks al cerrar
+}
+// archivo: index.html — funciones del modo Parlay
+
+let _parlayPicks = [];  // array de picks del parlay actual
+
+function toggleParlay(on) {
+  const slider = document.getElementById("parlaySlider");
+  const thumb  = document.getElementById("parlayThumb");
+  if(slider){ slider.style.background = on ? "var(--accent)" : "var(--border)"; }
+  if(thumb){  thumb.style.left = on ? "23px" : "3px"; }
+  document.getElementById("simpleFields").style.display = on ? "none" : "";
+  document.getElementById("parlaySection").style.display = on ? "" : "none";
+  if(on && _parlayPicks.length === 0) addParlayPick();
+}
+
+function addParlayPick() {
+  _parlayPicks.push({ equipo1:"", equipo2:"", tipo_apuesta:"", cuota:"" });
+  renderParlayPicks();
+}
+
+function removeParlayPick(idx) {
+  _parlayPicks.splice(idx, 1);
+  renderParlayPicks();
+}
+
+function renderParlayPicks() {
+  const container = document.getElementById("picksContainer");
+  if(!container) return;
+  container.innerHTML = _parlayPicks.map((p, i) => `
+    <div style="background:var(--surface,#151929);border-radius:8px;padding:8px;margin-bottom:6px;position:relative">
+      <div style="font-size:11px;font-weight:700;color:var(--text-2);margin-bottom:6px">
+        Pick #${i+1}
+        ${_parlayPicks.length > 1
+          ? `<button onclick="removeParlayPick(${i})"
+                     style="position:absolute;right:8px;top:8px;background:transparent;
+                            border:none;color:var(--red,#e05);cursor:pointer;font-size:13px">✕</button>`
+          : ""}
+      </div>
+      <div style="display:flex;gap:6px;margin-bottom:4px">
+        <input class="m-input" placeholder="Equipo 1" value="${esc(p.equipo1)}"
+               oninput="_parlayPicks[${i}].equipo1=this.value" style="flex:1;font-size:12px">
+        <input class="m-input" placeholder="Equipo 2" value="${esc(p.equipo2)}"
+               oninput="_parlayPicks[${i}].equipo2=this.value" style="flex:1;font-size:12px">
+      </div>
+      <div style="display:flex;gap:6px">
+        <input class="m-input" placeholder="Tipo (moneyline, over 2.5…)" value="${esc(p.tipo_apuesta)}"
+               oninput="_parlayPicks[${i}].tipo_apuesta=this.value" style="flex:2;font-size:12px">
+        <input class="m-input" placeholder="Cuota" type="number" step="0.01" value="${esc(String(p.cuota))}"
+               oninput="_parlayPicks[${i}].cuota=this.value;calcCuotaAuto()" style="flex:1;font-size:12px">
+      </div>
+    </div>
+  `).join("");
+}
+
+function calcCuotaAuto() {
+  const cuotas = _parlayPicks.map(p => parseFloat(p.cuota)).filter(c => c > 0);
+  if(cuotas.length < 2) return;
+  const total = cuotas.reduce((a,b) => a*b, 1);
+  const el = document.getElementById("mCuotaTotal");
+  const msg = document.getElementById("cuotaAutoMsg");
+  if(el && !el.value) { el.value = total.toFixed(3); }
+  if(msg) { msg.textContent = `Calculado: ${total.toFixed(3)} (producto de ${cuotas.length} cuotas)`; msg.style.display="block"; }
 }
 function setFechaNow(){ const n=new Date(); document.getElementById("mFecha").value=n.toISOString().slice(0,10); document.getElementById("mHora").value=n.toTimeString().slice(0,5); }
 
@@ -1095,34 +1218,97 @@ async function analyzeTicket(file){
   finally{ an.style.display="none"; }
 }
 
+// archivo: index.html
 async function submitBet(){
-  if(!getSecret()){ showErr("🔑 Configura la clave de API primero (ajustes de Railway)."); return; }
-  const eq1=document.getElementById("mEq1")?.value.trim();
-  const eq2=document.getElementById("mEq2")?.value.trim();
-  const tipo=document.getElementById("mTipo")?.value.trim();
-  const cuota=document.getElementById("mCuota")?.value.trim();
-  const monto=document.getElementById("mMonto")?.value.trim();
-  const dep=document.getElementById("mDep")?.value.trim();
-  const liga=document.getElementById("mLiga")?.value.trim();
-  const fecha=document.getElementById("mFecha")?.value.trim();
-  const hora=document.getElementById("mHora")?.value.trim();
-  const st=document.getElementById("mStatus")?.value||"pending";
-  const notas=document.getElementById("mNotas")?.value||"";
-  if(!eq1||!eq2||!tipo||!cuota||!monto){ showErr("⚠️ Completa: equipos, tipo, cuota y monto."); return; }
-  const btn=document.getElementById("mSubmitBtn");
-  const originalTxt=btn?.textContent||"";
+  if(!getSecret()){ showErr("🔑 Configura la clave de API primero."); return; }
+  const esParlay = document.getElementById("mEsParlay")?.checked || false;
+  const monto    = document.getElementById("mMonto")?.value.trim();
+  const dep      = document.getElementById("mDep")?.value.trim();
+  const liga     = document.getElementById("mLiga")?.value.trim();
+  const fecha    = document.getElementById("mFecha")?.value.trim();
+  const hora     = document.getElementById("mHora")?.value.trim();
+  const st       = document.getElementById("mStatus")?.value || "pending";
+  const notasVis = document.getElementById("mNotasVisible")?.value.trim() || "";
+
+  if(!monto){ showErr("⚠️ Ingresa el monto."); return; }
+
+  let payload;
+
+  if(esParlay && _editRowId === null){
+    // ── Validar picks ────────────────────────────────────────────────────────
+    // Sync picks desde el DOM (por si el usuario escribió sin disparar oninput)
+    document.querySelectorAll("#picksContainer > div").forEach((el, i) => {
+      const inputs = el.querySelectorAll("input");
+      if(_parlayPicks[i]){
+        _parlayPicks[i].equipo1      = inputs[0]?.value.trim() || "";
+        _parlayPicks[i].equipo2      = inputs[1]?.value.trim() || "";
+        _parlayPicks[i].tipo_apuesta = inputs[2]?.value.trim() || "";
+        _parlayPicks[i].cuota        = inputs[3]?.value.trim() || "";
+      }
+    });
+
+    const validPicks = _parlayPicks.filter(p => p.equipo1 && p.equipo2 && p.tipo_apuesta && p.cuota);
+    if(validPicks.length < 2){ showErr("⚠️ Un parlay necesita al menos 2 picks completos."); return; }
+
+    const cuotaTotal = parseFloat(document.getElementById("mCuotaTotal")?.value) ||
+                       validPicks.reduce((a,b) => a * parseFloat(b.cuota||1), 1);
+
+    const notasPicks = validPicks.map((p,i) =>
+      `#${i+1}: ${p.equipo1} vs ${p.equipo2} | ${p.tipo_apuesta} @ ${p.cuota}`
+    ).join(" || ");
+
+    const notas = notasVis ? `${notasPicks} || Nota: ${notasVis}` : notasPicks;
+    const ganancia = (parseFloat(monto) * cuotaTotal).toFixed(2);
+    const p0 = validPicks[0];
+
+    payload = {
+      equipo1:            p0.equipo1,
+      equipo2:            `PARLAY x${validPicks.length}`,
+      tipo_apuesta:       "Parlay",
+      cuota:              String(cuotaTotal.toFixed(3)),
+      monto,
+      deporte:            dep || "Multi",
+      liga:               liga || "",
+      fecha_partido:      fecha || "",
+      hora_partido:       hora  || "",
+      notas,
+      ganancia_potencial: ganancia,
+    };
+
+  } else {
+    // ── Apuesta simple ───────────────────────────────────────────────────────
+    const eq1  = document.getElementById("mEq1")?.value.trim();
+    const eq2  = document.getElementById("mEq2")?.value.trim();
+    const tipo = document.getElementById("mTipo")?.value.trim();
+    const cuota= document.getElementById("mCuota")?.value.trim();
+    if(!eq1||!eq2||!tipo||!cuota){ showErr("⚠️ Completa: equipos, tipo y cuota."); return; }
+
+    const notas = document.getElementById("mNotas")?.value || notasVis;
+    payload = { equipo1:eq1, equipo2:eq2, tipo_apuesta:tipo, cuota, monto, deporte:dep||"Otro", liga, fecha_partido:fecha, hora_partido:hora, notas };
+  }
+
+  const btn = document.getElementById("mSubmitBtn");
+  const originalTxt = btn?.textContent || "";
   if(btn){ btn.disabled=true; btn.textContent="⏳ Guardando…"; }
+
   try{
     let resp;
     if(_editRowId===null){
-      resp=await fetch(`${API_URL}/api/bets`,{method:"POST",headers:apiHeaders(),body:JSON.stringify({equipo1:eq1,equipo2:eq2,tipo_apuesta:tipo,cuota,monto,deporte:dep||"Otro",liga,fecha_partido:fecha,hora_partido:hora,notas})});
+      resp = await fetch(`${API_URL}/api/bets`,{method:"POST",headers:apiHeaders(),body:JSON.stringify(payload)});
     } else {
-      const body={equipo1:eq1,equipo2:eq2,tipo_apuesta:tipo,cuota,monto,deporte:dep,liga,fecha_partido:fecha,hora_partido:hora};
-      if(st!=="pending"){ body.status_final=st.charAt(0).toUpperCase()+st.slice(1); if(st==="win")body.ganancia_real=String((parseFloat(cuota)*parseFloat(monto)).toFixed(2)); if(st==="loss")body.ganancia_real=String(-parseFloat(monto)); if(st==="void")body.ganancia_real="0"; }
-      resp=await fetch(`${API_URL}/api/bets/${_editRowId}`,{method:"PUT",headers:apiHeaders(),body:JSON.stringify(body)});
+      if(st!=="pending"){
+        payload.status_final = st.charAt(0).toUpperCase()+st.slice(1);
+        const cuotaEdit = parseFloat(document.getElementById("mCuota")?.value||"0");
+        const montoEdit = parseFloat(monto||"0");
+        if(st==="win")  payload.ganancia_real = String((cuotaEdit*montoEdit).toFixed(2));
+        if(st==="loss") payload.ganancia_real = String(-montoEdit);
+        if(st==="void") payload.ganancia_real = "0";
+      }
+      resp = await fetch(`${API_URL}/api/bets/${_editRowId}`,{method:"PUT",headers:apiHeaders(),body:JSON.stringify(payload)});
     }
-    const j=await resp.json();
-    if(!j.ok) throw new Error(j.error||`Error ${resp.status} del servidor`);
+    const j = await resp.json();
+    if(!j.ok) throw new Error(j.error||`Error ${resp.status}`);
+    _parlayPicks = [];
     closeModal();
     await recargar();
     showTab("gestion",document.querySelector('[data-tab="gestion"]'));
