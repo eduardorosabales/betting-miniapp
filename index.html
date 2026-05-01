@@ -786,7 +786,10 @@ function renderBetItem(a){
   const icon=a.status==="win"?"win":a.status==="loss"?"loss":a.status==="void"?"pend":"pend";
   const res=a.status==="win"?`+${fmt(a.ganancia)}`:a.status==="loss"?`-${fmt(a.monto)}`:a.status==="void"?`🔄 Nula`:` ⏳ ${fmt(a.potencial)}`;
   const rc=a.status==="win"?"green":a.status==="loss"?"red":a.status==="void"?"accent":"yellow";
-  return`<div class="bet-item"><div class="bet-dot ${icon}"></div><div class="bet-info"><div class="bet-teams">${esc(a.equipo1||"?")} vs ${esc(a.equipo2||"?")}</div><div class="bet-meta">${esc(a.deporte)} · ${esc(a.tipo)} @ ${esc(a.cuota)} · ${a.fecha?.slice(0,10)||""}</div></div><div class="bet-right"><div class="bet-monto">${fmt(a.monto)}</div><div class="bet-result ${rc}">${res}</div></div></div>`;
+  const esParlay=(a.equipo2||"").startsWith("PARLAY");
+  const teamsLabel=esParlay?`🎯 Parlay · ${esc(a.equipo2||"")}`:  `${esc(a.equipo1||"?")} vs ${esc(a.equipo2||"?")}`;
+  const metaLabel=esParlay?`${esc(a.deporte)} · Acumulador @ ${esc(a.cuota)} · ${a.fecha?.slice(0,10)||""}`:  `${esc(a.deporte)} · ${esc(a.tipo)} @ ${esc(a.cuota)} · ${a.fecha?.slice(0,10)||""}`;
+  return`<div class="bet-item"><div class="bet-dot ${icon}"></div><div class="bet-info"><div class="bet-teams">${teamsLabel}</div><div class="bet-meta">${metaLabel}</div></div><div class="bet-right"><div class="bet-monto">${fmt(a.monto)}</div><div class="bet-result ${rc}">${res}</div></div></div>`;
 }
 
 /* ── Charts ── */
@@ -1004,6 +1007,7 @@ function openModal(rowId,idx){
             <input id="mFecha" class="m-input" type="date" value="${esc(v.fecha)}" style="flex:1">
           </div>
           <input id="mHora" class="m-input" type="time" value="${esc(v.hora)}" style="margin-top:6px">
+          <input id="mNotas" type="hidden" value="">
         </div>
         ${rowId!==null?`
         <div class="m-group"><label class="m-label">Resultado</label>
@@ -1055,16 +1059,38 @@ async function analyzeTicket(file){
     const j=await resp.json();
     if(!j.ok) throw new Error(j.error||"No se detectó ticket");
     const d=j.datos;
-    if(d.equipo1)     document.getElementById("mEq1").value=d.equipo1;
-    if(d.equipo2)     document.getElementById("mEq2").value=d.equipo2;
-    if(d.tipo_apuesta)document.getElementById("mTipo").value=d.tipo_apuesta;
-    if(d.cuota)       document.getElementById("mCuota").value=d.cuota;
-    if(d.monto)       document.getElementById("mMonto").value=d.monto;
-    if(d.deporte)     document.getElementById("mDep").value=d.deporte;
-    if(d.liga)        document.getElementById("mLiga").value=d.liga;
+    const esParlay = d.es_parlay && Array.isArray(d.picks) && d.picks.length > 1;
+
+    if(d.equipo1)       document.getElementById("mEq1").value=d.equipo1;
+    if(d.equipo2)       document.getElementById("mEq2").value=d.equipo2;
+    if(d.tipo_apuesta)  document.getElementById("mTipo").value=d.tipo_apuesta;
+    if(d.cuota)         document.getElementById("mCuota").value=d.cuota;
+    if(d.monto)         document.getElementById("mMonto").value=d.monto;
+    if(d.deporte)       document.getElementById("mDep").value=d.deporte;
+    if(d.liga)          document.getElementById("mLiga").value=d.liga;
     if(d.fecha_partido) document.getElementById("mFecha").value=d.fecha_partido;
     if(d.hora_partido)  document.getElementById("mHora").value=d.hora_partido;
-    uz.innerHTML=`<div class="u-icon">✅</div><div class="u-text" style="color:var(--win)">Ticket detectado — revisa los campos</div>`;
+
+    const mNotasEl=document.getElementById("mNotas");
+    if(mNotasEl) mNotasEl.value=d.notas||"";
+
+    if(esParlay){
+      const picksHtml=d.picks.map((p,i)=>
+        `<div style="font-size:11px;padding:3px 0;border-bottom:1px solid var(--border)">
+          <b>#${i+1}</b> ${esc(p.equipo1||"?")} vs ${esc(p.equipo2||"?")}
+          <span style="color:var(--text-2)"> | ${esc(p.tipo_apuesta||"")} @ ${esc(String(p.cuota||""))}</span>
+        </div>`
+      ).join("");
+      uz.innerHTML=`
+        <div class="u-icon">🎯</div>
+        <div class="u-text" style="color:var(--accent);font-weight:700">
+          Parlay · ${d.picks.length} picks · Cuota total: ${esc(String(d.cuota||""))}
+        </div>
+        <div style="width:100%;margin-top:8px;text-align:left">${picksHtml}</div>
+        <div class="u-sub" style="margin-top:6px">Revisa el monto y guarda ↓</div>`;
+    } else {
+      uz.innerHTML=`<div class="u-icon">✅</div><div class="u-text" style="color:var(--win)">Ticket detectado — revisa los campos</div>`;
+    }
   }catch(err){ showErr("⚠️ "+err.message); uz.style.opacity="1"; }
   finally{ an.style.display="none"; }
 }
@@ -1081,6 +1107,7 @@ async function submitBet(){
   const fecha=document.getElementById("mFecha")?.value.trim();
   const hora=document.getElementById("mHora")?.value.trim();
   const st=document.getElementById("mStatus")?.value||"pending";
+  const notas=document.getElementById("mNotas")?.value||"";
   if(!eq1||!eq2||!tipo||!cuota||!monto){ showErr("⚠️ Completa: equipos, tipo, cuota y monto."); return; }
   const btn=document.getElementById("mSubmitBtn");
   const originalTxt=btn?.textContent||"";
@@ -1088,7 +1115,7 @@ async function submitBet(){
   try{
     let resp;
     if(_editRowId===null){
-      resp=await fetch(`${API_URL}/api/bets`,{method:"POST",headers:apiHeaders(),body:JSON.stringify({equipo1:eq1,equipo2:eq2,tipo_apuesta:tipo,cuota,monto,deporte:dep||"Otro",liga,fecha_partido:fecha,hora_partido:hora})});
+      resp=await fetch(`${API_URL}/api/bets`,{method:"POST",headers:apiHeaders(),body:JSON.stringify({equipo1:eq1,equipo2:eq2,tipo_apuesta:tipo,cuota,monto,deporte:dep||"Otro",liga,fecha_partido:fecha,hora_partido:hora,notas})});
     } else {
       const body={equipo1:eq1,equipo2:eq2,tipo_apuesta:tipo,cuota,monto,deporte:dep,liga,fecha_partido:fecha,hora_partido:hora};
       if(st!=="pending"){ body.status_final=st.charAt(0).toUpperCase()+st.slice(1); if(st==="win")body.ganancia_real=String((parseFloat(cuota)*parseFloat(monto)).toFixed(2)); if(st==="loss")body.ganancia_real=String(-parseFloat(monto)); if(st==="void")body.ganancia_real="0"; }
