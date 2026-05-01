@@ -571,7 +571,7 @@ function renderMesContent(){
   if(!mesActual)return'<div class="empty">No hay datos este mes</div>';
   const ap=DATA.apuestas.filter(a=>a.fecha?.startsWith(mesActual));
   let w=0,l=0,p=0,apo=0,gan=0;
-  ap.forEach(a=>{if(a.status==="win"){w++;apo+=a.monto;gan+=a.ganancia||a.monto||0;}else if(a.status==="loss"){l++;apo+=a.monto;}else p++;});
+  ap.forEach(a=>{if(a.status==="win"){w++;apo+=a.monto;gan+=a.ganancia||a.monto||0;}else if(a.status==="loss"){l++;apo+=a.monto;}else p++;});if(/\bover\b|\bunder\b|\btotal\b|\bo\/u\b|más de|menos de|alt(ernate)? total|\bgames? o\/?u\b|\bsets? o\/?u\b|\bruns? o\/?u\b|half total|1st half total|q[1-4] total/.test(t))return"Total O/U";
   const neto=gan-apo,roi=apo>0?neto/apo*100:0,wr=(w+l)>0?(w/(w+l)*100).toFixed(1):"N/A";
   return`<div class="stats-grid">
       <div class="stat-card win-card"><div class="stat-value green">${w}</div><div class="stat-label">Ganadas</div></div>
