@@ -48,6 +48,9 @@ body::after{content:'';position:fixed;top:-200px;left:50%;transform:translateX(-
 .no-blur body::after{display:none!important}
 .no-blur .status-dot{animation:none!important}
 .no-blur .section.active{animation:none!important}
+.no-blur body::after{display:none!important}
+.no-blur .progress-fill,.no-blur .tipo-bar-fill,.no-blur .kelly-fill,.no-blur .dia-bar-fill{transition:none!important}
+.no-blur .loader-logo,.no-blur .loader-bar-fill{animation:none!important;opacity:1}
 
 /* ── Header ── */
 .header{position:sticky;top:0;z-index:100;background:rgba(6,8,15,0.85);backdrop-filter:blur(20px) saturate(180%);border-bottom:1px solid var(--border);padding:14px 16px}
@@ -267,6 +270,15 @@ body::after{content:'';position:fixed;top:-200px;left:50%;transform:translateX(-
 .secret-input{margin-top:10px;width:100%;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:13px;padding:9px 12px;box-sizing:border-box;outline:none}
 .secret-save{margin-top:8px;background:var(--pend);color:#000;border:none;border-radius:var(--radius-sm);padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer}
 </style>
+<script>
+// Aplica no-blur antes del primer paint para evitar backdrop-filter en Linux/Desktop
+(function(){
+  var ua = navigator.userAgent;
+  if ((ua.includes("Linux") && !ua.includes("Android")) || ua.includes("Windows NT")) {
+    document.documentElement.classList.add("no-blur");
+  }
+})();
+</script>
 </head>
 <body>
 
@@ -304,6 +316,7 @@ function apiHeaders(){ return { "Content-Type":"application/json", "X-Api-Key": 
 let DATA = null, filtroDeporte = "Todos", filtroEquipo = "";
 let mesActual = null, mesesDisponibles = [];
 let charts = {}, tabActual = "resumen", cargando = false;
+let _renderedSections = new Set();
 
 const NAV_ITEMS = [
   { id:"resumen",   icon:"📊", label:"General"  },
@@ -393,14 +406,15 @@ function calcRoiPorTipo(){
 }
 
 /* ── Helper: convierte un Date UTC a sus componentes en hora CDMX ── */
+const _mxFmt = (() => { try { return new Intl.DateTimeFormat("en-US", { timeZone:"America/Mexico_City", weekday:"short", hour:"numeric", hour12:false }); } catch(e){ return null; } })();
 function toMXParts(dt) {
   try {
-    const parts = new Intl.DateTimeFormat("en-US", {
+    const parts = (_mxFmt || new Intl.DateTimeFormat("en-US", {
       timeZone: "America/Mexico_City",
       weekday: "short",       // "Mon", "Tue"…
       hour:    "numeric",
       hour12:  false
-    }).formatToParts(dt);
+    })).formatToParts(dt);
     const get = t => parts.find(p => p.type === t)?.value ?? "0";
     const WEEK_SHORT = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
     return {
@@ -495,8 +509,23 @@ function calcKelly(){
   return{f,fMedio:f/2,fCuarto:f/4,p:p*100,cuotaMedia:b+1,ev};
 }
 
+const _RENDER_FNS = {
+  resumen:  ()=>renderResumen(),
+  semana:   ()=>renderSemana(),
+  mes:      ()=>renderMes(),
+  deportes: ()=>renderDeportes(),
+  tipos:    ()=>renderTipos(),
+  temporal: ()=>renderTemporal(),
+  rolling:  ()=>renderRolling(),
+  kelly:    ()=>renderKelly(),
+  capital:  ()=>renderCapital(),
+  apuestas: ()=>renderApuestas(),
+  gestion:  ()=>renderGestion(),
+};
+
 /* ── Render App ── */
 function renderApp(){
+  _renderedSections.clear();
   document.getElementById("app").innerHTML=`
     <div class="header">
       <div class="header-inner">
@@ -505,17 +534,17 @@ function renderApp(){
       </div>
     </div>
     <div class="content">
-      <div id="resumen"  class="section">${renderResumen()}</div>
-      <div id="semana"   class="section">${renderSemana()}</div>
-      <div id="mes"      class="section">${renderMes()}</div>
-      <div id="deportes" class="section">${renderDeportes()}</div>
-      <div id="tipos"    class="section">${renderTipos()}</div>
-      <div id="temporal" class="section">${renderTemporal()}</div>
-      <div id="rolling"  class="section">${renderRolling()}</div>
-      <div id="kelly"    class="section">${renderKelly()}</div>
-      <div id="capital"  class="section">${renderCapital()}</div>
-      <div id="apuestas" class="section">${renderApuestas()}</div>
-      <div id="gestion"  class="section">${renderGestion()}</div>
+      <div id="resumen"  class="section"></div>
+      <div id="semana"   class="section"></div>
+      <div id="mes"      class="section"></div>
+      <div id="deportes" class="section"></div>
+      <div id="tipos"    class="section"></div>
+      <div id="temporal" class="section"></div>
+      <div id="rolling"  class="section"></div>
+      <div id="kelly"    class="section"></div>
+      <div id="capital"  class="section"></div>
+      <div id="apuestas" class="section"></div>
+      <div id="gestion"  class="section"></div>
     </div>`;
   const nav=document.getElementById("bottomNav");
   nav.style.display="flex";
@@ -933,11 +962,19 @@ document.addEventListener("input",e=>{
   if(el){filtroEquipo=el.value;const l=document.getElementById("apuestasLista");if(l)l.innerHTML=renderApuestasList();}
 });
 
+const _ALWAYS_RERENDER = new Set(["apuestas","mes","gestion"]);
+
 function showTab(id,btn){
   document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));
   document.querySelectorAll(".nav-item").forEach(t=>t.classList.remove("active"));
   const sec=document.getElementById(id);
-  if(sec)sec.classList.add("active");
+  if(sec){
+    if(_RENDER_FNS[id]&&(!_renderedSections.has(id)||_ALWAYS_RERENDER.has(id))){
+      sec.innerHTML=_RENDER_FNS[id]();
+      _renderedSections.add(id);
+    }
+    sec.classList.add("active");
+  }
   if(btn)btn.classList.add("active");
   else{const nb=document.querySelector(`.nav-item[data-tab="${id}"]`);if(nb)nb.classList.add("active");}
   tabActual=id;
