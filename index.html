@@ -45,6 +45,9 @@ body::after{content:'';position:fixed;top:-200px;left:50%;transform:translateX(-
 .no-blur .header{backdrop-filter:none!important;background:rgba(6,8,15,0.97)!important}
 .no-blur .bottom-nav{backdrop-filter:none!important;background:rgba(10,14,28,0.97)!important}
 .no-blur body::before{display:none!important}
+.no-blur body::after{display:none!important}
+.no-blur .status-dot{animation:none!important}
+.no-blur .section.active{animation:none!important}
 
 /* ── Header ── */
 .header{position:sticky;top:0;z-index:100;background:rgba(6,8,15,0.85);backdrop-filter:blur(20px) saturate(180%);border-bottom:1px solid var(--border);padding:14px 16px}
@@ -282,11 +285,16 @@ body::after{content:'';position:fixed;top:-200px;left:50%;transform:translateX(-
 <script>
 const API_URL = "https://betting-stats-bot-production.up.railway.app";
 const tg = window.Telegram?.WebApp;
+const _isLowGPU = navigator.userAgent.includes("Linux") && !navigator.userAgent.includes("Android");
 if (tg) {
   tg.ready(); tg.expand();
-  if (tg.platform === "tdesktop" || tg.platform === "weba" || tg.platform === "webk" || tg.platform === "webz") {
+  if (tg.platform === "tdesktop" || tg.platform === "weba" || tg.platform === "webk" || tg.platform === "webz" || _isLowGPU) {
     document.documentElement.classList.add("no-blur");
   }
+}
+if (document.documentElement.classList.contains("no-blur")) {
+  Chart.defaults.animation = false;
+  Chart.defaults.animations = {};
 }
 
 // ── Auth para endpoints CRUD ──────────────────────────────────────────────────
