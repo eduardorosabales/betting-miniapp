@@ -279,6 +279,7 @@ body::after{content:'';position:fixed;top:-200px;left:50%;transform:translateX(-
   }
 })();
 </script>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
 
@@ -292,14 +293,17 @@ body::after{content:'';position:fixed;top:-200px;left:50%;transform:translateX(-
 <nav class="bottom-nav" id="bottomNav" style="display:none"></nav>
 <div id="gModal"></div>
 
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script>
 const API_URL = "https://betting-stats-bot-production.up.railway.app";
 const tg = window.Telegram?.WebApp;
 const _isLowGPU = navigator.userAgent.includes("Linux") && !navigator.userAgent.includes("Android");
 if (tg) {
-  tg.ready(); tg.expand();
+  tg.ready();
+  if (tg.isVersionAtLeast("6.1")) tg.expand();
+  tg.disableVerticalSwipes();
+  tg.setHeaderColor("#06080F");
+  tg.setBackgroundColor("#06080F");
   if (tg.platform === "tdesktop" || tg.platform === "weba" || tg.platform === "webk" || tg.platform === "webz" || _isLowGPU) {
     document.documentElement.classList.add("no-blur");
   }
@@ -312,6 +316,29 @@ if (document.documentElement.classList.contains("no-blur")) {
 // ── Auth para endpoints CRUD ──────────────────────────────────────────────────
 function getSecret(){ return localStorage.getItem("miniapp_secret") || ""; }
 function apiHeaders(){ return { "Content-Type":"application/json", "X-Api-Key": getSecret() }; }
+
+const _noBlur = document.documentElement.classList.contains("no-blur");
+
+/* Renderiza un canvas o un botón lazy según el entorno */
+function chartPlaceholder(canvasId, makeKey, tall=false){
+  const cls=tall?"chart-wrap-tall":"chart-wrap";
+  if(_noBlur){
+    return`<div class="${cls}" id="cwrap-${canvasId}" style="display:flex;align-items:center;justify-content:center;background:var(--card2);border-radius:var(--radius-md)"><button style="background:transparent;border:1px solid var(--border);color:var(--text-2);padding:10px 20px;border-radius:var(--radius-md);font-size:12px;font-weight:600;cursor:pointer" onclick="loadLazyChart('${canvasId}','${makeKey}')">📊 Cargar gráfica</button></div>`;
+  }
+  return`<div class="${cls}"><canvas id="${canvasId}" aria-label="Gráfica ${canvasId}" role="img"></canvas></div>`;
+}
+
+function loadLazyChart(canvasId,makeKey){
+  const wrap=document.getElementById("cwrap-"+canvasId);
+  if(!wrap)return;
+  wrap.removeAttribute("id");
+  wrap.innerHTML=`<canvas id="${canvasId}"></canvas>`;
+  if(makeKey==="neto")makeChartNeto();
+  else if(makeKey==="meses")makeChartMeses();
+  else if(makeKey==="dep")makeChartDep();
+  else if(makeKey==="tipo")makeChartTipo();
+  else if(makeKey==="rolling")makeChartRolling();
+}
 
 let DATA = null, filtroDeporte = "Todos", filtroEquipo = "";
 let mesActual = null, mesesDisponibles = [];
@@ -577,8 +604,8 @@ function renderResumen(){
     <div class="card"><div class="card-title">Win rate — ${wr}%</div>
       <div class="progress-wrap"><div class="progress-labels"><span class="green">${r.wins}W</span><span class="muted">${wr}%</span><span class="red">${r.losses}L</span></div>
       <div class="progress-track"><div class="progress-fill" style="width:${wr}%"></div></div></div></div>
-    <div class="card"><div class="card-title">Neto acumulado</div><div class="chart-wrap"><canvas id="chartNeto"></canvas></div></div>
-    <div class="card"><div class="card-title">Apostado vs Ganado</div><div class="chart-wrap"><canvas id="chartMeses"></canvas></div></div>`;
+    <div class="card"><div class="card-title">Neto acumulado</div>${chartPlaceholder("chartNeto","neto")}</div>
+    <div class="card"><div class="card-title">Apostado vs Ganado</div>${chartPlaceholder("chartMeses","meses")}</div>`;
 }
 
 /* ── Tab: Semana ── */
@@ -612,6 +639,7 @@ function renderSemana(){
 
 /* ── Tab: Mes ── */
 function renderMes(){
+  if(!DATA||!mesesDisponibles.length)return'<div class="empty">No hay datos de meses</div>';
   const idx=mesesDisponibles.indexOf(mesActual);
   return`<div class="mes-selector">
     <button class="mes-nav" data-mes-dir="-1" ${idx<=0?"disabled style='opacity:0.3;cursor:default'":""}>‹</button>
@@ -660,7 +688,7 @@ function renderDeportes(){
       <div class="kpi"><div class="kpi-label">🟢 Mejor</div><div class="kpi-value green" style="font-size:14px;margin-top:4px">${esc(deps[0].nombre)}</div><div style="font-family:var(--font-num);font-size:12px;color:var(--win);margin-top:4px">${deps[0].roi>=0?"+":""}${fmtp(deps[0].roi)}</div></div>
       <div class="kpi"><div class="kpi-label">🔴 Peor</div><div class="kpi-value red" style="font-size:14px;margin-top:4px">${esc(deps[deps.length-1].nombre)}</div><div style="font-family:var(--font-num);font-size:12px;color:var(--loss);margin-top:4px">${fmtp(deps[deps.length-1].roi)}</div></div>
     </div>
-    <div class="card"><div class="card-title">ROI comparativo</div><div class="chart-wrap"><canvas id="chartDep"></canvas></div></div>
+    <div class="card"><div class="card-title">ROI comparativo</div>${chartPlaceholder("chartDep","dep")}</div>
     <div class="card"><div class="card-title">Desglose</div>${deps.map(d=>{const total=d.wins+d.losses,wr=total>0?(d.wins/total*100).toFixed(0):0;return`<div class="sport-item"><div><div class="sport-name">${esc(d.nombre)}</div><div class="sport-sub">${d.wins}W·${d.losses}L·${wr}%WR·${fmt(d.apostado)}</div></div><div class="sport-roi ${d.roi>=0?"green":"red"}">${d.roi>=0?"+":""}${fmtp(d.roi)}</div></div>`;}).join("")}</div>`;
 }
 
@@ -676,7 +704,7 @@ function renderTipos(){
     </div>`:"";
   return`<div class="section-header">ROI por <span>tipo</span></div>
     ${kpisMejorPeor}
-    <div class="card"><div class="card-title">ROI por tipo</div><div class="chart-wrap"><canvas id="chartTipo"></canvas></div></div>
+    <div class="card"><div class="card-title">ROI por tipo</div>${chartPlaceholder("chartTipo","tipo")}</div>
     <div class="card"><div class="card-title">Detalle completo</div>
       ${tipos.map(t=>{
         const barW=Math.min(100,Math.abs(t.roi)/maxAbsRoi*100);
@@ -764,7 +792,7 @@ function renderRolling(){
       <div style="font-size:13px;font-weight:700;margin-bottom:6px">Tendencia reciente</div>
       <div style="font-size:24px">${tendencia.split(" ")[0]} <span style="font-size:14px;color:var(--text-2)">${tendencia.split(" ").slice(1).join(" ")}</span></div>
     </div>
-    <div class="card"><div class="card-title">ROI rodante (ventana ${VENTANA})</div><div class="chart-wrap-tall"><canvas id="chartRolling"></canvas></div></div>
+    <div class="card"><div class="card-title">ROI rodante (ventana ${VENTANA})</div>${chartPlaceholder("chartRolling","rolling",true)}</div>
     <div class="explainer"><strong>ROI rodante:</strong> Calcula el rendimiento de las últimas ${VENTANA} apuestas cerradas. Si la línea sube, el tipster está mejorando. Si baja, hay una racha negativa real — no solo mala suerte en 1-2 apuestas.</div>`;
 }
 
@@ -938,6 +966,7 @@ function makeChartRolling(){
 
 function initCharts(){
   if(!DATA||typeof Chart==="undefined")return;
+  if(_noBlur)return; // en Linux/tdesktop los charts son lazy (botón manual)
   Chart.defaults.color="#8896A8";
   Chart.defaults.borderColor="rgba(255,255,255,0.04)";
   if(tabActual==="resumen"){makeChartNeto();makeChartMeses();}
@@ -965,6 +994,11 @@ document.addEventListener("input",e=>{
 const _ALWAYS_RERENDER = new Set(["apuestas","mes","gestion"]);
 
 function showTab(id,btn){
+  // Liberar canvases del tab anterior antes de cambiar
+  if(tabActual==="resumen"){destroyChart("neto");destroyChart("meses");}
+  if(tabActual==="deportes"){destroyChart("dep");}
+  if(tabActual==="tipos"){destroyChart("tipo");}
+  if(tabActual==="rolling"){destroyChart("rolling");}
   document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));
   document.querySelectorAll(".nav-item").forEach(t=>t.classList.remove("active"));
   const sec=document.getElementById(id);
