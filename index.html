@@ -369,15 +369,17 @@ function mesLabel(m){if(!m)return"—";const[y,mo]=m.split("-");return["Ene","Fe
 /* ── Fetch ── */
 let _ctrl=null;
 async function cargarDatos(){
+/* ── Fetch ── */
+let _ctrl=null;
+async function cargarDatos(){
   if(!getSecret()){
-    document.getElementById("app").innerHTML=`
-      <div style="padding:20px">
-        <div class="error-box">
-          <p>🔑 <strong>Clave de API no configurada</strong></p><br>
-          <small>Ve a la pestaña <strong>Gestión ⚙️</strong> e ingresa tu
-          <code>MINIAPP_SECRET</code> para conectar el dashboard.</small>
-        </div>
-      </div>`;
+    const nav=document.getElementById("bottomNav");
+    if(nav){
+      nav.style.display="flex";
+      nav.innerHTML=buildNav();
+    }
+    document.getElementById("app").innerHTML=buildSections();
+    showTab("gestion",null);
     return;
   }
   if(_ctrl)_ctrl.abort();
