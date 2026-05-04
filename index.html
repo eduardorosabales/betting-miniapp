@@ -1085,16 +1085,29 @@ function renderGLista(){
 }
 
 async function pasteSecret(){
-  try {
-    const text = await navigator.clipboard.readText();
-    const el = document.getElementById("sInput");
-    if(el) el.value = text.trim();
-  } catch(e) {
-    // Fallback: foco en el campo para que el usuario pegue manualmente
-    const el = document.getElementById("sInput");
-    if(el){ el.focus(); el.select(); }
-    alert("Usa Ctrl+V en el campo ahora que está enfocado.");
+  const el = document.getElementById("sInput");
+  if(!el) return;
+  el.focus();
+  el.select();
+
+  // Intento 1: API moderna (falla silenciosamente en Telegram WebView Linux)
+  if(navigator.clipboard && navigator.clipboard.readText){
+    try{
+      const text = await navigator.clipboard.readText();
+      if(text){ el.value = text.trim(); return; }
+    }catch(_){}
   }
+
+  // Intento 2: execCommand legacy — funciona en Telegram WebView
+  try{
+    const ok = document.execCommand('paste');
+    if(ok) return;
+  }catch(_){}
+
+  // Intento 3: fallback visual — campo ya está enfocado, usuario presiona Ctrl+V
+  el.style.outline = "2px solid var(--accent)";
+  setTimeout(()=>{ el.style.outline=""; }, 2000);
+  alert("Campo listo — presiona Ctrl+V ahora");
 }
 
 function saveSecret(){
