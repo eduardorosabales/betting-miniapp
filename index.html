@@ -370,13 +370,11 @@ function mesLabel(m){if(!m)return"—";const[y,mo]=m.split("-");return["Ene","Fe
 let _ctrl=null;
 async function cargarDatos(){
   if(!getSecret()){
-    const nav=document.getElementById("bottomNav");
-    if(nav){
-      nav.style.display="flex";
-      nav.innerHTML=buildNav();
-    }
-    document.getElementById("app").innerHTML=buildSections();
-    showTab("gestion",null);
+    renderApp();
+    setTimeout(()=>{
+      const btn=document.querySelector('[data-tab="gestion"]');
+      showTab("gestion", btn);
+    }, 0);
     return;
   }
   if(_ctrl)_ctrl.abort();
