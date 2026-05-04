@@ -1046,8 +1046,12 @@ function renderGestion(){
   ${!ok ? `<div class="secret-banner">
     <strong>🔑 Clave de API requerida</strong><br>
     Pega tu <code>MINIAPP_SECRET</code> de Railway para habilitar el CRUD.
-    <input id="sInput" class="secret-input" type="password" placeholder="MINIAPP_SECRET...">
-    <button class="secret-save" onclick="saveSecret()">Guardar</button>
+<input id="sInput" class="secret-input" type="text" placeholder="MINIAPP_SECRET..."
+  autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+<div style="display:flex;gap:8px;margin-top:6px">
+  <button class="secret-save" onclick="pasteSecret()">📋 Pegar</button>
+  <button class="secret-save" onclick="saveSecret()">Guardar</button>
+</div>
   </div>` : ""}
 
   <div class="g-toolbar">
@@ -1078,6 +1082,19 @@ function renderGLista(){
       </div>
     </div>`;
   }).join("");
+}
+
+async function pasteSecret(){
+  try {
+    const text = await navigator.clipboard.readText();
+    const el = document.getElementById("sInput");
+    if(el) el.value = text.trim();
+  } catch(e) {
+    // Fallback: foco en el campo para que el usuario pegue manualmente
+    const el = document.getElementById("sInput");
+    if(el){ el.focus(); el.select(); }
+    alert("Usa Ctrl+V en el campo ahora que está enfocado.");
+  }
 }
 
 function saveSecret(){
