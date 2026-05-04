@@ -1047,7 +1047,8 @@ function renderGestion(){
     <strong>🔑 Clave de API requerida</strong><br>
     Pega tu <code>MINIAPP_SECRET</code> de Railway para habilitar el CRUD.
 <input id="sInput" class="secret-input" type="text" placeholder="MINIAPP_SECRET..."
-  autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+  autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+  onpaste="handleSecretPaste(event)">
 <div style="display:flex;gap:8px;margin-top:6px">
   <button class="secret-save" onclick="pasteSecret()">📋 Pegar</button>
   <button class="secret-save" onclick="saveSecret()">Guardar</button>
@@ -1084,30 +1085,28 @@ function renderGLista(){
   }).join("");
 }
 
+function handleSecretPaste(e){
+  const text = (e.clipboardData || window.clipboardData).getData('text');
+  if(text){
+    e.preventDefault();
+    document.getElementById('sInput').value = text.trim();
+  }
+}
+
 async function pasteSecret(){
   const el = document.getElementById("sInput");
   if(!el) return;
   el.focus();
   el.select();
-
-  // Intento 1: API moderna (falla silenciosamente en Telegram WebView Linux)
-  if(navigator.clipboard && navigator.clipboard.readText){
-    try{
-      const text = await navigator.clipboard.readText();
-      if(text){ el.value = text.trim(); return; }
-    }catch(_){}
-  }
-
-  // Intento 2: execCommand legacy — funciona en Telegram WebView
-  try{
-    const ok = document.execCommand('paste');
-    if(ok) return;
-  }catch(_){}
-
-  // Intento 3: fallback visual — campo ya está enfocado, usuario presiona Ctrl+V
   el.style.outline = "2px solid var(--accent)";
-  setTimeout(()=>{ el.style.outline=""; }, 2000);
-  alert("Campo listo — presiona Ctrl+V ahora");
+  setTimeout(()=>{ el.style.outline=""; }, 2500);
+}
+
+function saveSecret(){
+  const v = document.getElementById("sInput")?.value?.trim();
+  if(!v){ alert("Escribe la clave primero."); return; }
+  localStorage.setItem("miniapp_secret", v);
+  loadData();
 }
 
 function saveSecret(){
