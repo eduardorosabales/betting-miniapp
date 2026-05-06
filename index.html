@@ -608,6 +608,10 @@ function renderResumen(){
       <div class="kpi"><div class="kpi-label">Total apostado</div><div class="kpi-value accent">${fmt(r.apostado)}</div></div>
       <div class="kpi"><div class="kpi-label">Total cobrado</div><div class="kpi-value">${fmt(r.ganado)}</div></div>
     </div>
+    ${r.mejor_mes ? `<div class="kpi-row">
+      <div class="kpi"><div class="kpi-label">🏆 Mejor mes</div><div class="kpi-value accent">${mesLabel(r.mejor_mes.mes)}</div></div>
+      <div class="kpi"><div class="kpi-label">Pico neto alcanzado</div><div class="kpi-value green">${fmts(r.mejor_mes.neto_max)}</div></div>
+    </div>` : ""}
     ${rachaHtml}
     <div class="card"><div class="card-title">Win rate — ${wr}%</div>
       <div class="progress-wrap"><div class="progress-labels"><span class="green">${r.wins}W</span><span class="muted">${wr}%</span><span class="red">${r.losses}L</span></div>
@@ -662,15 +666,21 @@ function renderMesContent(){
   let w=0,l=0,p=0,apo=0,gan=0;
   ap.forEach(a=>{if(a.status==="win"){w++;apo+=a.monto;gan+=a.ganancia||a.monto||0;}else if(a.status==="loss"){l++;apo+=a.monto;}else p++;});
   const neto=gan-apo,roi=apo>0?neto/apo*100:0,wr=(w+l)>0?(w/(w+l)*100).toFixed(1):"N/A";
+  const _mesData=DATA.grafica_meses.find(m=>m.mes===mesActual);
+  const _netoMax=_mesData!=null?_mesData.neto_max:null;
   return`<div class="stats-grid">
       <div class="stat-card win-card"><div class="stat-value green">${w}</div><div class="stat-label">Ganadas</div></div>
       <div class="stat-card loss-card"><div class="stat-value red">${l}</div><div class="stat-label">Perdidas</div></div>
       <div class="stat-card pend-card"><div class="stat-value yellow">${p}</div><div class="stat-label">Pendientes</div></div>
     </div>
     <div class="kpi-row">
-      <div class="kpi"><div class="kpi-label">Neto</div><div class="kpi-value ${signColor(neto)}">${fmts(neto)}</div></div>
+      <div class="kpi"><div class="kpi-label">Neto del mes</div><div class="kpi-value ${signColor(neto)}">${fmts(neto)}</div></div>
       <div class="kpi"><div class="kpi-label">ROI</div><div class="kpi-value ${signColor(roi)}">${roi>=0?"+":""}${fmtp(roi)}</div></div>
     </div>
+    ${_netoMax!==null?`<div class="kpi-row">
+      <div class="kpi"><div class="kpi-label">📈 Pico neto (acum.)</div><div class="kpi-value ${signColor(_netoMax)}">${fmts(_netoMax)}</div></div>
+      <div class="kpi"><div class="kpi-label" style="font-size:9px;color:var(--text-2)">Máx. global alcanzado<br>durante este mes</div></div>
+    </div>`:""}
     <div class="kpi-row">
       <div class="kpi"><div class="kpi-label">Apostado</div><div class="kpi-value accent">${fmt(apo)}</div></div>
       <div class="kpi"><div class="kpi-label">Win rate</div><div class="kpi-value">${wr}%</div></div>
