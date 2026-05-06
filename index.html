@@ -678,8 +678,7 @@ function renderMesContent(){
       <div class="kpi"><div class="kpi-label">ROI</div><div class="kpi-value ${signColor(roi)}">${roi>=0?"+":""}${fmtp(roi)}</div></div>
     </div>
     ${_netoMax!==null?`<div class="kpi-row">
-      <div class="kpi"><div class="kpi-label">📈 Pico neto (acum.)</div><div class="kpi-value ${signColor(_netoMax)}">${fmts(_netoMax)}</div></div>
-      <div class="kpi"><div class="kpi-label" style="font-size:9px;color:var(--text-2)">Máx. global alcanzado<br>durante este mes</div></div>
+      <div class="kpi"><div class="kpi-label">📈 Pico neto (acum.)</div><div class="kpi-value ${signColor(_netoMax)}">${fmts(_netoMax)}</div><div style="font-size:9px;color:var(--text-2);margin-top:3px">Máx. global alcanzado este mes</div></div>
     </div>`:""}
     <div class="kpi-row">
       <div class="kpi"><div class="kpi-label">Apostado</div><div class="kpi-value accent">${fmt(apo)}</div></div>
