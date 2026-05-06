@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="api-url" content="https://betting-stats-bot-production.up.railway.app">
 <title>Betting Stats</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -295,7 +296,12 @@ body::after{content:'';position:fixed;top:-200px;left:50%;transform:translateX(-
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script>
-const API_URL = "https://betting-stats-bot-production.up.railway.app";
+// FIX: API_URL configurable vía meta tag, fallback al dominio Railway.
+// En el <head>: <meta name="api-url" content="https://...">
+const API_URL = (
+  document.querySelector('meta[name="api-url"]')?.content
+  || "https://betting-stats-bot-production.up.railway.app"
+);
 const tg = window.Telegram?.WebApp;
 const _isLowGPU = navigator.userAgent.includes("Linux") && !navigator.userAgent.includes("Android");
 if (tg) {
@@ -314,7 +320,17 @@ if (document.documentElement.classList.contains("no-blur")) {
 }
 
 // ── Auth para endpoints CRUD ──────────────────────────────────────────────────
-function getSecret(){ return localStorage.getItem("miniapp_secret") || ""; }
+function getSecret(){
+  // FIX-XSS: sessionStorage en lugar de localStorage. Si hay XSS, el atacante
+  // solo accede a la key durante la sesión activa, no para siempre.
+  // Migración silenciosa: lee de localStorage si existe, lo pasa a session, y borra.
+  const legacy = localStorage.getItem("miniapp_secret");
+  if (legacy) {
+    sessionStorage.setItem("miniapp_secret", legacy);
+    localStorage.removeItem("miniapp_secret");
+  }
+  return sessionStorage.getItem("miniapp_secret") || "";
+}
 function apiHeaders(){ return { "Content-Type":"application/json", "X-Api-Key": getSecret() }; }
 
 const _noBlur = document.documentElement.classList.contains("no-blur");
@@ -1114,14 +1130,14 @@ async function pasteSecret(){
 function saveSecret(){
   const v = document.getElementById("sInput")?.value?.trim();
   if(!v){ alert("Escribe la clave primero."); return; }
-  localStorage.setItem("miniapp_secret", v);
+  sessionStorage.setItem("miniapp_secret", v);
   loadData();
 }
 
 function saveSecret(){
   const v=document.getElementById("sInput")?.value?.trim();
   if(!v) return;
-  localStorage.setItem("miniapp_secret",v);
+  sessionStorage.setItem("miniapp_secret",v);
   location.reload();
 }
 
