@@ -331,8 +331,25 @@ function getSecret(){
   }
   return sessionStorage.getItem("miniapp_secret") || "";
 }
-function apiHeaders(){ return { "Content-Type":"application/json", "X-Api-Key": getSecret() }; }
+function apiHeaders(extra = {}){
+  // Auth híbrida: mientras dura la migración, enviamos AMBOS headers.
+  // El backend acepta cualquiera. Cuando confirmemos que initData funciona
+  // en producción ~1 semana, retiramos el X-Api-Key.
+  const headers = { "Content-Type": "application/json", ...extra };
 
+  // 1) initData de Telegram (preferido) — válido si la Mini-App se abre desde Telegram
+  if (tg?.initData) {
+    headers["X-Telegram-Init-Data"] = tg.initData;
+  }
+
+  // 2) Fallback: X-Api-Key (legacy) — útil para abrir la Mini-App fuera de Telegram
+  const apiKey = getSecret();
+  if (apiKey) {
+    headers["X-Api-Key"] = apiKey;
+  }
+
+  return headers;
+}
 const _noBlur = document.documentElement.classList.contains("no-blur");
 
 /* Renderiza un canvas o un botón lazy según el entorno */
@@ -385,7 +402,7 @@ function mesLabel(m){if(!m)return"—";const[y,mo]=m.split("-");return["Ene","Fe
 /* ── Fetch ── */
 let _ctrl=null;
 async function cargarDatos(){
-  if(!getSecret()){
+  if(!getSecret() && !tg?.initData){
     renderApp();
     setTimeout(()=>{
       const btn=document.querySelector('[data-tab="gestion"]');
@@ -397,9 +414,7 @@ async function cargarDatos(){
   _ctrl=new AbortController();
   const timeout=setTimeout(()=>_ctrl.abort(),12000);
   try{
-    const hdrs = apiHeaders();
-    if(tg?.initData)hdrs["X-Telegram-Init-Data"]=tg.initData;
-    const res=await fetch(`${API_URL}/api/stats`,{headers:hdrs,signal:_ctrl.signal});
+    const res=await fetch(`${API_URL}/api/stats`,{headers:apiHeaders(),signal:_ctrl.signal});
     if(!res.ok)throw new Error(`HTTP ${res.status}`);
     const json=await res.json();
     if(!json.resumen||!Array.isArray(json.apuestas))throw new Error("Datos inesperados");
