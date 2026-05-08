@@ -1389,7 +1389,7 @@ function handleDrop(e){
   const f=e.dataTransfer.files[0]; if(f?.type.startsWith("image/")) analyzeTicket(f);
 }
 
-// Pre-comprime imagen via canvas. Reduce 5-12MB → <1MB sin pérdida visible para tickets.
+// Pre-comprime imagen via canvas. Reduce 5-12MB → <1MB sin pérdida visible para tickets..
 // Devuelve { blob, b64 } con la imagen ya comprimida en formato JPEG.
 async function compressImage(file, {maxDim=1920, quality=0.85} = {}){
   const bmp = await createImageBitmap(file).catch(()=>null);
