@@ -1389,9 +1389,20 @@ function handleDrop(e){
   const f=e.dataTransfer.files[0]; if(f?.type.startsWith("image/")) analyzeTicket(f);
 }
 
-// Pre-comprime imagen via canvas. Reduce 5-12MB → <1MB sin pérdida visible para tickets..
-// Devuelve { blob, b64 } con la imagen ya comprimida en formato JPEG.
-async function compressImage(file, {maxDim=1920, quality=0.85} = {}){
+// Pre-comprime imagen via canvas. Reduce 5-12MB → <1MB sin pérdida visible para tickets.
+// Re-compresión adaptativa: si el primer preset (1920px q=0.85) excede el umbral,
+// reintenta con presets más agresivos antes de rendirse. Si ningún preset baja
+// del umbral, lanza error local — nunca enviamos un body que el bot rechazaría.
+const _COMPRESS_PRESETS = [
+  { maxDim: 1920, quality: 0.85 },
+  { maxDim: 1600, quality: 0.75 },
+  { maxDim: 1280, quality: 0.70 },
+];
+// 6MB de blob comprimido. Margen de seguridad bajo el client_max_size=10MB del bot
+// considerando overhead de base64 (×4/3) + envoltura JSON.
+const _MAX_BLOB_BYTES_TO_SEND = 6 * 1024 * 1024;
+
+async function _compressOnce(file, {maxDim, quality}){
   const bmp = await createImageBitmap(file).catch(()=>null);
   if(!bmp) throw new Error("No se pudo decodificar la imagen");
   let {width:w, height:h} = bmp;
@@ -1404,13 +1415,35 @@ async function compressImage(file, {maxDim=1920, quality=0.85} = {}){
   bmp.close?.();
   const blob = await new Promise(r => canvas.toBlob(r, "image/jpeg", quality));
   if(!blob) throw new Error("Fallo en compresión");
+  return { blob, dim:{w, h} };
+}
+
+async function compressImage(file){
+  if(!file || !file.size) throw new Error("Archivo vacío");
+  let lastBlob=null, lastDim=null, lastPreset=null;
+  for(const preset of _COMPRESS_PRESETS){
+    const {blob, dim} = await _compressOnce(file, preset);
+    lastBlob=blob; lastDim=dim; lastPreset=preset;
+    if(blob.size <= _MAX_BLOB_BYTES_TO_SEND) break;
+    console.warn(`[compressImage] preset ${preset.maxDim}px q=${preset.quality} → ${(blob.size/1024/1024).toFixed(2)}MB, reintentando más agresivo`);
+  }
+  if(lastBlob.size > _MAX_BLOB_BYTES_TO_SEND){
+    throw new Error(`Imagen demasiado grande tras compresión (${(lastBlob.size/1024/1024).toFixed(1)}MB). Recorta el ticket o usa otra captura.`);
+  }
   const b64 = await new Promise((res,rej)=>{
     const r=new FileReader();
     r.onload=()=>res(r.result.split(",")[1]);
     r.onerror=()=>rej(new Error("Error leyendo blob comprimido"));
-    r.readAsDataURL(blob);
+    r.readAsDataURL(lastBlob);
   });
-  return { blob, b64, originalSize:file.size, compressedSize:blob.size };
+  return {
+    blob: lastBlob,
+    b64,
+    originalSize: file.size,
+    compressedSize: lastBlob.size,
+    dim: lastDim,
+    preset: lastPreset,
+  };
 }
 
 async function analyzeTicket(file){
@@ -1419,8 +1452,14 @@ async function analyzeTicket(file){
   const an=document.getElementById("uAn"); const uz=document.getElementById("uZone");
   an.style.display="flex"; uz.style.opacity="0.5";
   try{
-    const {b64, originalSize, compressedSize} = await compressImage(file);
-    console.log(`[analyzeTicket] ${(originalSize/1024/1024).toFixed(2)}MB → ${(compressedSize/1024/1024).toFixed(2)}MB`);
+    const {b64, originalSize, compressedSize, dim, preset} = await compressImage(file);
+    const mbIn  = (originalSize/1024/1024).toFixed(2);
+    const mbOut = (compressedSize/1024/1024).toFixed(2);
+    console.log(`[analyzeTicket] ${mbIn}MB → ${mbOut}MB · ${dim.w}x${dim.h} · q=${preset.quality}`);
+    // Feedback visible: en Telegram WebApp móvil no hay acceso a la consola.
+    // Mostramos los tamaños en la zona de upload para diagnóstico inmediato.
+    const uTextEl = uz.querySelector(".u-text");
+    if(uTextEl) uTextEl.textContent = `Comprimida ${mbIn}→${mbOut}MB · analizando…`;
     const resp=await fetch(`${API_URL}/api/analyze-ticket`,{method:"POST",headers:apiHeaders(),body:JSON.stringify({image_b64:b64})});
     const j=await resp.json();
     if(!j.ok) throw new Error(j.error||"No se detectó ticket");
