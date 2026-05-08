@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="api-url" content="https://betting-stats-bot-production.up.railway.app">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://telegram.org; style-src 'self' 'unsafe-inline'; connect-src 'self' https://*.up.railway.app; img-src 'self' data: blob:; object-src 'none'; base-uri 'self'; frame-ancestors https://web.telegram.org https://t.me;">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://telegram.org; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://*.up.railway.app wss://*.up.railway.app; img-src 'self' data: blob:; object-src 'none'; base-uri 'self';">
 <title>Betting Stats</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -315,7 +315,7 @@ if (tg) {
     document.documentElement.classList.add("no-blur");
   }
 }
-if (document.documentElement.classList.contains("no-blur")) {
+if (document.documentElement.classList.contains("no-blur") && typeof Chart !== "undefined") {
   Chart.defaults.animation = false;
   Chart.defaults.animations = {};
 }
@@ -424,8 +424,10 @@ async function cargarDatos(){
     mesActual=mesesDisponibles[mesesDisponibles.length-1]||null;
     renderApp();
   }catch(e){
-    if(e.name==="AbortError")return;
-    document.getElementById("app").innerHTML=`<div style="padding:20px"><div class="error-box"><p>Sin conexión</p><br><small>${esc(e.message)}</small><br><button class="retry-btn" data-action="recargar">↻ Reintentar</button></div></div>`;
+    const msg = e.name === "AbortError"
+      ? "Tiempo de espera agotado (12s). Verifica tu conexión o que el backend esté disponible."
+      : e.message;
+    document.getElementById("app").innerHTML=`<div style="padding:20px"><div class="error-box"><p>Sin conexión</p><br><small>${esc(msg)}</small><br><button class="retry-btn" data-action="recargar">↻ Reintentar</button></div></div>`;
   }finally{clearTimeout(timeout);}
 }
 
