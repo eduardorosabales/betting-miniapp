@@ -1389,13 +1389,38 @@ function handleDrop(e){
   const f=e.dataTransfer.files[0]; if(f?.type.startsWith("image/")) analyzeTicket(f);
 }
 
+// Pre-comprime imagen via canvas. Reduce 5-12MB → <1MB sin pérdida visible para tickets.
+// Devuelve { blob, b64 } con la imagen ya comprimida en formato JPEG.
+async function compressImage(file, {maxDim=1920, quality=0.85} = {}){
+  const bmp = await createImageBitmap(file).catch(()=>null);
+  if(!bmp) throw new Error("No se pudo decodificar la imagen");
+  let {width:w, height:h} = bmp;
+  const scale = Math.min(1, maxDim/Math.max(w,h));
+  w = Math.round(w*scale); h = Math.round(h*scale);
+  const canvas = document.createElement("canvas");
+  canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(bmp, 0, 0, w, h);
+  bmp.close?.();
+  const blob = await new Promise(r => canvas.toBlob(r, "image/jpeg", quality));
+  if(!blob) throw new Error("Fallo en compresión");
+  const b64 = await new Promise((res,rej)=>{
+    const r=new FileReader();
+    r.onload=()=>res(r.result.split(",")[1]);
+    r.onerror=()=>rej(new Error("Error leyendo blob comprimido"));
+    r.readAsDataURL(blob);
+  });
+  return { blob, b64, originalSize:file.size, compressedSize:blob.size };
+}
+
 async function analyzeTicket(file){
   if(!file) return;
   if(!getSecret()){ showErr("Configura la clave de API primero."); return; }
   const an=document.getElementById("uAn"); const uz=document.getElementById("uZone");
   an.style.display="flex"; uz.style.opacity="0.5";
   try{
-    const b64=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(",")[1]);r.onerror=()=>rej(new Error("Error leyendo archivo"));r.readAsDataURL(file);});
+    const {b64, originalSize, compressedSize} = await compressImage(file);
+    console.log(`[analyzeTicket] ${(originalSize/1024/1024).toFixed(2)}MB → ${(compressedSize/1024/1024).toFixed(2)}MB`);
     const resp=await fetch(`${API_URL}/api/analyze-ticket`,{method:"POST",headers:apiHeaders(),body:JSON.stringify({image_b64:b64})});
     const j=await resp.json();
     if(!j.ok) throw new Error(j.error||"No se detectó ticket");
