@@ -961,13 +961,38 @@ function renderApuestasList(){
   const mostrar=[...filt].reverse().slice(0,50);
   const truncated=filt.length>50;  return`<div class="card"><div class="card-title">${filt.length} apuesta${filt.length!==1?"s":""}${truncated?" <span style='color:var(--text-2);font-weight:400;font-size:10px'>(mostrando últimas 50)</span>":""}</div>${mostrar.length===0?'<div class="empty">Sin resultados</div>':mostrar.map(renderBetItem).join("")}</div>`;
 }
+const _RE_SUFIJO_HOME_AWAY = /^((?:Asian\s+Handicap|Handicap|Moneyline|1X2)(?:\s+[+\-]?\d+(?:\.\d+)?)?)\s*-\s*(Home|Away|Draw|Empate|Local|Visitante)\s*$/i;
+
+function formatTipoApuesta(a){
+  let t = (a?.tipo || "").trim();
+  if(!t) return "";
+
+  // 1) Unificar 1X2 → Moneyline.
+  t = t.replace(/^1X2\b/i, "Moneyline");
+
+  // 2) Traducir Home/Away/Draw → equipo concreto.
+  const m = t.match(_RE_SUFIJO_HOME_AWAY);
+  if(!m) return t;
+
+  const base = m[1].trim();
+  const sel  = m[2].trim().toLowerCase();
+  const eq1  = (a.equipo1 || "").trim();
+  const eq2  = (a.equipo2 || "").trim();
+
+  if(sel === "home" || sel === "local")        return eq1 ? `${base} - ${eq1}` : t;
+  if(sel === "away" || sel === "visitante")    return eq2 ? `${base} - ${eq2}` : t;
+  if((sel === "draw" || sel === "empate") && /^moneyline/i.test(base))
+                                               return `${base} - Empate`;
+  return t;
+}
+
 function renderBetItem(a){
   const icon=a.status==="win"?"win":a.status==="loss"?"loss":a.status==="void"?"pend":"pend";
   const res=a.status==="win"?`+${fmt(a.ganancia)}`:a.status==="loss"?`-${fmt(a.monto)}`:a.status==="void"?`🔄 Nula`:` ⏳ ${fmt(a.potencial)}`;
   const rc=a.status==="win"?"green":a.status==="loss"?"red":a.status==="void"?"accent":"yellow";
   const esParlay=(a.equipo2||"").startsWith("PARLAY");
   const teamsLabel=esParlay?`🎯 Parlay · ${esc(a.equipo2||"")}`:  `${esc(a.equipo1||"?")} vs ${esc(a.equipo2||"?")}`;
-  const metaLabel=esParlay?`${esc(a.deporte)} · Acumulador @ ${esc(a.cuota)} · ${(a.fecha_partido||a.fecha)?.slice(0,10)||""}`:  `${esc(a.deporte)} · ${esc(a.tipo)} @ ${esc(a.cuota)} · ${(a.fecha_partido||a.fecha)?.slice(0,10)||""}`;
+  const metaLabel=esParlay?`${esc(a.deporte)} · Acumulador @ ${esc(a.cuota)} · ${(a.fecha_partido||a.fecha)?.slice(0,10)||""}`:  `${esc(a.deporte)} · ${esc(formatTipoApuesta(a))} @ ${esc(a.cuota)} · ${(a.fecha_partido||a.fecha)?.slice(0,10)||""}`;
   return`<div class="bet-item"><div class="bet-dot ${icon}"></div><div class="bet-info"><div class="bet-teams">${teamsLabel}</div><div class="bet-meta">${metaLabel}</div></div><div class="bet-right"><div class="bet-monto">${fmt(a.monto)}</div><div class="bet-result ${rc}">${res}</div></div></div>`;
 }
 
