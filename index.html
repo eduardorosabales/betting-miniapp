@@ -902,9 +902,13 @@ function renderCapital(){
         <span style="color:var(--text-2)">Exposición simultánea máx.</span>
         <span style="font-family:var(--font-num);color:var(--text)">${fmt(c.exp_maxima)}</span>
       </div>
-      <div style="display:flex;justify-content:space-between;font-size:12px">
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
         <span style="color:var(--text-2)">Drawdown peor racha (${c.peor_racha} × ${fmt(c.monto_racha_prom ?? c.monto_promedio)})</span>
         <span style="font-family:var(--font-num);color:var(--loss)">${fmt(c.drawdown_racha)}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:12px">
+        <span style="color:var(--text-2)">Drawdown histórico real</span>
+        <span style="font-family:var(--font-num);color:var(--loss)">${fmt(c.drawdown_maximo ?? 0)}</span>
       </div>
     </div>` : "";
 
@@ -942,7 +946,7 @@ function renderCapital(){
     </div>
     ${capMesHtml}
     <div class="explainer">
-      El <strong>capital mínimo</strong> es el mayor entre: la exposición simultánea máxima histórica y el drawdown estimado de la peor racha perdedora.
+      El <strong>capital mínimo</strong> es el mayor entre: la exposición simultánea máxima histórica, el drawdown estimado de la peor racha perdedora y el drawdown histórico real (curva de balance).
       El <strong>capital cómodo</strong> añade un 50% de colchón de seguridad sobre ese mínimo.
     </div>`;
 }
