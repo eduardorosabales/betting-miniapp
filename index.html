@@ -96,204 +96,6 @@
       display: none
     }
 
-    /* ── Desktop layout (≥768px) ── */
-    @media(min-width:768px) {
-      body {
-        padding-bottom: 0;
-        padding-left: var(--sidebar-w);
-      }
-
-      /* Header centrado en área de contenido */
-      .header {
-        left: var(--sidebar-w);
-        right: 0;
-      }
-
-      .header-inner {
-        max-width: var(--content-max);
-        margin: 0 auto;
-      }
-
-      /* Contenido centrado */
-      .content {
-        max-width: var(--content-max);
-        margin: 0 auto;
-        padding: 24px 32px;
-      }
-
-      /* Sidebar vertical en lugar de bottom nav */
-      .bottom-nav {
-        position: fixed;
-        top: 0;
-        left: 0;
-        bottom: 0;
-        right: auto;
-        width: var(--sidebar-w);
-        height: 100%;
-        flex-direction: column;
-        align-items: stretch;
-        justify-content: flex-start;
-        border-top: none;
-        border-right: 1px solid var(--border);
-        padding: 0;
-        padding-top: 70px;
-        overflow-y: auto;
-        overflow-x: hidden;
-      }
-
-      .nav-item {
-        min-width: auto;
-        flex: none;
-        flex-direction: row;
-        justify-content: flex-start;
-        gap: 12px;
-        padding: 12px 20px;
-        border-radius: 0;
-        text-align: left;
-      }
-
-      .nav-item.active::before {
-        top: 0;
-        bottom: 0;
-        left: 0;
-        right: auto;
-        width: 3px;
-        height: 100%;
-        border-radius: 0 4px 4px 0;
-      }
-
-      .nav-icon {
-        font-size: 18px
-      }
-
-      .nav-label {
-        font-size: 13px;
-        font-weight: 600;
-        letter-spacing: 0.2px
-      }
-
-      /* Grids más amplios */
-      .stats-grid {
-        grid-template-columns: repeat(3, 1fr);
-        gap: 12px
-      }
-
-      .kpi-row {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 12px
-      }
-
-      .cap-grid {
-        grid-template-columns: repeat(3, 1fr);
-        gap: 12px
-      }
-
-      .kelly-grid {
-        grid-template-columns: repeat(3, 1fr);
-        gap: 12px
-      }
-
-      /* Cards más espaciadas */
-      .card {
-        padding: 20px;
-        margin-bottom: 14px
-      }
-
-      .stat-card {
-        padding: 18px 14px
-      }
-
-      .stat-value {
-        font-size: 30px
-      }
-
-      .section-header {
-        font-size: 24px;
-        margin-bottom: 18px
-      }
-
-      /* Charts más altos en desktop */
-      .chart-wrap {
-        height: 220px
-      }
-
-      .chart-wrap-tall {
-        height: 280px
-      }
-
-      /* Modal desktop: dialog centrado en lugar de bottom sheet */
-      .m-overlay {
-        align-items: center;
-        justify-content: center;
-        padding: 0;
-        padding-left: var(--sidebar-w);
-      }
-
-      .m-sheet {
-        width: min(600px, calc(100vw - var(--sidebar-w) - 40px));
-        max-height: min(88vh, 700px);
-        border-radius: var(--radius-lg);
-        box-shadow: 0 24px 80px rgba(0, 0, 0, 0.7);
-      }
-
-      .m-handle {
-        display: none
-      }
-
-      .m-foot {
-        padding: 16px 20px
-      }
-
-      .m-body {
-        padding: 16px 20px
-      }
-
-      /* Sidebar logo */
-      .sidebar-logo {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        padding: 18px 20px 12px;
-        border-bottom: 1px solid var(--border);
-        margin-bottom: 4px;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: var(--sidebar-w);
-        background: rgba(10, 14, 28, 0.97);
-        z-index: 201;
-        text-decoration: none;
-      }
-
-      .sidebar-logo-icon {
-        width: 30px;
-        height: 30px;
-        background: linear-gradient(135deg, var(--accent), #00A880);
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 14px;
-        flex-shrink: 0;
-      }
-
-      .sidebar-logo-text {
-        font-family: var(--font-head);
-        font-size: 16px;
-        font-weight: 800;
-        letter-spacing: -0.3px;
-        color: var(--text);
-      }
-
-      .sidebar-logo-text span {
-        color: var(--accent)
-      }
-
-      /* Hide mobile header on desktop -- keep it visible but adjust */
-      .header {
-        left: var(--sidebar-w)
-      }
-    }
 
     /* ── Performance overrides (Telegram Desktop / Linux) ── */
     .no-blur .header {
@@ -1680,6 +1482,214 @@
       font-weight: 700;
       cursor: pointer
     }
+
+    /* ── Desktop layout (≥768px) ── */
+    @media(min-width:768px) {
+      body {
+        padding-bottom: 0;
+        padding-left: var(--sidebar-w);
+      }
+
+      /* Header centrado en área de contenido */
+      .header {
+        left: var(--sidebar-w);
+        right: 0;
+      }
+
+      .header-inner {
+        max-width: var(--content-max);
+        margin: 0 auto;
+      }
+
+      /* Contenido centrado */
+      .content {
+        max-width: var(--content-max);
+        margin: 0 auto;
+        padding: 24px 32px;
+      }
+
+      /* Sidebar vertical en lugar de bottom nav */
+      .bottom-nav {
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        right: auto;
+        width: var(--sidebar-w);
+        height: 100%;
+        flex-direction: column;
+        align-items: stretch;
+        justify-content: flex-start;
+        border-top: none;
+        border-right: 1px solid var(--border);
+        padding: 0;
+        padding-top: 70px;
+        overflow-y: auto;
+        overflow-x: hidden;
+      }
+
+      .nav-item {
+        min-width: auto;
+        flex: none;
+        flex-direction: row;
+        justify-content: flex-start;
+        gap: 12px;
+        padding: 12px 20px;
+        border-radius: 0;
+        text-align: left;
+      }
+
+      .nav-item.active::before {
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: auto;
+        width: 3px;
+        height: 100%;
+        border-radius: 0 4px 4px 0;
+      }
+
+      .nav-icon {
+        font-size: 18px
+      }
+
+      .nav-label {
+        font-size: 13px;
+        font-weight: 600;
+        letter-spacing: 0.2px
+      }
+
+      /* Grids más amplios */
+      .stats-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px
+      }
+
+      .kpi-row {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px
+      }
+
+      .cap-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px
+      }
+
+      .kelly-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px
+      }
+
+      /* Cards más espaciadas */
+      .card {
+        padding: 20px;
+        margin-bottom: 14px
+      }
+
+      .stat-card {
+        padding: 18px 14px
+      }
+
+      .stat-value {
+        font-size: 30px
+      }
+
+      .section-header {
+        font-size: 24px;
+        margin-bottom: 18px
+      }
+
+      /* Charts más altos en desktop */
+      .chart-wrap {
+        height: 220px
+      }
+
+      .chart-wrap-tall {
+        height: 280px
+      }
+
+      /* Modal desktop: dialog centrado en lugar de bottom sheet */
+      .m-overlay {
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        padding-left: var(--sidebar-w);
+      }
+
+      .m-sheet {
+        width: min(600px, calc(100vw - var(--sidebar-w) - 40px));
+        max-height: min(88vh, 700px);
+        border-radius: var(--radius-lg);
+        box-shadow: 0 24px 80px rgba(0, 0, 0, 0.7);
+      }
+
+      .m-handle {
+        display: none
+      }
+
+      .m-foot {
+        padding: 16px 20px
+      }
+
+      .m-body {
+        padding: 16px 20px
+      }
+
+      /* Sidebar logo */
+      .sidebar-logo {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 18px 20px 12px;
+        border-bottom: 1px solid var(--border);
+        margin-bottom: 4px;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: var(--sidebar-w);
+        background: rgba(10, 14, 28, 0.97);
+        z-index: 201;
+        text-decoration: none;
+      }
+
+      .sidebar-logo-icon {
+        width: 30px;
+        height: 30px;
+        background: linear-gradient(135deg, var(--accent), #00A880);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        flex-shrink: 0;
+      }
+
+      .sidebar-logo-text {
+        font-family: var(--font-head);
+        font-size: 16px;
+        font-weight: 800;
+        letter-spacing: -0.3px;
+        color: var(--text);
+      }
+
+      .sidebar-logo-text span {
+        color: var(--accent)
+      }
+
+      /* Hide mobile header on desktop -- keep it visible but adjust */
+      .header {
+        left: var(--sidebar-w)
+      }
+
+      .header .logo {
+        display: none;
+      }
+
+      .header-inner {
+        justify-content: flex-end;
+      }
+    }
+
   </style>
   <script>
     // Aplica no-blur antes del primer paint para evitar backdrop-filter en Linux/Desktop
@@ -1768,7 +1778,7 @@
     /* Renderiza un canvas o un botón lazy según el entorno */
     function chartPlaceholder(canvasId, makeKey, tall = false) {
       const cls = tall ? "chart-wrap-tall" : "chart-wrap";
-      if (_noBlur) {
+      if (_noBlur && window.innerWidth < 768) {
         return `<div class="${cls}" id="cwrap-${canvasId}" style="display:flex;align-items:center;justify-content:center;background:var(--card2);border-radius:var(--radius-md)"><button style="background:transparent;border:1px solid var(--border);color:var(--text-2);padding:10px 20px;border-radius:var(--radius-md);font-size:12px;font-weight:600;cursor:pointer" onclick="loadLazyChart('${canvasId}','${makeKey}')">📊 Cargar gráfica</button></div>`;
       }
       return `<div class="${cls}"><canvas id="${canvasId}" aria-label="Gráfica ${canvasId}" role="img"></canvas></div>`;
@@ -2463,7 +2473,7 @@
 
     function initCharts() {
       if (!DATA || typeof Chart === "undefined") return;
-      if (_noBlur) return; // en Linux/tdesktop los charts son lazy (botón manual)
+      if (_noBlur && window.innerWidth < 768) return; // en Linux/tdesktop los charts son lazy (botón manual) en móvil
       Chart.defaults.color = "#8896A8";
       Chart.defaults.borderColor = "rgba(255,255,255,0.04)";
       if (tabActual === "resumen") { makeChartNeto(); makeChartMeses(); }
