@@ -38,12 +38,138 @@
   --font-body:  'DM Sans', sans-serif;
   --nav-h:      72px;
   --safe-b:     env(safe-area-inset-bottom, 0px);
+  --sidebar-w:  220px;
+  --content-max: 960px;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{height:100%}
 body{font-family:var(--font-body);background:var(--bg);color:var(--text);min-height:100svh;min-height:100vh;padding-bottom:calc(var(--nav-h) + 20px);overflow-x:hidden}
 body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");pointer-events:none;z-index:0;opacity:0.4}
 body::after{content:'';position:fixed;top:-200px;left:50%;transform:translateX(-50%);width:600px;height:400px;background:radial-gradient(ellipse,rgba(0,205,150,0.07) 0%,transparent 70%);pointer-events:none;z-index:0}
+
+/* ── Sidebar logo: oculto en mobile, visible en desktop vía @media ── */
+.sidebar-logo{display:none}
+
+/* ── Desktop layout (≥768px) ── */
+@media(min-width:768px){
+  body{
+    padding-bottom:0;
+    padding-left:var(--sidebar-w);
+  }
+  /* Header centrado en área de contenido */
+  .header{
+    left:var(--sidebar-w);
+    right:0;
+  }
+  .header-inner{
+    max-width:var(--content-max);
+    margin:0 auto;
+  }
+  /* Contenido centrado */
+  .content{
+    max-width:var(--content-max);
+    margin:0 auto;
+    padding:24px 32px;
+  }
+  /* Sidebar vertical en lugar de bottom nav */
+  .bottom-nav{
+    position:fixed;
+    top:0;
+    left:0;
+    bottom:0;
+    right:auto;
+    width:var(--sidebar-w);
+    height:100%;
+    flex-direction:column;
+    align-items:stretch;
+    justify-content:flex-start;
+    border-top:none;
+    border-right:1px solid var(--border);
+    padding:0;
+    padding-top:70px;
+    overflow-y:auto;
+    overflow-x:hidden;
+  }
+  .nav-item{
+    min-width:auto;
+    flex:none;
+    flex-direction:row;
+    justify-content:flex-start;
+    gap:12px;
+    padding:12px 20px;
+    border-radius:0;
+    text-align:left;
+  }
+  .nav-item.active::before{
+    top:0;
+    bottom:0;
+    left:0;
+    right:auto;
+    width:3px;
+    height:100%;
+    border-radius:0 4px 4px 0;
+  }
+  .nav-icon{font-size:18px}
+  .nav-label{font-size:13px;font-weight:600;letter-spacing:0.2px}
+  /* Grids más amplios */
+  .stats-grid{grid-template-columns:repeat(3,1fr);gap:12px}
+  .kpi-row{grid-template-columns:repeat(2,1fr);gap:12px}
+  .cap-grid{grid-template-columns:repeat(3,1fr);gap:12px}
+  .kelly-grid{grid-template-columns:repeat(3,1fr);gap:12px}
+  /* Cards más espaciadas */
+  .card{padding:20px;margin-bottom:14px}
+  .stat-card{padding:18px 14px}
+  .stat-value{font-size:30px}
+  .section-header{font-size:24px;margin-bottom:18px}
+  /* Charts más altos en desktop */
+  .chart-wrap{height:220px}
+  .chart-wrap-tall{height:280px}
+  /* Modal desktop: dialog centrado en lugar de bottom sheet */
+  .m-overlay{
+    align-items:center;
+    justify-content:center;
+    padding:0;
+    padding-left:var(--sidebar-w);
+  }
+  .m-sheet{
+    width:min(600px,calc(100vw - var(--sidebar-w) - 40px));
+    max-height:min(88vh, 700px);
+    border-radius:var(--radius-lg);
+    box-shadow:0 24px 80px rgba(0,0,0,0.7);
+  }
+  .m-handle{display:none}
+  .m-foot{padding:16px 20px}
+  .m-body{padding:16px 20px}
+  /* Sidebar logo */
+  .sidebar-logo{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:18px 20px 12px;
+    border-bottom:1px solid var(--border);
+    margin-bottom:4px;
+    position:fixed;
+    top:0;
+    left:0;
+    width:var(--sidebar-w);
+    background:rgba(10,14,28,0.97);
+    z-index:201;
+    text-decoration:none;
+  }
+  .sidebar-logo-icon{
+    width:30px;height:30px;
+    background:linear-gradient(135deg,var(--accent),#00A880);
+    border-radius:8px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:14px;flex-shrink:0;
+  }
+  .sidebar-logo-text{
+    font-family:var(--font-head);font-size:16px;font-weight:800;letter-spacing:-0.3px;color:var(--text);
+  }
+  .sidebar-logo-text span{color:var(--accent)}
+  /* Hide mobile header on desktop -- keep it visible but adjust */
+  .header{left:var(--sidebar-w)}
+}
 
 /* ── Performance overrides (Telegram Desktop / Linux) ── */
 .no-blur .header{backdrop-filter:none!important;background:rgba(6,8,15,0.97)!important}
@@ -57,7 +183,7 @@ body::after{content:'';position:fixed;top:-200px;left:50%;transform:translateX(-
 .no-blur .loader-logo,.no-blur .loader-bar-fill{animation:none!important;opacity:1}
 
 /* ── Header ── */
-.header{position:sticky;top:0;z-index:100;background:rgba(6,8,15,0.85);backdrop-filter:blur(20px) saturate(180%);border-bottom:1px solid var(--border);padding:14px 16px}
+.header{position:sticky;top:0;z-index:100;background:rgba(6,8,15,0.85);backdrop-filter:blur(20px) saturate(180%);border-bottom:1px solid var(--border);padding:14px 16px;left:0;right:0}
 .header-inner{display:flex;align-items:center;justify-content:space-between}
 .logo{display:flex;align-items:center;gap:10px}
 .logo-icon{width:32px;height:32px;background:linear-gradient(135deg,var(--accent),#00A880);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
@@ -618,7 +744,9 @@ function renderApp(){
     </div>`;
   const nav=document.getElementById("bottomNav");
   nav.style.display="flex";
-  nav.innerHTML=NAV_ITEMS.map(n=>`<button class="nav-item" data-tab="${n.id}"><span class="nav-icon">${n.icon}</span><span class="nav-label">${n.label}</span></button>`).join("");
+  // Sidebar logo — visible solo en desktop (≥768px) vía CSS
+  const _sidebarLogo=`<div class="sidebar-logo"><div class="sidebar-logo-icon">📈</div><div class="sidebar-logo-text">Bet<span>Stats</span></div></div>`;
+  nav.innerHTML=_sidebarLogo+NAV_ITEMS.map(n=>`<button class="nav-item" data-tab="${n.id}"><span class="nav-icon">${n.icon}</span><span class="nav-label">${n.label}</span></button>`).join("");
   const saved=tabActual;
   setTimeout(()=>{const btn=nav.querySelector(`[data-tab="${saved}"]`);showTab(saved,btn);},0);
 }
@@ -1200,6 +1328,8 @@ function getVH(){
 function syncModalToViewport(){
   const sheet=document.getElementById("mSheet");
   if(!sheet)return;
+  // En desktop (≥768px) el CSS ya maneja max-height con min(88vh,700px); no sobreescribir.
+  if(window.matchMedia("(min-width:768px)").matches)return;
   const vh=window.visualViewport?window.visualViewport.height:getVH();
   const navH=parseInt(getComputedStyle(document.documentElement).getPropertyValue("--nav-h"))||72;
   sheet.style.maxHeight=Math.floor((vh-navH)*0.94)+"px";
@@ -1218,7 +1348,7 @@ function openModal(rowId,idx){
   // archivo: index.html — dentro de openModal()
   document.getElementById("gModal").innerHTML=`
   <div class="m-overlay" id="mOverlay" onclick="if(event.target===this)closeModal()">
-    <div class="m-sheet" id="mSheet" style="max-height:${Math.floor((getVH()-72)*0.94)}px">
+    <div class="m-sheet" id="mSheet" style="max-height:${window.matchMedia('(min-width:768px)').matches?'':''+Math.floor((getVH()-72)*0.94)+'px'}">
       <div class="m-handle"></div>
       <div class="m-head">
         <div class="m-title">
