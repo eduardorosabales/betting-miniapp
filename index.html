@@ -1,728 +1,2014 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<meta name="api-url" content="https://betting-stats-bot-production.up.railway.app">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://telegram.org; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://*.up.railway.app wss://*.up.railway.app; img-src 'self' data: blob:; object-src 'none'; base-uri 'self';">
-<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
-<link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon-180.png">
-<title>Betting Stats</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Space+Mono:wght@400;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-<style>
-:root {
-  --bg:         #06080F;
-  --surface:    #0A0E1C;
-  --card:       #0D1220;
-  --card2:      #111826;
-  --border:     rgba(255,255,255,0.06);
-  --border-hi:  rgba(0,205,150,0.25);
-  --accent:     #00CD96;
-  --accent-dim: rgba(0,205,150,0.12);
-  --win:        #00CD96;
-  --win-bg:     rgba(0,205,150,0.1);
-  --loss:       #FF3D5A;
-  --loss-bg:    rgba(255,61,90,0.1);
-  --pend:       #F5A623;
-  --pend-bg:    rgba(245,166,35,0.1);
-  --text:       #E2E8F4;
-  --text-2:     #8896A8;
-  --text-3:     #3D4A5C;
-  --radius-sm:  8px;
-  --radius-md:  12px;
-  --radius-lg:  16px;
-  --font-head:  'Syne', sans-serif;
-  --font-num:   'Space Mono', monospace;
-  --font-body:  'DM Sans', sans-serif;
-  --nav-h:      72px;
-  --safe-b:     env(safe-area-inset-bottom, 0px);
-  --sidebar-w:  220px;
-  --content-max: 960px;
-}
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html{height:100%}
-body{font-family:var(--font-body);background:var(--bg);color:var(--text);min-height:100svh;min-height:100vh;padding-bottom:calc(var(--nav-h) + 20px);overflow-x:hidden}
-body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");pointer-events:none;z-index:0;opacity:0.4}
-body::after{content:'';position:fixed;top:-200px;left:50%;transform:translateX(-50%);width:600px;height:400px;background:radial-gradient(ellipse,rgba(0,205,150,0.07) 0%,transparent 70%);pointer-events:none;z-index:0}
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <meta name="api-url" content="https://betting-stats-bot-production.up.railway.app">
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://telegram.org; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://*.up.railway.app wss://*.up.railway.app; img-src 'self' data: blob:; object-src 'none'; base-uri 'self';">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon-180.png">
+  <title>Betting Stats</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Space+Mono:wght@400;700&family=DM+Sans:wght@400;500;600&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --bg: #06080F;
+      --surface: #0A0E1C;
+      --card: #0D1220;
+      --card2: #111826;
+      --border: rgba(255, 255, 255, 0.06);
+      --border-hi: rgba(0, 205, 150, 0.25);
+      --accent: #00CD96;
+      --accent-dim: rgba(0, 205, 150, 0.12);
+      --win: #00CD96;
+      --win-bg: rgba(0, 205, 150, 0.1);
+      --loss: #FF3D5A;
+      --loss-bg: rgba(255, 61, 90, 0.1);
+      --pend: #F5A623;
+      --pend-bg: rgba(245, 166, 35, 0.1);
+      --text: #E2E8F4;
+      --text-2: #8896A8;
+      --text-3: #3D4A5C;
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --font-head: 'Syne', sans-serif;
+      --font-num: 'Space Mono', monospace;
+      --font-body: 'DM Sans', sans-serif;
+      --nav-h: 72px;
+      --safe-b: env(safe-area-inset-bottom, 0px);
+      --sidebar-w: 220px;
+      --content-max: 960px;
+    }
 
-/* ── Sidebar logo: oculto en mobile, visible en desktop vía @media ── */
-.sidebar-logo{display:none}
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
+    }
 
-/* ── Desktop layout (≥768px) ── */
-@media(min-width:768px){
-  body{
-    padding-bottom:0;
-    padding-left:var(--sidebar-w);
-  }
-  /* Header centrado en área de contenido */
-  .header{
-    left:var(--sidebar-w);
-    right:0;
-  }
-  .header-inner{
-    max-width:var(--content-max);
-    margin:0 auto;
-  }
-  /* Contenido centrado */
-  .content{
-    max-width:var(--content-max);
-    margin:0 auto;
-    padding:24px 32px;
-  }
-  /* Sidebar vertical en lugar de bottom nav */
-  .bottom-nav{
-    position:fixed;
-    top:0;
-    left:0;
-    bottom:0;
-    right:auto;
-    width:var(--sidebar-w);
-    height:100%;
-    flex-direction:column;
-    align-items:stretch;
-    justify-content:flex-start;
-    border-top:none;
-    border-right:1px solid var(--border);
-    padding:0;
-    padding-top:70px;
-    overflow-y:auto;
-    overflow-x:hidden;
-  }
-  .nav-item{
-    min-width:auto;
-    flex:none;
-    flex-direction:row;
-    justify-content:flex-start;
-    gap:12px;
-    padding:12px 20px;
-    border-radius:0;
-    text-align:left;
-  }
-  .nav-item.active::before{
-    top:0;
-    bottom:0;
-    left:0;
-    right:auto;
-    width:3px;
-    height:100%;
-    border-radius:0 4px 4px 0;
-  }
-  .nav-icon{font-size:18px}
-  .nav-label{font-size:13px;font-weight:600;letter-spacing:0.2px}
-  /* Grids más amplios */
-  .stats-grid{grid-template-columns:repeat(3,1fr);gap:12px}
-  .kpi-row{grid-template-columns:repeat(2,1fr);gap:12px}
-  .cap-grid{grid-template-columns:repeat(3,1fr);gap:12px}
-  .kelly-grid{grid-template-columns:repeat(3,1fr);gap:12px}
-  /* Cards más espaciadas */
-  .card{padding:20px;margin-bottom:14px}
-  .stat-card{padding:18px 14px}
-  .stat-value{font-size:30px}
-  .section-header{font-size:24px;margin-bottom:18px}
-  /* Charts más altos en desktop */
-  .chart-wrap{height:220px}
-  .chart-wrap-tall{height:280px}
-  /* Modal desktop: dialog centrado en lugar de bottom sheet */
-  .m-overlay{
-    align-items:center;
-    justify-content:center;
-    padding:0;
-    padding-left:var(--sidebar-w);
-  }
-  .m-sheet{
-    width:min(600px,calc(100vw - var(--sidebar-w) - 40px));
-    max-height:min(88vh, 700px);
-    border-radius:var(--radius-lg);
-    box-shadow:0 24px 80px rgba(0,0,0,0.7);
-  }
-  .m-handle{display:none}
-  .m-foot{padding:16px 20px}
-  .m-body{padding:16px 20px}
-  /* Sidebar logo */
-  .sidebar-logo{
-    display:flex;
-    align-items:center;
-    gap:10px;
-    padding:18px 20px 12px;
-    border-bottom:1px solid var(--border);
-    margin-bottom:4px;
-    position:fixed;
-    top:0;
-    left:0;
-    width:var(--sidebar-w);
-    background:rgba(10,14,28,0.97);
-    z-index:201;
-    text-decoration:none;
-  }
-  .sidebar-logo-icon{
-    width:30px;height:30px;
-    background:linear-gradient(135deg,var(--accent),#00A880);
-    border-radius:8px;
-    display:flex;align-items:center;justify-content:center;
-    font-size:14px;flex-shrink:0;
-  }
-  .sidebar-logo-text{
-    font-family:var(--font-head);font-size:16px;font-weight:800;letter-spacing:-0.3px;color:var(--text);
-  }
-  .sidebar-logo-text span{color:var(--accent)}
-  /* Hide mobile header on desktop -- keep it visible but adjust */
-  .header{left:var(--sidebar-w)}
-}
+    html {
+      height: 100%
+    }
 
-/* ── Performance overrides (Telegram Desktop / Linux) ── */
-.no-blur .header{backdrop-filter:none!important;background:rgba(6,8,15,0.97)!important}
-.no-blur .bottom-nav{backdrop-filter:none!important;background:rgba(10,14,28,0.97)!important}
-.no-blur body::before{display:none!important}
-.no-blur body::after{display:none!important}
-.no-blur .status-dot{animation:none!important}
-.no-blur .section.active{animation:none!important}
-.no-blur body::after{display:none!important}
-.no-blur .progress-fill,.no-blur .tipo-bar-fill,.no-blur .kelly-fill,.no-blur .dia-bar-fill{transition:none!important}
-.no-blur .loader-logo,.no-blur .loader-bar-fill{animation:none!important;opacity:1}
+    body {
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100svh;
+      min-height: 100vh;
+      padding-bottom: calc(var(--nav-h) + 20px);
+      overflow-x: hidden
+    }
 
-/* ── Header ── */
-.header{position:sticky;top:0;z-index:100;background:rgba(6,8,15,0.85);backdrop-filter:blur(20px) saturate(180%);border-bottom:1px solid var(--border);padding:14px 16px;left:0;right:0}
-.header-inner{display:flex;align-items:center;justify-content:space-between}
-.logo{display:flex;align-items:center;gap:10px}
-.logo-icon{width:32px;height:32px;background:linear-gradient(135deg,var(--accent),#00A880);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
-.logo-text{font-family:var(--font-head);font-size:17px;font-weight:800;letter-spacing:-0.3px}
-.logo-text span{color:var(--accent)}
-.header-right{display:flex;align-items:center;gap:8px}
-.status-dot{width:7px;height:7px;background:var(--accent);border-radius:50%;animation:pulse-dot 2s ease-in-out infinite}
-@keyframes pulse-dot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(0.8)}}
-.refresh-btn{background:var(--card2);border:1px solid var(--border);color:var(--text-2);padding:6px 14px;border-radius:var(--radius-sm);font-family:var(--font-body);font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s;letter-spacing:0.2px}
-.refresh-btn:active{transform:scale(0.96)}
-.refresh-btn:disabled{opacity:0.4;cursor:default}
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.4
+    }
 
-/* ── Content ── */
-.content{padding:16px;position:relative;z-index:1}
-.section{display:none}
-.section.active{display:block;animation:fadein 0.25s ease}
-@keyframes fadein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+    body::after {
+      content: '';
+      position: fixed;
+      top: -200px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 600px;
+      height: 400px;
+      background: radial-gradient(ellipse, rgba(0, 205, 150, 0.07) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0
+    }
 
-/* ── Bottom nav ── */
-.bottom-nav{position:fixed;bottom:0;left:0;right:0;height:var(--nav-h);background:rgba(10,14,28,0.92);backdrop-filter:blur(24px) saturate(200%);border-top:1px solid var(--border);display:flex;align-items:stretch;z-index:200;overflow-x:auto;scrollbar-width:none;padding-bottom:env(safe-area-inset-bottom,0px)}
-.bottom-nav::-webkit-scrollbar{display:none}
-.nav-item{min-width:64px;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;border:none;background:transparent;color:var(--text-3);padding:8px 4px;transition:color 0.2s;position:relative;-webkit-tap-highlight-color:transparent}
-.nav-item.active{color:var(--accent)}
-.nav-item.active::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:32px;height:2px;background:var(--accent);border-radius:0 0 4px 4px}
-.nav-icon{font-size:20px;line-height:1}
-.nav-label{font-size:10px;font-weight:600;letter-spacing:0.3px}
+    /* ── Sidebar logo: oculto en mobile, visible en desktop vía @media ── */
+    .sidebar-logo {
+      display: none
+    }
 
-/* ── Cards ── */
-.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;margin-bottom:10px;position:relative;overflow:hidden}
-.card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,0.02),transparent 60%);pointer-events:none}
-.card-title{font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:1px;margin-bottom:14px}
+    /* ── Desktop layout (≥768px) ── */
+    @media(min-width:768px) {
+      body {
+        padding-bottom: 0;
+        padding-left: var(--sidebar-w);
+      }
 
-/* ── Stats grid ── */
-.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
-.stat-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-md);padding:14px 10px;text-align:center;position:relative;overflow:hidden}
-.stat-card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;opacity:0;transition:opacity 0.2s}
-.stat-card.win-card::after{background:var(--win);opacity:1}
-.stat-card.loss-card::after{background:var(--loss);opacity:1}
-.stat-card.pend-card::after{background:var(--pend);opacity:1}
-.stat-value{font-family:var(--font-num);font-size:26px;font-weight:700;line-height:1;margin-bottom:5px}
-.stat-label{font-size:10px;color:var(--text-2);font-weight:600;letter-spacing:0.5px;text-transform:uppercase}
+      /* Header centrado en área de contenido */
+      .header {
+        left: var(--sidebar-w);
+        right: 0;
+      }
 
-/* ── KPI ── */
-.kpi-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
-.kpi{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-md);padding:14px}
-.kpi-label{font-size:10px;color:var(--text-2);font-weight:600;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px}
-.kpi-value{font-family:var(--font-num);font-size:21px;font-weight:700;letter-spacing:-0.5px}
+      .header-inner {
+        max-width: var(--content-max);
+        margin: 0 auto;
+      }
 
-/* ── Colors ── */
-.green{color:var(--win)}.red{color:var(--loss)}.yellow{color:var(--pend)}.accent{color:var(--accent)}.muted{color:var(--text-2)}
+      /* Contenido centrado */
+      .content {
+        max-width: var(--content-max);
+        margin: 0 auto;
+        padding: 24px 32px;
+      }
 
-/* ── Progress ── */
-.progress-wrap{margin-bottom:4px}
-.progress-labels{display:flex;justify-content:space-between;font-size:12px;font-weight:700;margin-bottom:8px}
-.progress-track{height:6px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden}
-.progress-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--win),var(--accent));transition:width 0.8s cubic-bezier(0.4,0,0.2,1)}
+      /* Sidebar vertical en lugar de bottom nav */
+      .bottom-nav {
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        right: auto;
+        width: var(--sidebar-w);
+        height: 100%;
+        flex-direction: column;
+        align-items: stretch;
+        justify-content: flex-start;
+        border-top: none;
+        border-right: 1px solid var(--border);
+        padding: 0;
+        padding-top: 70px;
+        overflow-y: auto;
+        overflow-x: hidden;
+      }
 
-/* ── Chart ── */
-.chart-wrap{position:relative;height:180px;margin-bottom:4px}
-.chart-wrap-tall{position:relative;height:220px;margin-bottom:4px}
+      .nav-item {
+        min-width: auto;
+        flex: none;
+        flex-direction: row;
+        justify-content: flex-start;
+        gap: 12px;
+        padding: 12px 20px;
+        border-radius: 0;
+        text-align: left;
+      }
 
-/* ── Sport items ── */
-.sport-item{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border)}
-.sport-item:last-child{border-bottom:none}
-.sport-name{font-size:14px;font-weight:600}
-.sport-sub{font-size:11px;color:var(--text-2);margin-top:2px}
-.sport-roi{font-family:var(--font-num);font-size:16px;font-weight:700}
+      .nav-item.active::before {
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: auto;
+        width: 3px;
+        height: 100%;
+        border-radius: 0 4px 4px 0;
+      }
 
-/* ── Capital ── */
-.capital-hero{text-align:center;padding:24px 0 16px}
-.capital-label{font-size:10px;font-weight:700;color:var(--text-2);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px}
-.capital-amount{font-family:var(--font-head);font-size:42px;font-weight:800;color:var(--accent);line-height:1;letter-spacing:-1px}
-.capital-sub{font-size:12px;color:var(--text-2);margin-top:8px;font-weight:500}
-.cap-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:16px}
-.cap-stat{background:var(--card2);border-radius:var(--radius-md);padding:14px 12px;text-align:center;border:1px solid var(--border)}
-.cap-stat-val{font-family:var(--font-num);font-size:18px;font-weight:700;margin-bottom:4px}
-.cap-stat-lbl{font-size:10px;color:var(--text-2);font-weight:600;text-transform:uppercase;letter-spacing:0.5px}
+      .nav-icon {
+        font-size: 18px
+      }
 
-/* ── Bet items ── */
-.bet-item{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}
-.bet-item:last-child{border-bottom:none}
-.bet-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-.bet-dot.win{background:var(--win);box-shadow:0 0 6px rgba(0,205,150,0.5)}
-.bet-dot.loss{background:var(--loss);box-shadow:0 0 6px rgba(255,61,90,0.5)}
-.bet-dot.pend{background:var(--pend);box-shadow:0 0 6px rgba(245,166,35,0.5)}
-.bet-info{flex:1;min-width:0}
-.bet-teams{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px}
-.bet-meta{font-size:11px;color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.bet-right{text-align:right;flex-shrink:0}
-.bet-monto{font-family:var(--font-num);font-size:13px;font-weight:700}
-.bet-result{font-family:var(--font-num);font-size:11px;margin-top:1px}
+      .nav-label {
+        font-size: 13px;
+        font-weight: 600;
+        letter-spacing: 0.2px
+      }
 
-/* ── Filters ── */
-.filter-row{display:flex;gap:6px;overflow-x:auto;margin-bottom:12px;scrollbar-width:none;padding-bottom:2px}
-.filter-row::-webkit-scrollbar{display:none}
-.filter-chip{padding:6px 14px;border-radius:99px;font-size:12px;font-weight:700;border:1px solid var(--border);background:var(--card);color:var(--text-2);cursor:pointer;white-space:nowrap;transition:all 0.15s;letter-spacing:0.2px}
-.filter-chip.active{background:var(--accent-dim);border-color:var(--border-hi);color:var(--accent)}
+      /* Grids más amplios */
+      .stats-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px
+      }
 
-/* ── Search ── */
-.search-wrap{position:relative;margin-bottom:10px}
-.search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:14px;pointer-events:none;color:var(--text-2)}
-.search-input{width:100%;padding:10px 14px 10px 36px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-md);color:var(--text);font-family:var(--font-body);font-size:14px;outline:none;transition:border-color 0.2s}
-.search-input:focus{border-color:rgba(0,205,150,0.35)}
-.search-input::placeholder{color:var(--text-3)}
+      .kpi-row {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px
+      }
 
-/* ── Mes selector ── */
-.mes-selector{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-md);padding:10px 14px}
-.mes-nav{background:var(--card2);border:1px solid var(--border);color:var(--text-2);width:32px;height:32px;border-radius:var(--radius-sm);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s}
-.mes-nav:active{transform:scale(0.92)}
-.mes-label{font-family:var(--font-head);font-size:16px;font-weight:700}
+      .cap-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px
+      }
 
-/* ── Racha badge ── */
-.racha-badge{display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:var(--radius-md);font-size:13px;font-weight:700;margin-bottom:10px;letter-spacing:0.2px}
-.racha-win{background:var(--win-bg);color:var(--win);border:1px solid rgba(0,205,150,0.2)}
-.racha-loss{background:var(--loss-bg);color:var(--loss);border:1px solid rgba(255,61,90,0.2)}
-.racha-icon{font-size:18px}
+      .kelly-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px
+      }
 
-/* ── Loader ── */
-.loader{display:flex;flex-direction:column;align-items:center;justify-content:center;height:70vh;gap:20px}
-.loader-logo{font-family:var(--font-head);font-size:32px;font-weight:800;letter-spacing:-0.5px;animation:loader-pulse 1.5s ease-in-out infinite}
-.loader-logo span{color:var(--accent)}
-@keyframes loader-pulse{0%,100%{opacity:1}50%{opacity:0.4}}
-.loader-bar{width:80px;height:2px;background:var(--card2);border-radius:1px;overflow:hidden}
-.loader-bar-fill{height:100%;background:var(--accent);border-radius:1px;animation:loader-slide 1.5s ease-in-out infinite}
-@keyframes loader-slide{0%{width:0%;margin-left:0}50%{width:60%;margin-left:20%}100%{width:0%;margin-left:100%}}
-.loader p{font-size:13px;color:var(--text-2);font-weight:500}
+      /* Cards más espaciadas */
+      .card {
+        padding: 20px;
+        margin-bottom: 14px
+      }
 
-/* ── Error ── */
-.error-box{background:var(--loss-bg);border:1px solid rgba(255,61,90,0.25);border-radius:var(--radius-lg);padding:24px 20px;text-align:center;margin:20px 0}
-.error-box p{color:var(--loss);font-size:14px;font-weight:600}
-.error-box small{color:var(--text-2);font-size:12px}
-.retry-btn{margin-top:14px;padding:9px 22px;background:var(--accent);color:#000;border:none;border-radius:var(--radius-md);font-family:var(--font-body);font-size:13px;font-weight:700;cursor:pointer;letter-spacing:0.2px}
+      .stat-card {
+        padding: 18px 14px
+      }
 
-/* ── Empty / Explainer ── */
-.empty{text-align:center;padding:30px 20px;color:var(--text-2);font-size:13px}
-.divider{border:none;border-top:1px solid var(--border);margin:4px 0 12px}
-.section-header{font-family:var(--font-head);font-size:20px;font-weight:800;letter-spacing:-0.3px;margin-bottom:14px;color:var(--text)}
-.section-header span{color:var(--accent)}
-.explainer{font-size:12px;color:var(--text-2);line-height:1.6;padding:12px 14px;background:var(--card2);border-radius:var(--radius-md);border-left:2px solid var(--accent);margin-top:8px}
-.explainer strong{color:var(--text);font-weight:600}
+      .stat-value {
+        font-size: 30px
+      }
 
-/* ── Tipo row ── */
-.tipo-item{display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--border)}
-.tipo-item:last-child{border-bottom:none}
-.tipo-bar-wrap{height:4px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden;margin-top:6px;width:100%}
-.tipo-bar-fill{height:100%;border-radius:2px;transition:width 0.8s cubic-bezier(0.4,0,0.2,1)}
+      .section-header {
+        font-size: 24px;
+        margin-bottom: 18px
+      }
 
-/* ── Rolling chart ── */
-.rolling-kpi{display:flex;gap:8px;margin-bottom:10px}
-.rolling-kpi-item{flex:1;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-md);padding:12px;text-align:center}
-.rolling-kpi-val{font-family:var(--font-num);font-size:20px;font-weight:700}
-.rolling-kpi-lbl{font-size:10px;color:var(--text-2);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-top:4px}
+      /* Charts más altos en desktop */
+      .chart-wrap {
+        height: 220px
+      }
 
-/* ── Kelly meter ── */
-.kelly-meter{height:12px;background:rgba(255,255,255,0.06);border-radius:6px;overflow:hidden;margin:10px 0}
-.kelly-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--win),#F5A623);transition:width 0.8s cubic-bezier(0.4,0,0.2,1)}
-.kelly-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
-.kelly-card{background:var(--card2);border-radius:var(--radius-md);padding:14px;text-align:center;border:1px solid var(--border)}
-.kelly-card-pct{font-family:var(--font-num);font-size:22px;font-weight:700;color:var(--accent)}
-.kelly-card-lbl{font-size:10px;color:var(--text-2);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-top:4px}
-.kelly-card-sub{font-size:11px;color:var(--text-3);margin-top:3px}
+      .chart-wrap-tall {
+        height: 280px
+      }
 
-/* ── Temporal ── */
-.dia-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)}
-.dia-row:last-child{border-bottom:none}
-.dia-label{font-size:12px;font-weight:700;width:36px;flex-shrink:0;color:var(--text-2)}
-.dia-bar-wrap{flex:1;height:6px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden}
-.dia-bar-fill{height:100%;border-radius:3px;transition:width 0.8s cubic-bezier(0.4,0,0.2,1)}
-.dia-roi{font-family:var(--font-num);font-size:11px;font-weight:700;width:52px;text-align:right;flex-shrink:0}
-.dia-wl{font-size:10px;color:var(--text-2);width:56px;text-align:right;flex-shrink:0}
+      /* Modal desktop: dialog centrado en lugar de bottom sheet */
+      .m-overlay {
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        padding-left: var(--sidebar-w);
+      }
 
-/* ── Gestión CRUD ── */
-.g-toolbar{display:flex;align-items:center;gap:8px;margin-bottom:12px}
-.btn-add{-webkit-appearance:none;appearance:none;display:inline-flex;align-items:center;justify-content:center;gap:6px;background-color:#00CD96;color:#000;border:none;border-radius:var(--radius-md);padding:10px 18px;font-size:13px;font-weight:700;cursor:pointer;letter-spacing:0.2px;-webkit-tap-highlight-color:transparent;flex-shrink:0;min-height:40px;box-shadow:0 0 14px rgba(0,205,150,0.35)}
-.btn-add:active{opacity:.75;transform:scale(0.97)}
-.g-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-md);padding:12px 14px;margin-bottom:8px}
-.g-card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
-.g-teams{font-size:13px;font-weight:700;line-height:1.35}
-.g-meta{font-size:11px;color:var(--text-2);margin-top:3px;line-height:1.4}
-.g-actions{display:flex;gap:6px;flex-shrink:0}
-.btn-edit{background:rgba(255,255,255,0.07);color:var(--text-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:6px 9px;font-size:13px;cursor:pointer}
-.btn-del{background:rgba(255,61,90,0.12);color:var(--loss);border:1px solid rgba(255,61,90,0.2);border-radius:var(--radius-sm);padding:6px 9px;font-size:13px;cursor:pointer}
-/* Modal */
-.m-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.72);z-index:9999;display:flex;align-items:flex-end;justify-content:center;padding-bottom:var(--nav-h)}
-/* Modal — estructura flexbox con footer sticky */
-.m-sheet{background:var(--surface);border-radius:20px 20px 16px 16px;width:100%;max-width:520px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 -8px 40px rgba(0,0,0,0.6)}
-.m-handle{width:36px;height:4px;background:rgba(255,255,255,0.18);border-radius:2px;margin:10px auto 0;flex-shrink:0}
-.m-head{padding:12px 16px;flex-shrink:0;border-bottom:1px solid var(--border)}
-.m-body{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding:14px 16px 8px;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
-.m-foot{flex-shrink:0;padding:12px 16px;padding-bottom:calc(env(safe-area-inset-bottom,0px) + 14px);background:var(--surface);border-top:1px solid var(--border)}
-.m-title{font-family:var(--font-head);font-size:17px;font-weight:800;display:flex;justify-content:space-between;align-items:center}
-.m-close{background:var(--card2);border:1px solid var(--border);color:var(--text-2);width:32px;height:32px;border-radius:var(--radius-sm);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center}
-.m-label{display:block;font-size:10px;font-weight:700;color:var(--text-2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px}
-.m-input{width:100%;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:var(--font-body);font-size:14px;padding:9px 12px;outline:none;box-sizing:border-box;transition:border-color .2s}
-.m-input:focus{border-color:rgba(0,205,150,.4)}
-.m-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.m-group{margin-bottom:11px}
-.m-date-row{display:flex;gap:8px;align-items:center;margin-bottom:6px}
-.m-now-btn{flex-shrink:0;background:var(--accent);color:#000;border:none;border-radius:var(--radius-sm);padding:8px 12px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap}
-.m-submit{display:block;width:100%;background:var(--accent);color:#000;border:none;border-radius:var(--radius-md);padding:14px;font-family:var(--font-head);font-size:15px;font-weight:800;cursor:pointer;letter-spacing:.2px;transition:opacity .15s}
-.m-submit:active,.m-submit:disabled{opacity:.6}
-.m-submit:disabled{cursor:not-allowed}
-.m-err{font-size:12px;color:var(--loss);margin-bottom:8px;display:none;padding:8px 10px;background:rgba(255,80,80,.08);border-radius:6px;border:1px solid rgba(255,80,80,.2)}
-/* Upload zone */
-.u-zone{border:2px dashed var(--border);border-radius:var(--radius-md);padding:22px 16px;text-align:center;cursor:pointer;margin-bottom:12px;transition:border-color .2s}
-.u-zone:hover,.u-zone.drag{border-color:var(--accent)}
-.u-icon{font-size:30px;margin-bottom:6px}
-.u-text{font-size:13px;color:var(--text-2)}
-.u-sub{font-size:11px;color:var(--text-3);margin-top:3px}
-.u-analyzing{background:rgba(245,166,35,.1);border:1px solid rgba(245,166,35,.25);border-radius:var(--radius-sm);padding:9px 12px;font-size:12px;color:var(--pend);display:none;align-items:center;gap:8px;margin-bottom:12px}
-/* Secret banner */
-.secret-banner{background:rgba(245,166,35,.08);border:1px solid rgba(245,166,35,.2);border-radius:var(--radius-md);padding:14px;margin-bottom:12px;font-size:13px;color:var(--text-2);line-height:1.5}
-.secret-banner strong{color:var(--pend)}
-.secret-input{margin-top:10px;width:100%;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:13px;padding:9px 12px;box-sizing:border-box;outline:none}
-.secret-save{margin-top:8px;background:var(--pend);color:#000;border:none;border-radius:var(--radius-sm);padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer}
-</style>
-<script>
-// Aplica no-blur antes del primer paint para evitar backdrop-filter en Linux/Desktop
-(function(){
-  var ua = navigator.userAgent;
-  if ((ua.includes("Linux") && !ua.includes("Android")) || ua.includes("Windows NT")) {
-    document.documentElement.classList.add("no-blur");
-  }
-})();
-</script>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
-</head>
-<body>
+      .m-sheet {
+        width: min(600px, calc(100vw - var(--sidebar-w) - 40px));
+        max-height: min(88vh, 700px);
+        border-radius: var(--radius-lg);
+        box-shadow: 0 24px 80px rgba(0, 0, 0, 0.7);
+      }
 
-<div id="app">
-  <div class="loader">
-    <div class="loader-logo">Bet<span>Stats</span></div>
-    <div class="loader-bar"><div class="loader-bar-fill"></div></div>
-    <p>Cargando datos...</p>
-  </div>
-</div>
-<nav class="bottom-nav" id="bottomNav" style="display:none"></nav>
-<div id="gModal"></div>
+      .m-handle {
+        display: none
+      }
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<script>
-// FIX: API_URL configurable vía meta tag, fallback al dominio Railway.
-// En el <head>: <meta name="api-url" content="https://...">
-const API_URL = (
-  document.querySelector('meta[name="api-url"]')?.content
-  || "https://betting-stats-bot-production.up.railway.app"
-);
-const tg = window.Telegram?.WebApp;
-const _isLowGPU = navigator.userAgent.includes("Linux") && !navigator.userAgent.includes("Android");
-if (tg) {
-  tg.ready();
-  if (tg.isVersionAtLeast("6.1")) tg.expand();
-  tg.disableVerticalSwipes();
-  tg.setHeaderColor("#06080F");
-  tg.setBackgroundColor("#06080F");
-  if (tg.platform === "tdesktop" || tg.platform === "weba" || tg.platform === "webk" || tg.platform === "webz" || _isLowGPU) {
-    document.documentElement.classList.add("no-blur");
-  }
-}
-if (document.documentElement.classList.contains("no-blur") && typeof Chart !== "undefined") {
-  Chart.defaults.animation = false;
-  Chart.defaults.animations = {};
-}
+      .m-foot {
+        padding: 16px 20px
+      }
 
-// ── Auth para endpoints CRUD ──────────────────────────────────────────────────
-function getSecret(){
-  // FIX-XSS: sessionStorage en lugar de localStorage. Si hay XSS, el atacante
-  // solo accede a la key durante la sesión activa, no para siempre.
-  // Migración silenciosa: lee de localStorage si existe, lo pasa a session, y borra.
-  const legacy = localStorage.getItem("miniapp_secret");
-  if (legacy) {
-    sessionStorage.setItem("miniapp_secret", legacy);
-    localStorage.removeItem("miniapp_secret");
-  }
-  return sessionStorage.getItem("miniapp_secret") || "";
-}
-function apiHeaders(extra = {}){
-  // Auth híbrida: mientras dura la migración, enviamos AMBOS headers.
-  // El backend acepta cualquiera. Cuando confirmemos que initData funciona
-  // en producción ~1 semana, retiramos el X-Api-Key.
-  const headers = { "Content-Type": "application/json", ...extra };
+      .m-body {
+        padding: 16px 20px
+      }
 
-  // 1) initData de Telegram (preferido) — válido si la Mini-App se abre desde Telegram
-  if (tg?.initData) {
-    headers["X-Telegram-Init-Data"] = tg.initData;
-  }
+      /* Sidebar logo */
+      .sidebar-logo {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 18px 20px 12px;
+        border-bottom: 1px solid var(--border);
+        margin-bottom: 4px;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: var(--sidebar-w);
+        background: rgba(10, 14, 28, 0.97);
+        z-index: 201;
+        text-decoration: none;
+      }
 
-  // 2) Fallback: X-Api-Key (legacy) — útil para abrir la Mini-App fuera de Telegram
-  const apiKey = getSecret();
-  if (apiKey) {
-    headers["X-Api-Key"] = apiKey;
-  }
+      .sidebar-logo-icon {
+        width: 30px;
+        height: 30px;
+        background: linear-gradient(135deg, var(--accent), #00A880);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        flex-shrink: 0;
+      }
 
-  return headers;
-}
-const _noBlur = document.documentElement.classList.contains("no-blur");
+      .sidebar-logo-text {
+        font-family: var(--font-head);
+        font-size: 16px;
+        font-weight: 800;
+        letter-spacing: -0.3px;
+        color: var(--text);
+      }
 
-/* Renderiza un canvas o un botón lazy según el entorno */
-function chartPlaceholder(canvasId, makeKey, tall=false){
-  const cls=tall?"chart-wrap-tall":"chart-wrap";
-  if(_noBlur){
-    return`<div class="${cls}" id="cwrap-${canvasId}" style="display:flex;align-items:center;justify-content:center;background:var(--card2);border-radius:var(--radius-md)"><button style="background:transparent;border:1px solid var(--border);color:var(--text-2);padding:10px 20px;border-radius:var(--radius-md);font-size:12px;font-weight:600;cursor:pointer" onclick="loadLazyChart('${canvasId}','${makeKey}')">📊 Cargar gráfica</button></div>`;
-  }
-  return`<div class="${cls}"><canvas id="${canvasId}" aria-label="Gráfica ${canvasId}" role="img"></canvas></div>`;
-}
+      .sidebar-logo-text span {
+        color: var(--accent)
+      }
 
-function loadLazyChart(canvasId,makeKey){
-  const wrap=document.getElementById("cwrap-"+canvasId);
-  if(!wrap)return;
-  wrap.removeAttribute("id");
-  wrap.innerHTML=`<canvas id="${canvasId}"></canvas>`;
-  if(makeKey==="neto")makeChartNeto();
-  else if(makeKey==="meses")makeChartMeses();
-  else if(makeKey==="dep")makeChartDep();
-  else if(makeKey==="tipo")makeChartTipo();
-  else if(makeKey==="rolling")makeChartRolling();
-}
-
-let DATA = null, filtroDeporte = "Todos", filtroEquipo = "";
-let mesActual = null, mesesDisponibles = [];
-let charts = {}, tabActual = "resumen", cargando = false;
-let _renderedSections = new Set();
-
-const NAV_ITEMS = [
-  { id:"resumen",   icon:"📊", label:"General"  },
-  { id:"semana",    icon:"📅", label:"7 días"   },
-  { id:"mes",       icon:"🗓", label:"Mes"      },
-  { id:"deportes",  icon:"🏆", label:"Deportes" },
-  { id:"tipos",     icon:"🎯", label:"Tipos"    },
-  { id:"temporal",  icon:"⏱", label:"Timing"   },
-  { id:"rolling",   icon:"📈", label:"Tendencia"},
-  { id:"kelly",     icon:"🧮", label:"Kelly"    },
-  { id:"capital",   icon:"💼", label:"Capital"  },
-  { id:"apuestas",  icon:"📋", label:"Bets"     },
-  { id:"gestion",   icon:"⚙️", label:"Gestión"  },
-];
-
-function esc(s){ return s==null?"":String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;")}
-const fmt  = n => n==null?"—":`$${Number(n).toLocaleString("es-MX",{maximumFractionDigits:0})}`;
-const fmtp = n => n==null?"—":`${Number(n).toFixed(1)}%`;
-const fmts = n => n==null?"—":Number(n)>=0?`+${fmt(n)}`:fmt(n);
-const signColor = n => Number(n)>=0?"green":"red";
-function mesLabel(m){if(!m)return"—";const[y,mo]=m.split("-");return["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"][parseInt(mo,10)-1]+" "+y}
-
-/* ── Fetch ── */
-let _ctrl=null;
-async function cargarDatos(){
-  if(!getSecret() && !tg?.initData){
-    renderApp();
-    setTimeout(()=>{
-      const btn=document.querySelector('[data-tab="gestion"]');
-      showTab("gestion", btn);
-    }, 0);
-    return;
-  }
-  if(_ctrl)_ctrl.abort();
-  _ctrl=new AbortController();
-  const timeout=setTimeout(()=>_ctrl.abort(),12000);
-  try{
-    const res=await fetch(`${API_URL}/api/stats`,{headers:apiHeaders(),signal:_ctrl.signal});
-    if(!res.ok)throw new Error(`HTTP ${res.status}`);
-    const json=await res.json();
-    if(!json.resumen||!Array.isArray(json.apuestas))throw new Error("Datos inesperados");
-    DATA=json;
-    mesesDisponibles=DATA.grafica_meses.map(m=>m.mes);
-    mesActual=mesesDisponibles[mesesDisponibles.length-1]||null;
-    renderApp();
-  }catch(e){
-    const msg = e.name === "AbortError"
-      ? "Tiempo de espera agotado (12s). Verifica tu conexión o que el backend esté disponible."
-      : e.message;
-    document.getElementById("app").innerHTML=`<div style="padding:20px"><div class="error-box"><p>Sin conexión</p><br><small>${esc(msg)}</small><br><button class="retry-btn" data-action="recargar">↻ Reintentar</button></div></div>`;
-  }finally{clearTimeout(timeout);}
-}
-
-/* ── Analytics helpers (client-side) ── */
-function normalizaTipo(raw){
-  const t=(raw||"").toLowerCase().trim();
-  if(!t)return"Otro";
-  // Parlay — primero: puede contener "winner", "over", etc. en sus picks
-  if(/parlay|combo|acumulad|multi.?bet|\bsgp\b|same.?game/.test(t))return"Parlay";
-  // Futuro / Outright
-  if(/\boutright\b|futures?|to win the|championship|tournament winner|season (wins?|points?|goals?)|award|mvp|heisman|ballon/.test(t))return"Futuro";
-  // Moneyline / Ganador — DNB, to qualify, W1/W2, fight/race winner, MMA
-  if(/moneyline|\b1x2\b|\bml\b|ganador|team wins?|\bw[12]\b|\bwinner\b|to win\b|match result|draw no bet|\bdnb\b|to qualify|fight winner|race winner|series winner|method of victory|\bko\b|\btko\b|decision win|round betting|will win/.test(t))return"Moneyline";
-  // Handicap — puck line (NHL), run line (MLB), point spread, AH
-  if(/handicap|hcp|\bspread\b|\basian\b|puck line|run line|point spread|european handicap|\beh\b|alt(ernate)? spread/.test(t))return"Handicap";
-  // BTTS
-  if(/ambos|btts|both teams to score|\bgg\b|no goal/.test(t))return"BTTS";
-  // Marcador exacto
-  if(/correct score|marcador exacto|resultado exacto|exact score/.test(t))return"Marcador exacto";
-  // Props — va ANTES de Total O/U: "Player Points Over 25.5" debe ser Prop, no Total O/U
-  if(/\bplayer\b|\bprop\b|anytime (scorer|td|goal|basket|touchd)|first (goal|scorer|td|basket|pitch|serve|touchd)|last (goal|scorer|td|touchd)|to score\b|rushing yards|receiving yards|passing yards|\bassists?\b|\rebounds?\b|strikeouts?\b|home run|top (batsman|bowler|scorer)|fall of wicket|wickets?\b|century\b/.test(t))return"Props";
-  // Total O/U — \b evita "overtime", "overview", etc.
-if (/\bover\b|\bunder\b|\btotal\b|\bo\/u\b|más de|menos de|alt(ernate)? total|\bgames? o\/?u\b|\bsets? o\/?u\b|\bruns? o\/?u\b|half total|1st half total|q[1-4] total/.test(t)) return "Total O/U";  return"Otro";
-}
-
-function calcRoiPorTipo(){
-  const bucket={};
-  DATA.apuestas.filter(a=>a.status==="win"||a.status==="loss").forEach(a=>{
-    const t=normalizaTipo(a.tipo);
-    if(!bucket[t])bucket[t]={w:0,l:0,apo:0,gan:0,cuotas:[]};
-    const b=bucket[t];
-    b.apo+=a.monto||0;
-    if(parseFloat(a.cuota)>1.01)b.cuotas.push(parseFloat(a.cuota));
-    if(a.status==="win"){b.w++;b.gan+=a.ganancia||a.monto||0;}
-    else b.l++;
-  });
-  return Object.entries(bucket)
-    .filter(([,b])=>b.w+b.l>=1)
-    .map(([tipo,b])=>{
-      const total=b.w+b.l,neto=b.gan-b.apo;
-      return{tipo,wins:b.w,losses:b.l,apo:b.apo,neto,roi:b.apo>0?neto/b.apo*100:0,wr:total>0?b.w/total*100:0,cuotaMedia:b.cuotas.length>0?b.cuotas.reduce((a,c)=>a+c,0)/b.cuotas.length:0};
-    })
-    .sort((a,b)=>b.roi-a.roi);
-}
-
-/* ── Helper: convierte un Date UTC a sus componentes en hora CDMX ── */
-const _mxFmt = (() => { try { return new Intl.DateTimeFormat("en-US", { timeZone:"America/Mexico_City", weekday:"short", hour:"numeric", hour12:false }); } catch(e){ return null; } })();
-function toMXParts(dt) {
-  try {
-    const parts = (_mxFmt || new Intl.DateTimeFormat("en-US", {
-      timeZone: "America/Mexico_City",
-      weekday: "short",       // "Mon", "Tue"…
-      hour:    "numeric",
-      hour12:  false
-    })).formatToParts(dt);
-    const get = t => parts.find(p => p.type === t)?.value ?? "0";
-    const WEEK_SHORT = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-    return {
-      dow:  WEEK_SHORT.indexOf(get("weekday")),   // 0=Dom … 6=Sáb
-      hour: parseInt(get("hour"), 10)              // 0-23
-    };
-  } catch(e) {
-    // Fallback: UTC-6 fijo (funciona sin soporte de Intl avanzado)
-    const local = new Date(dt.getTime() - 6 * 3600000);
-    return { dow: local.getUTCDay(), hour: local.getUTCHours() };
-  }
-}
-
-function calcTemporal(){
-  const DIAS   = ["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"];
-  const FRANJAS = ["00-06","06-10","10-14","14-18","18-22","22-00"];
-  const db={}, hb={};
-  DIAS.forEach(d=>{db[d]={w:0,l:0,apo:0,gan:0}});
-  FRANJAS.forEach(f=>{hb[f]={w:0,l:0,apo:0,gan:0}});
-
-  DATA.apuestas.filter(a=>(a.status==="win"||a.status==="loss")&&(a.fecha_partido||a.fecha)).forEach(a=>{
-
-    // ── DÍA DE SEMANA: usa fecha del EVENTO (no de registro) ──
-    const fechaEvento = a.fecha_partido
-      ? new Date(a.fecha_partido + "T12:00:00")   // mediodía local, sin desplazamiento UTC
-      : new Date(a.fecha.replace(" ","T")+"Z");
-    if(isNaN(fechaEvento)) return;
-
-    const dowEvento = fechaEvento.getDay();         // 0=Dom … 6=Sáb
-    const diaIdx    = dowEvento === 0 ? 6 : dowEvento - 1;
-    const dia       = DIAS[diaIdx];
-
-    db[dia].apo += a.monto||0;
-    if(a.status==="win"){db[dia].w++;db[dia].gan+=a.ganancia||a.monto||0;}
-    else db[dia].l++;
-
-    // ── FRANJA HORARIA: usa fecha/hora de REGISTRO ──
-    if(a.fecha){
-      const dtReg = new Date(a.fecha.replace(" ","T")+"Z");
-      if(!isNaN(dtReg)){
-        const { hour } = toMXParts(dtReg);
-        const franja = hour<6?"00-06":hour<10?"06-10":hour<14?"10-14":
-                       hour<18?"14-18":hour<22?"18-22":"22-00";
-        hb[franja].apo += a.monto||0;
-        if(a.status==="win"){hb[franja].w++;hb[franja].gan+=a.ganancia||a.monto||0;}
-        else hb[franja].l++;
+      /* Hide mobile header on desktop -- keep it visible but adjust */
+      .header {
+        left: var(--sidebar-w)
       }
     }
-  });
 
-  const toStats=(label,b)=>{
-    const total=b.w+b.l, neto=b.gan-b.apo;
-    return{label,wins:b.w,losses:b.l,neto,roi:b.apo>0?neto/b.apo*100:0,
-           wr:total>0?b.w/total*100:0,total};
-  };
-  return{
-    porDia:  DIAS.map(d=>toStats(d,db[d])).filter(x=>x.total>0),
-    porHora: FRANJAS.map(f=>toStats(f,hb[f])).filter(x=>x.total>0)
-  };
-}
+    /* ── Performance overrides (Telegram Desktop / Linux) ── */
+    .no-blur .header {
+      backdrop-filter: none !important;
+      background: rgba(6, 8, 15, 0.97) !important
+    }
 
-function calcRolling(ventana=20){
-  const res=DATA.apuestas.filter(a=>a.status==="win"||a.status==="loss");
-  if(res.length<ventana)return[];
-  const points=[];
-  let netoAcum=0;
-  for(let i=0;i<res.length;i++){
-    const a=res[i];
-    if(a.status==="win")netoAcum+=(a.ganancia||a.monto||0)-(a.monto||0);
-    else netoAcum-=a.monto||0;
-    if(i<ventana-1)continue;
-    const win=res.slice(i-ventana+1,i+1);
-    const w=win.filter(x=>x.status==="win").length;
-    const apo=win.reduce((s,x)=>s+(x.monto||0),0);
-    const gan=win.reduce((s,x)=>x.status==="win"?s+(x.ganancia||x.monto||0):s,0);
-    const roi=apo>0?(gan-apo)/apo*100:0;
-    points.push({i,roi,wr:w/ventana*100,netoAcum});
-  }
-  return points;
-}
+    .no-blur .bottom-nav {
+      backdrop-filter: none !important;
+      background: rgba(10, 14, 28, 0.97) !important
+    }
 
-function calcKelly(){
-  const res=DATA.apuestas.filter(a=>a.status==="win"||a.status==="loss");
-  if(res.length<10)return null;
-  const p=res.filter(a=>a.status==="win").length/res.length;
-  const cuotas=res.map(a=>parseFloat(a.cuota)).filter(c=>c>1.01);  // solo bets resueltas
-  if(!cuotas.length)return null;
-  const b=cuotas.reduce((s,c)=>s+c,0)/cuotas.length-1;
-  if(b<=0)return null;
-  const f=Math.max(0,Math.min((p*(b+1)-1)/b,0.25));
-  const ev=p*b-(1-p);
-  return{f,fMedio:f/2,fCuarto:f/4,p:p*100,cuotaMedia:b+1,ev};
-}
+    .no-blur body::before {
+      display: none !important
+    }
 
-const _RENDER_FNS = {
-  resumen:  ()=>renderResumen(),
-  semana:   ()=>renderSemana(),
-  mes:      ()=>renderMes(),
-  deportes: ()=>renderDeportes(),
-  tipos:    ()=>renderTipos(),
-  temporal: ()=>renderTemporal(),
-  rolling:  ()=>renderRolling(),
-  kelly:    ()=>renderKelly(),
-  capital:  ()=>renderCapital(),
-  apuestas: ()=>renderApuestas(),
-  gestion:  ()=>renderGestion(),
-};
+    .no-blur body::after {
+      display: none !important
+    }
 
-/* ── Render App ── */
-function renderApp(){
-  _renderedSections.clear();
-  document.getElementById("app").innerHTML=`
+    .no-blur .status-dot {
+      animation: none !important
+    }
+
+    .no-blur .section.active {
+      animation: none !important
+    }
+
+    .no-blur body::after {
+      display: none !important
+    }
+
+    .no-blur .progress-fill,
+    .no-blur .tipo-bar-fill,
+    .no-blur .kelly-fill,
+    .no-blur .dia-bar-fill {
+      transition: none !important
+    }
+
+    .no-blur .loader-logo,
+    .no-blur .loader-bar-fill {
+      animation: none !important;
+      opacity: 1
+    }
+
+    /* ── Header ── */
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(6, 8, 15, 0.85);
+      backdrop-filter: blur(20px) saturate(180%);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 16px;
+      left: 0;
+      right: 0
+    }
+
+    .header-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px
+    }
+
+    .logo-icon {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, var(--accent), #00A880);
+      border-radius: 9px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0
+    }
+
+    .logo-text {
+      font-family: var(--font-head);
+      font-size: 17px;
+      font-weight: 800;
+      letter-spacing: -0.3px
+    }
+
+    .logo-text span {
+      color: var(--accent)
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 8px
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      background: var(--accent);
+      border-radius: 50%;
+      animation: pulse-dot 2s ease-in-out infinite
+    }
+
+    @keyframes pulse-dot {
+
+      0%,
+      100% {
+        opacity: 1;
+        transform: scale(1)
+      }
+
+      50% {
+        opacity: 0.4;
+        transform: scale(0.8)
+      }
+    }
+
+    .refresh-btn {
+      background: var(--card2);
+      border: 1px solid var(--border);
+      color: var(--text-2);
+      padding: 6px 14px;
+      border-radius: var(--radius-sm);
+      font-family: var(--font-body);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      letter-spacing: 0.2px
+    }
+
+    .refresh-btn:active {
+      transform: scale(0.96)
+    }
+
+    .refresh-btn:disabled {
+      opacity: 0.4;
+      cursor: default
+    }
+
+    /* ── Content ── */
+    .content {
+      padding: 16px;
+      position: relative;
+      z-index: 1
+    }
+
+    .section {
+      display: none
+    }
+
+    .section.active {
+      display: block;
+      animation: fadein 0.25s ease
+    }
+
+    @keyframes fadein {
+      from {
+        opacity: 0;
+        transform: translateY(6px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    /* ── Bottom nav ── */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: var(--nav-h);
+      background: rgba(10, 14, 28, 0.92);
+      backdrop-filter: blur(24px) saturate(200%);
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: stretch;
+      z-index: 200;
+      overflow-x: auto;
+      scrollbar-width: none;
+      padding-bottom: env(safe-area-inset-bottom, 0px)
+    }
+
+    .bottom-nav::-webkit-scrollbar {
+      display: none
+    }
+
+    .nav-item {
+      min-width: 64px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      color: var(--text-3);
+      padding: 8px 4px;
+      transition: color 0.2s;
+      position: relative;
+      -webkit-tap-highlight-color: transparent
+    }
+
+    .nav-item.active {
+      color: var(--accent)
+    }
+
+    .nav-item.active::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 32px;
+      height: 2px;
+      background: var(--accent);
+      border-radius: 0 0 4px 4px
+    }
+
+    .nav-icon {
+      font-size: 20px;
+      line-height: 1
+    }
+
+    .nav-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.3px
+    }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      margin-bottom: 10px;
+      position: relative;
+      overflow: hidden
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.02), transparent 60%);
+      pointer-events: none
+    }
+
+    .card-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-3);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 14px
+    }
+
+    /* ── Stats grid ── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 10px
+    }
+
+    .stat-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 14px 10px;
+      text-align: center;
+      position: relative;
+      overflow: hidden
+    }
+
+    .stat-card::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      opacity: 0;
+      transition: opacity 0.2s
+    }
+
+    .stat-card.win-card::after {
+      background: var(--win);
+      opacity: 1
+    }
+
+    .stat-card.loss-card::after {
+      background: var(--loss);
+      opacity: 1
+    }
+
+    .stat-card.pend-card::after {
+      background: var(--pend);
+      opacity: 1
+    }
+
+    .stat-value {
+      font-family: var(--font-num);
+      font-size: 26px;
+      font-weight: 700;
+      line-height: 1;
+      margin-bottom: 5px
+    }
+
+    .stat-label {
+      font-size: 10px;
+      color: var(--text-2);
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      text-transform: uppercase
+    }
+
+    /* ── KPI ── */
+    .kpi-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 10px
+    }
+
+    .kpi {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 14px
+    }
+
+    .kpi-label {
+      font-size: 10px;
+      color: var(--text-2);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 6px
+    }
+
+    .kpi-value {
+      font-family: var(--font-num);
+      font-size: 21px;
+      font-weight: 700;
+      letter-spacing: -0.5px
+    }
+
+    /* ── Colors ── */
+    .green {
+      color: var(--win)
+    }
+
+    .red {
+      color: var(--loss)
+    }
+
+    .yellow {
+      color: var(--pend)
+    }
+
+    .accent {
+      color: var(--accent)
+    }
+
+    .muted {
+      color: var(--text-2)
+    }
+
+    /* ── Progress ── */
+    .progress-wrap {
+      margin-bottom: 4px
+    }
+
+    .progress-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 8px
+    }
+
+    .progress-track {
+      height: 6px;
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 3px;
+      overflow: hidden
+    }
+
+    .progress-fill {
+      height: 100%;
+      border-radius: 3px;
+      background: linear-gradient(90deg, var(--win), var(--accent));
+      transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1)
+    }
+
+    /* ── Chart ── */
+    .chart-wrap {
+      position: relative;
+      height: 180px;
+      margin-bottom: 4px
+    }
+
+    .chart-wrap-tall {
+      position: relative;
+      height: 220px;
+      margin-bottom: 4px
+    }
+
+    /* ── Sport items ── */
+    .sport-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border)
+    }
+
+    .sport-item:last-child {
+      border-bottom: none
+    }
+
+    .sport-name {
+      font-size: 14px;
+      font-weight: 600
+    }
+
+    .sport-sub {
+      font-size: 11px;
+      color: var(--text-2);
+      margin-top: 2px
+    }
+
+    .sport-roi {
+      font-family: var(--font-num);
+      font-size: 16px;
+      font-weight: 700
+    }
+
+    /* ── Capital ── */
+    .capital-hero {
+      text-align: center;
+      padding: 24px 0 16px
+    }
+
+    .capital-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text-2);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 10px
+    }
+
+    .capital-amount {
+      font-family: var(--font-head);
+      font-size: 42px;
+      font-weight: 800;
+      color: var(--accent);
+      line-height: 1;
+      letter-spacing: -1px
+    }
+
+    .capital-sub {
+      font-size: 12px;
+      color: var(--text-2);
+      margin-top: 8px;
+      font-weight: 500
+    }
+
+    .cap-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      margin-top: 16px
+    }
+
+    .cap-stat {
+      background: var(--card2);
+      border-radius: var(--radius-md);
+      padding: 14px 12px;
+      text-align: center;
+      border: 1px solid var(--border)
+    }
+
+    .cap-stat-val {
+      font-family: var(--font-num);
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 4px
+    }
+
+    .cap-stat-lbl {
+      font-size: 10px;
+      color: var(--text-2);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px
+    }
+
+    /* ── Bet items ── */
+    .bet-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border)
+    }
+
+    .bet-item:last-child {
+      border-bottom: none
+    }
+
+    .bet-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0
+    }
+
+    .bet-dot.win {
+      background: var(--win);
+      box-shadow: 0 0 6px rgba(0, 205, 150, 0.5)
+    }
+
+    .bet-dot.loss {
+      background: var(--loss);
+      box-shadow: 0 0 6px rgba(255, 61, 90, 0.5)
+    }
+
+    .bet-dot.pend {
+      background: var(--pend);
+      box-shadow: 0 0 6px rgba(245, 166, 35, 0.5)
+    }
+
+    .bet-info {
+      flex: 1;
+      min-width: 0
+    }
+
+    .bet-teams {
+      font-size: 13px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 2px
+    }
+
+    .bet-meta {
+      font-size: 11px;
+      color: var(--text-2);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis
+    }
+
+    .bet-right {
+      text-align: right;
+      flex-shrink: 0
+    }
+
+    .bet-monto {
+      font-family: var(--font-num);
+      font-size: 13px;
+      font-weight: 700
+    }
+
+    .bet-result {
+      font-family: var(--font-num);
+      font-size: 11px;
+      margin-top: 1px
+    }
+
+    /* ── Filters ── */
+    .filter-row {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      margin-bottom: 12px;
+      scrollbar-width: none;
+      padding-bottom: 2px
+    }
+
+    .filter-row::-webkit-scrollbar {
+      display: none
+    }
+
+    .filter-chip {
+      padding: 6px 14px;
+      border-radius: 99px;
+      font-size: 12px;
+      font-weight: 700;
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--text-2);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s;
+      letter-spacing: 0.2px
+    }
+
+    .filter-chip.active {
+      background: var(--accent-dim);
+      border-color: var(--border-hi);
+      color: var(--accent)
+    }
+
+    /* ── Search ── */
+    .search-wrap {
+      position: relative;
+      margin-bottom: 10px
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 14px;
+      pointer-events: none;
+      color: var(--text-2)
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 10px 14px 10px 36px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s
+    }
+
+    .search-input:focus {
+      border-color: rgba(0, 205, 150, 0.35)
+    }
+
+    .search-input::placeholder {
+      color: var(--text-3)
+    }
+
+    /* ── Mes selector ── */
+    .mes-selector {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 10px 14px
+    }
+
+    .mes-nav {
+      background: var(--card2);
+      border: 1px solid var(--border);
+      color: var(--text-2);
+      width: 32px;
+      height: 32px;
+      border-radius: var(--radius-sm);
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s
+    }
+
+    .mes-nav:active {
+      transform: scale(0.92)
+    }
+
+    .mes-label {
+      font-family: var(--font-head);
+      font-size: 16px;
+      font-weight: 700
+    }
+
+    /* ── Racha badge ── */
+    .racha-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border-radius: var(--radius-md);
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 10px;
+      letter-spacing: 0.2px
+    }
+
+    .racha-win {
+      background: var(--win-bg);
+      color: var(--win);
+      border: 1px solid rgba(0, 205, 150, 0.2)
+    }
+
+    .racha-loss {
+      background: var(--loss-bg);
+      color: var(--loss);
+      border: 1px solid rgba(255, 61, 90, 0.2)
+    }
+
+    .racha-icon {
+      font-size: 18px
+    }
+
+    /* ── Loader ── */
+    .loader {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 70vh;
+      gap: 20px
+    }
+
+    .loader-logo {
+      font-family: var(--font-head);
+      font-size: 32px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      animation: loader-pulse 1.5s ease-in-out infinite
+    }
+
+    .loader-logo span {
+      color: var(--accent)
+    }
+
+    @keyframes loader-pulse {
+
+      0%,
+      100% {
+        opacity: 1
+      }
+
+      50% {
+        opacity: 0.4
+      }
+    }
+
+    .loader-bar {
+      width: 80px;
+      height: 2px;
+      background: var(--card2);
+      border-radius: 1px;
+      overflow: hidden
+    }
+
+    .loader-bar-fill {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 1px;
+      animation: loader-slide 1.5s ease-in-out infinite
+    }
+
+    @keyframes loader-slide {
+      0% {
+        width: 0%;
+        margin-left: 0
+      }
+
+      50% {
+        width: 60%;
+        margin-left: 20%
+      }
+
+      100% {
+        width: 0%;
+        margin-left: 100%
+      }
+    }
+
+    .loader p {
+      font-size: 13px;
+      color: var(--text-2);
+      font-weight: 500
+    }
+
+    /* ── Error ── */
+    .error-box {
+      background: var(--loss-bg);
+      border: 1px solid rgba(255, 61, 90, 0.25);
+      border-radius: var(--radius-lg);
+      padding: 24px 20px;
+      text-align: center;
+      margin: 20px 0
+    }
+
+    .error-box p {
+      color: var(--loss);
+      font-size: 14px;
+      font-weight: 600
+    }
+
+    .error-box small {
+      color: var(--text-2);
+      font-size: 12px
+    }
+
+    .retry-btn {
+      margin-top: 14px;
+      padding: 9px 22px;
+      background: var(--accent);
+      color: #000;
+      border: none;
+      border-radius: var(--radius-md);
+      font-family: var(--font-body);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      letter-spacing: 0.2px
+    }
+
+    /* ── Empty / Explainer ── */
+    .empty {
+      text-align: center;
+      padding: 30px 20px;
+      color: var(--text-2);
+      font-size: 13px
+    }
+
+    .divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 4px 0 12px
+    }
+
+    .section-header {
+      font-family: var(--font-head);
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.3px;
+      margin-bottom: 14px;
+      color: var(--text)
+    }
+
+    .section-header span {
+      color: var(--accent)
+    }
+
+    .explainer {
+      font-size: 12px;
+      color: var(--text-2);
+      line-height: 1.6;
+      padding: 12px 14px;
+      background: var(--card2);
+      border-radius: var(--radius-md);
+      border-left: 2px solid var(--accent);
+      margin-top: 8px
+    }
+
+    .explainer strong {
+      color: var(--text);
+      font-weight: 600
+    }
+
+    /* ── Tipo row ── */
+    .tipo-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--border)
+    }
+
+    .tipo-item:last-child {
+      border-bottom: none
+    }
+
+    .tipo-bar-wrap {
+      height: 4px;
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 2px;
+      overflow: hidden;
+      margin-top: 6px;
+      width: 100%
+    }
+
+    .tipo-bar-fill {
+      height: 100%;
+      border-radius: 2px;
+      transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1)
+    }
+
+    /* ── Rolling chart ── */
+    .rolling-kpi {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px
+    }
+
+    .rolling-kpi-item {
+      flex: 1;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 12px;
+      text-align: center
+    }
+
+    .rolling-kpi-val {
+      font-family: var(--font-num);
+      font-size: 20px;
+      font-weight: 700
+    }
+
+    .rolling-kpi-lbl {
+      font-size: 10px;
+      color: var(--text-2);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-top: 4px
+    }
+
+    /* ── Kelly meter ── */
+    .kelly-meter {
+      height: 12px;
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 6px;
+      overflow: hidden;
+      margin: 10px 0
+    }
+
+    .kelly-fill {
+      height: 100%;
+      border-radius: 6px;
+      background: linear-gradient(90deg, var(--win), #F5A623);
+      transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1)
+    }
+
+    .kelly-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 12px
+    }
+
+    .kelly-card {
+      background: var(--card2);
+      border-radius: var(--radius-md);
+      padding: 14px;
+      text-align: center;
+      border: 1px solid var(--border)
+    }
+
+    .kelly-card-pct {
+      font-family: var(--font-num);
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--accent)
+    }
+
+    .kelly-card-lbl {
+      font-size: 10px;
+      color: var(--text-2);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-top: 4px
+    }
+
+    .kelly-card-sub {
+      font-size: 11px;
+      color: var(--text-3);
+      margin-top: 3px
+    }
+
+    /* ── Temporal ── */
+    .dia-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border)
+    }
+
+    .dia-row:last-child {
+      border-bottom: none
+    }
+
+    .dia-label {
+      font-size: 12px;
+      font-weight: 700;
+      width: 36px;
+      flex-shrink: 0;
+      color: var(--text-2)
+    }
+
+    .dia-bar-wrap {
+      flex: 1;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 3px;
+      overflow: hidden
+    }
+
+    .dia-bar-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1)
+    }
+
+    .dia-roi {
+      font-family: var(--font-num);
+      font-size: 11px;
+      font-weight: 700;
+      width: 52px;
+      text-align: right;
+      flex-shrink: 0
+    }
+
+    .dia-wl {
+      font-size: 10px;
+      color: var(--text-2);
+      width: 56px;
+      text-align: right;
+      flex-shrink: 0
+    }
+
+    /* ── Gestión CRUD ── */
+    .g-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px
+    }
+
+    .btn-add {
+      -webkit-appearance: none;
+      appearance: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      background-color: #00CD96;
+      color: #000;
+      border: none;
+      border-radius: var(--radius-md);
+      padding: 10px 18px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      letter-spacing: 0.2px;
+      -webkit-tap-highlight-color: transparent;
+      flex-shrink: 0;
+      min-height: 40px;
+      box-shadow: 0 0 14px rgba(0, 205, 150, 0.35)
+    }
+
+    .btn-add:active {
+      opacity: .75;
+      transform: scale(0.97)
+    }
+
+    .g-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
+      margin-bottom: 8px
+    }
+
+    .g-card-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 8px
+    }
+
+    .g-teams {
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 1.35
+    }
+
+    .g-meta {
+      font-size: 11px;
+      color: var(--text-2);
+      margin-top: 3px;
+      line-height: 1.4
+    }
+
+    .g-actions {
+      display: flex;
+      gap: 6px;
+      flex-shrink: 0
+    }
+
+    .btn-edit {
+      background: rgba(255, 255, 255, 0.07);
+      color: var(--text-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 6px 9px;
+      font-size: 13px;
+      cursor: pointer
+    }
+
+    .btn-del {
+      background: rgba(255, 61, 90, 0.12);
+      color: var(--loss);
+      border: 1px solid rgba(255, 61, 90, 0.2);
+      border-radius: var(--radius-sm);
+      padding: 6px 9px;
+      font-size: 13px;
+      cursor: pointer
+    }
+
+    /* Modal */
+    .m-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.72);
+      z-index: 9999;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      padding-bottom: var(--nav-h)
+    }
+
+    /* Modal — estructura flexbox con footer sticky */
+    .m-sheet {
+      background: var(--surface);
+      border-radius: 20px 20px 16px 16px;
+      width: 100%;
+      max-width: 520px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.6)
+    }
+
+    .m-handle {
+      width: 36px;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.18);
+      border-radius: 2px;
+      margin: 10px auto 0;
+      flex-shrink: 0
+    }
+
+    .m-head {
+      padding: 12px 16px;
+      flex-shrink: 0;
+      border-bottom: 1px solid var(--border)
+    }
+
+    .m-body {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 14px 16px 8px;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain
+    }
+
+    .m-foot {
+      flex-shrink: 0;
+      padding: 12px 16px;
+      padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 14px);
+      background: var(--surface);
+      border-top: 1px solid var(--border)
+    }
+
+    .m-title {
+      font-family: var(--font-head);
+      font-size: 17px;
+      font-weight: 800;
+      display: flex;
+      justify-content: space-between;
+      align-items: center
+    }
+
+    .m-close {
+      background: var(--card2);
+      border: 1px solid var(--border);
+      color: var(--text-2);
+      width: 32px;
+      height: 32px;
+      border-radius: var(--radius-sm);
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center
+    }
+
+    .m-label {
+      display: block;
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text-2);
+      text-transform: uppercase;
+      letter-spacing: .6px;
+      margin-bottom: 5px
+    }
+
+    .m-input {
+      width: 100%;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 14px;
+      padding: 9px 12px;
+      outline: none;
+      box-sizing: border-box;
+      transition: border-color .2s
+    }
+
+    .m-input:focus {
+      border-color: rgba(0, 205, 150, .4)
+    }
+
+    .m-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px
+    }
+
+    .m-group {
+      margin-bottom: 11px
+    }
+
+    .m-date-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 6px
+    }
+
+    .m-now-btn {
+      flex-shrink: 0;
+      background: var(--accent);
+      color: #000;
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 8px 12px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap
+    }
+
+    .m-submit {
+      display: block;
+      width: 100%;
+      background: var(--accent);
+      color: #000;
+      border: none;
+      border-radius: var(--radius-md);
+      padding: 14px;
+      font-family: var(--font-head);
+      font-size: 15px;
+      font-weight: 800;
+      cursor: pointer;
+      letter-spacing: .2px;
+      transition: opacity .15s
+    }
+
+    .m-submit:active,
+    .m-submit:disabled {
+      opacity: .6
+    }
+
+    .m-submit:disabled {
+      cursor: not-allowed
+    }
+
+    .m-err {
+      font-size: 12px;
+      color: var(--loss);
+      margin-bottom: 8px;
+      display: none;
+      padding: 8px 10px;
+      background: rgba(255, 80, 80, .08);
+      border-radius: 6px;
+      border: 1px solid rgba(255, 80, 80, .2)
+    }
+
+    /* Upload zone */
+    .u-zone {
+      border: 2px dashed var(--border);
+      border-radius: var(--radius-md);
+      padding: 22px 16px;
+      text-align: center;
+      cursor: pointer;
+      margin-bottom: 12px;
+      transition: border-color .2s
+    }
+
+    .u-zone:hover,
+    .u-zone.drag {
+      border-color: var(--accent)
+    }
+
+    .u-icon {
+      font-size: 30px;
+      margin-bottom: 6px
+    }
+
+    .u-text {
+      font-size: 13px;
+      color: var(--text-2)
+    }
+
+    .u-sub {
+      font-size: 11px;
+      color: var(--text-3);
+      margin-top: 3px
+    }
+
+    .u-analyzing {
+      background: rgba(245, 166, 35, .1);
+      border: 1px solid rgba(245, 166, 35, .25);
+      border-radius: var(--radius-sm);
+      padding: 9px 12px;
+      font-size: 12px;
+      color: var(--pend);
+      display: none;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px
+    }
+
+    /* Secret banner */
+    .secret-banner {
+      background: rgba(245, 166, 35, .08);
+      border: 1px solid rgba(245, 166, 35, .2);
+      border-radius: var(--radius-md);
+      padding: 14px;
+      margin-bottom: 12px;
+      font-size: 13px;
+      color: var(--text-2);
+      line-height: 1.5
+    }
+
+    .secret-banner strong {
+      color: var(--pend)
+    }
+
+    .secret-input {
+      margin-top: 10px;
+      width: 100%;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-size: 13px;
+      padding: 9px 12px;
+      box-sizing: border-box;
+      outline: none
+    }
+
+    .secret-save {
+      margin-top: 8px;
+      background: var(--pend);
+      color: #000;
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer
+    }
+  </style>
+  <script>
+    // Aplica no-blur antes del primer paint para evitar backdrop-filter en Linux/Desktop
+    (function () {
+      var ua = navigator.userAgent;
+      if ((ua.includes("Linux") && !ua.includes("Android")) || ua.includes("Windows NT")) {
+        document.documentElement.classList.add("no-blur");
+      }
+    })();
+  </script>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+
+<body>
+
+  <div id="app">
+    <div class="loader">
+      <div class="loader-logo">Bet<span>Stats</span></div>
+      <div class="loader-bar">
+        <div class="loader-bar-fill"></div>
+      </div>
+      <p>Cargando datos...</p>
+    </div>
+  </div>
+  <nav class="bottom-nav" id="bottomNav" style="display:none"></nav>
+  <div id="gModal"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <script>
+    // FIX: API_URL configurable vía meta tag, fallback al dominio Railway.
+    // En el <head>: <meta name="api-url" content="https://...">
+    const API_URL = (
+      document.querySelector('meta[name="api-url"]')?.content
+      || "https://betting-stats-bot-production.up.railway.app"
+    );
+    const tg = window.Telegram?.WebApp;
+    const _isLowGPU = navigator.userAgent.includes("Linux") && !navigator.userAgent.includes("Android");
+    if (tg) {
+      tg.ready();
+      if (tg.isVersionAtLeast("6.1")) tg.expand();
+      tg.disableVerticalSwipes();
+      tg.setHeaderColor("#06080F");
+      tg.setBackgroundColor("#06080F");
+      if (tg.platform === "tdesktop" || tg.platform === "weba" || tg.platform === "webk" || tg.platform === "webz" || _isLowGPU) {
+        document.documentElement.classList.add("no-blur");
+      }
+    }
+    if (document.documentElement.classList.contains("no-blur") && typeof Chart !== "undefined") {
+      Chart.defaults.animation = false;
+      Chart.defaults.animations = {};
+    }
+
+    // ── Auth para endpoints CRUD ──────────────────────────────────────────────────
+    function getSecret() {
+      // FIX-XSS: sessionStorage en lugar de localStorage. Si hay XSS, el atacante
+      // solo accede a la key durante la sesión activa, no para siempre.
+      // Migración silenciosa: lee de localStorage si existe, lo pasa a session, y borra.
+      const legacy = localStorage.getItem("miniapp_secret");
+      if (legacy) {
+        sessionStorage.setItem("miniapp_secret", legacy);
+        localStorage.removeItem("miniapp_secret");
+      }
+      return sessionStorage.getItem("miniapp_secret") || "";
+    }
+    function apiHeaders(extra = {}) {
+      // Auth híbrida: mientras dura la migración, enviamos AMBOS headers.
+      // El backend acepta cualquiera. Cuando confirmemos que initData funciona
+      // en producción ~1 semana, retiramos el X-Api-Key.
+      const headers = { "Content-Type": "application/json", ...extra };
+
+      // 1) initData de Telegram (preferido) — válido si la Mini-App se abre desde Telegram
+      if (tg?.initData) {
+        headers["X-Telegram-Init-Data"] = tg.initData;
+      }
+
+      // 2) Fallback: X-Api-Key (legacy) — útil para abrir la Mini-App fuera de Telegram
+      const apiKey = getSecret();
+      if (apiKey) {
+        headers["X-Api-Key"] = apiKey;
+      }
+
+      return headers;
+    }
+    const _noBlur = document.documentElement.classList.contains("no-blur");
+
+    /* Renderiza un canvas o un botón lazy según el entorno */
+    function chartPlaceholder(canvasId, makeKey, tall = false) {
+      const cls = tall ? "chart-wrap-tall" : "chart-wrap";
+      if (_noBlur) {
+        return `<div class="${cls}" id="cwrap-${canvasId}" style="display:flex;align-items:center;justify-content:center;background:var(--card2);border-radius:var(--radius-md)"><button style="background:transparent;border:1px solid var(--border);color:var(--text-2);padding:10px 20px;border-radius:var(--radius-md);font-size:12px;font-weight:600;cursor:pointer" onclick="loadLazyChart('${canvasId}','${makeKey}')">📊 Cargar gráfica</button></div>`;
+      }
+      return `<div class="${cls}"><canvas id="${canvasId}" aria-label="Gráfica ${canvasId}" role="img"></canvas></div>`;
+    }
+
+    function loadLazyChart(canvasId, makeKey) {
+      const wrap = document.getElementById("cwrap-" + canvasId);
+      if (!wrap) return;
+      wrap.removeAttribute("id");
+      wrap.innerHTML = `<canvas id="${canvasId}"></canvas>`;
+      if (makeKey === "neto") makeChartNeto();
+      else if (makeKey === "meses") makeChartMeses();
+      else if (makeKey === "dep") makeChartDep();
+      else if (makeKey === "tipo") makeChartTipo();
+      else if (makeKey === "rolling") makeChartRolling();
+    }
+
+    let DATA = null, filtroDeporte = "Todos", filtroEquipo = "";
+    let mesActual = null, mesesDisponibles = [];
+    let charts = {}, tabActual = "resumen", cargando = false;
+    let _renderedSections = new Set();
+
+    const NAV_ITEMS = [
+      { id: "resumen", icon: "📊", label: "General" },
+      { id: "semana", icon: "📅", label: "7 días" },
+      { id: "mes", icon: "🗓", label: "Mes" },
+      { id: "deportes", icon: "🏆", label: "Deportes" },
+      { id: "tipos", icon: "🎯", label: "Tipos" },
+      { id: "temporal", icon: "⏱", label: "Timing" },
+      { id: "rolling", icon: "📈", label: "Tendencia" },
+      { id: "kelly", icon: "🧮", label: "Kelly" },
+      { id: "capital", icon: "💼", label: "Capital" },
+      { id: "apuestas", icon: "📋", label: "Bets" },
+      { id: "gestion", icon: "⚙️", label: "Gestión" },
+    ];
+
+    function esc(s) { return s == null ? "" : String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;") }
+    const fmt = n => n == null ? "—" : `$${Number(n).toLocaleString("es-MX", { maximumFractionDigits: 0 })}`;
+    const fmtp = n => n == null ? "—" : `${Number(n).toFixed(1)}%`;
+    const fmts = n => n == null ? "—" : Number(n) >= 0 ? `+${fmt(n)}` : fmt(n);
+    const signColor = n => Number(n) >= 0 ? "green" : "red";
+    function mesLabel(m) { if (!m) return "—"; const [y, mo] = m.split("-"); return ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"][parseInt(mo, 10) - 1] + " " + y }
+
+    /* ── Fetch ── */
+    let _ctrl = null;
+    async function cargarDatos() {
+      if (!getSecret() && !tg?.initData) {
+        renderApp();
+        setTimeout(() => {
+          const btn = document.querySelector('[data-tab="gestion"]');
+          showTab("gestion", btn);
+        }, 0);
+        return;
+      }
+      if (_ctrl) _ctrl.abort();
+      _ctrl = new AbortController();
+      const timeout = setTimeout(() => _ctrl.abort(), 12000);
+      try {
+        const res = await fetch(`${API_URL}/api/stats`, { headers: apiHeaders(), signal: _ctrl.signal });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = await res.json();
+        if (!json.resumen || !Array.isArray(json.apuestas)) throw new Error("Datos inesperados");
+        DATA = json;
+        mesesDisponibles = DATA.grafica_meses.map(m => m.mes);
+        mesActual = mesesDisponibles[mesesDisponibles.length - 1] || null;
+        renderApp();
+      } catch (e) {
+        const msg = e.name === "AbortError"
+          ? "Tiempo de espera agotado (12s). Verifica tu conexión o que el backend esté disponible."
+          : e.message;
+        document.getElementById("app").innerHTML = `<div style="padding:20px"><div class="error-box"><p>Sin conexión</p><br><small>${esc(msg)}</small><br><button class="retry-btn" data-action="recargar">↻ Reintentar</button></div></div>`;
+      } finally { clearTimeout(timeout); }
+    }
+
+    /* ── Analytics helpers (client-side) ── */
+    function normalizaTipo(raw) {
+      const t = (raw || "").toLowerCase().trim();
+      if (!t) return "Otro";
+      // Parlay — primero: puede contener "winner", "over", etc. en sus picks
+      if (/parlay|combo|acumulad|multi.?bet|\bsgp\b|same.?game/.test(t)) return "Parlay";
+      // Futuro / Outright
+      if (/\boutright\b|futures?|to win the|championship|tournament winner|season (wins?|points?|goals?)|award|mvp|heisman|ballon/.test(t)) return "Futuro";
+      // Moneyline / Ganador — DNB, to qualify, W1/W2, fight/race winner, MMA
+      if (/moneyline|\b1x2\b|\bml\b|ganador|team wins?|\bw[12]\b|\bwinner\b|to win\b|match result|draw no bet|\bdnb\b|to qualify|fight winner|race winner|series winner|method of victory|\bko\b|\btko\b|decision win|round betting|will win/.test(t)) return "Moneyline";
+      // Handicap — puck line (NHL), run line (MLB), point spread, AH
+      if (/handicap|hcp|\bspread\b|\basian\b|puck line|run line|point spread|european handicap|\beh\b|alt(ernate)? spread/.test(t)) return "Handicap";
+      // BTTS
+      if (/ambos|btts|both teams to score|\bgg\b|no goal/.test(t)) return "BTTS";
+      // Marcador exacto
+      if (/correct score|marcador exacto|resultado exacto|exact score/.test(t)) return "Marcador exacto";
+      // Props — va ANTES de Total O/U: "Player Points Over 25.5" debe ser Prop, no Total O/U
+      if (/\bplayer\b|\bprop\b|anytime (scorer|td|goal|basket|touchd)|first (goal|scorer|td|basket|pitch|serve|touchd)|last (goal|scorer|td|touchd)|to score\b|rushing yards|receiving yards|passing yards|\bassists?\b|\rebounds?\b|strikeouts?\b|home run|top (batsman|bowler|scorer)|fall of wicket|wickets?\b|century\b/.test(t)) return "Props";
+      // Total O/U — \b evita "overtime", "overview", etc.
+      if (/\bover\b|\bunder\b|\btotal\b|\bo\/u\b|más de|menos de|alt(ernate)? total|\bgames? o\/?u\b|\bsets? o\/?u\b|\bruns? o\/?u\b|half total|1st half total|q[1-4] total/.test(t)) return "Total O/U"; return "Otro";
+    }
+
+    function calcRoiPorTipo() {
+      const bucket = {};
+      DATA.apuestas.filter(a => a.status === "win" || a.status === "loss").forEach(a => {
+        const t = normalizaTipo(a.tipo);
+        if (!bucket[t]) bucket[t] = { w: 0, l: 0, apo: 0, gan: 0, cuotas: [] };
+        const b = bucket[t];
+        b.apo += a.monto || 0;
+        if (parseFloat(a.cuota) > 1.01) b.cuotas.push(parseFloat(a.cuota));
+        if (a.status === "win") { b.w++; b.gan += a.ganancia || a.monto || 0; }
+        else b.l++;
+      });
+      return Object.entries(bucket)
+        .filter(([, b]) => b.w + b.l >= 1)
+        .map(([tipo, b]) => {
+          const total = b.w + b.l, neto = b.gan - b.apo;
+          return { tipo, wins: b.w, losses: b.l, apo: b.apo, neto, roi: b.apo > 0 ? neto / b.apo * 100 : 0, wr: total > 0 ? b.w / total * 100 : 0, cuotaMedia: b.cuotas.length > 0 ? b.cuotas.reduce((a, c) => a + c, 0) / b.cuotas.length : 0 };
+        })
+        .sort((a, b) => b.roi - a.roi);
+    }
+
+    /* ── Helper: convierte un Date UTC a sus componentes en hora CDMX ── */
+    const _mxFmt = (() => { try { return new Intl.DateTimeFormat("en-US", { timeZone: "America/Mexico_City", weekday: "short", hour: "numeric", hour12: false }); } catch (e) { return null; } })();
+    function toMXParts(dt) {
+      try {
+        const parts = (_mxFmt || new Intl.DateTimeFormat("en-US", {
+          timeZone: "America/Mexico_City",
+          weekday: "short",       // "Mon", "Tue"…
+          hour: "numeric",
+          hour12: false
+        })).formatToParts(dt);
+        const get = t => parts.find(p => p.type === t)?.value ?? "0";
+        const WEEK_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+        return {
+          dow: WEEK_SHORT.indexOf(get("weekday")),   // 0=Dom … 6=Sáb
+          hour: parseInt(get("hour"), 10)              // 0-23
+        };
+      } catch (e) {
+        // Fallback: UTC-6 fijo (funciona sin soporte de Intl avanzado)
+        const local = new Date(dt.getTime() - 6 * 3600000);
+        return { dow: local.getUTCDay(), hour: local.getUTCHours() };
+      }
+    }
+
+    function calcTemporal() {
+      const DIAS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
+      const FRANJAS = ["00-06", "06-10", "10-14", "14-18", "18-22", "22-00"];
+      const db = {}, hb = {};
+      DIAS.forEach(d => { db[d] = { w: 0, l: 0, apo: 0, gan: 0 } });
+      FRANJAS.forEach(f => { hb[f] = { w: 0, l: 0, apo: 0, gan: 0 } });
+
+      DATA.apuestas.filter(a => (a.status === "win" || a.status === "loss") && (a.fecha_partido || a.fecha)).forEach(a => {
+
+        // ── DÍA DE SEMANA: usa fecha del EVENTO (no de registro) ──
+        const fechaEvento = a.fecha_partido
+          ? new Date(a.fecha_partido + "T12:00:00")   // mediodía local, sin desplazamiento UTC
+          : new Date(a.fecha.replace(" ", "T") + "Z");
+        if (isNaN(fechaEvento)) return;
+
+        const dowEvento = fechaEvento.getDay();         // 0=Dom … 6=Sáb
+        const diaIdx = dowEvento === 0 ? 6 : dowEvento - 1;
+        const dia = DIAS[diaIdx];
+
+        db[dia].apo += a.monto || 0;
+        if (a.status === "win") { db[dia].w++; db[dia].gan += a.ganancia || a.monto || 0; }
+        else db[dia].l++;
+
+        // ── FRANJA HORARIA: usa fecha/hora de REGISTRO ──
+        if (a.fecha) {
+          const dtReg = new Date(a.fecha.replace(" ", "T") + "Z");
+          if (!isNaN(dtReg)) {
+            const { hour } = toMXParts(dtReg);
+            const franja = hour < 6 ? "00-06" : hour < 10 ? "06-10" : hour < 14 ? "10-14" :
+              hour < 18 ? "14-18" : hour < 22 ? "18-22" : "22-00";
+            hb[franja].apo += a.monto || 0;
+            if (a.status === "win") { hb[franja].w++; hb[franja].gan += a.ganancia || a.monto || 0; }
+            else hb[franja].l++;
+          }
+        }
+      });
+
+      const toStats = (label, b) => {
+        const total = b.w + b.l, neto = b.gan - b.apo;
+        return {
+          label, wins: b.w, losses: b.l, neto, roi: b.apo > 0 ? neto / b.apo * 100 : 0,
+          wr: total > 0 ? b.w / total * 100 : 0, total
+        };
+      };
+      return {
+        porDia: DIAS.map(d => toStats(d, db[d])).filter(x => x.total > 0),
+        porHora: FRANJAS.map(f => toStats(f, hb[f])).filter(x => x.total > 0)
+      };
+    }
+
+    function calcRolling(ventana = 20) {
+      const res = DATA.apuestas.filter(a => a.status === "win" || a.status === "loss");
+      if (res.length < ventana) return [];
+      const points = [];
+      let netoAcum = 0;
+      for (let i = 0; i < res.length; i++) {
+        const a = res[i];
+        if (a.status === "win") netoAcum += (a.ganancia || a.monto || 0) - (a.monto || 0);
+        else netoAcum -= a.monto || 0;
+        if (i < ventana - 1) continue;
+        const win = res.slice(i - ventana + 1, i + 1);
+        const w = win.filter(x => x.status === "win").length;
+        const apo = win.reduce((s, x) => s + (x.monto || 0), 0);
+        const gan = win.reduce((s, x) => x.status === "win" ? s + (x.ganancia || x.monto || 0) : s, 0);
+        const roi = apo > 0 ? (gan - apo) / apo * 100 : 0;
+        points.push({ i, roi, wr: w / ventana * 100, netoAcum });
+      }
+      return points;
+    }
+
+    function calcKelly() {
+      const res = DATA.apuestas.filter(a => a.status === "win" || a.status === "loss");
+      if (res.length < 10) return null;
+      const p = res.filter(a => a.status === "win").length / res.length;
+      const cuotas = res.map(a => parseFloat(a.cuota)).filter(c => c > 1.01);  // solo bets resueltas
+      if (!cuotas.length) return null;
+      const b = cuotas.reduce((s, c) => s + c, 0) / cuotas.length - 1;
+      if (b <= 0) return null;
+      const f = Math.max(0, Math.min((p * (b + 1) - 1) / b, 0.25));
+      const ev = p * b - (1 - p);
+      return { f, fMedio: f / 2, fCuarto: f / 4, p: p * 100, cuotaMedia: b + 1, ev };
+    }
+
+    const _RENDER_FNS = {
+      resumen: () => renderResumen(),
+      semana: () => renderSemana(),
+      mes: () => renderMes(),
+      deportes: () => renderDeportes(),
+      tipos: () => renderTipos(),
+      temporal: () => renderTemporal(),
+      rolling: () => renderRolling(),
+      kelly: () => renderKelly(),
+      capital: () => renderCapital(),
+      apuestas: () => renderApuestas(),
+      gestion: () => renderGestion(),
+    };
+
+    /* ── Render App ── */
+    function renderApp() {
+      _renderedSections.clear();
+      document.getElementById("app").innerHTML = `
     <div class="header">
       <div class="header-inner">
         <div class="logo"><div class="logo-icon">📈</div><div class="logo-text">Bet<span>Stats</span></div></div>
@@ -742,30 +2028,30 @@ function renderApp(){
       <div id="apuestas" class="section"></div>
       <div id="gestion"  class="section"></div>
     </div>`;
-  const nav=document.getElementById("bottomNav");
-  nav.style.display="flex";
-  // Sidebar logo — visible solo en desktop (≥768px) vía CSS
-  const _sidebarLogo=`<div class="sidebar-logo"><div class="sidebar-logo-icon">📈</div><div class="sidebar-logo-text">Bet<span>Stats</span></div></div>`;
-  nav.innerHTML=_sidebarLogo+NAV_ITEMS.map(n=>`<button class="nav-item" data-tab="${n.id}"><span class="nav-icon">${n.icon}</span><span class="nav-label">${n.label}</span></button>`).join("");
-  const saved=tabActual;
-  setTimeout(()=>{const btn=nav.querySelector(`[data-tab="${saved}"]`);showTab(saved,btn);},0);
-}
+      const nav = document.getElementById("bottomNav");
+      nav.style.display = "flex";
+      // Sidebar logo — visible solo en desktop (≥768px) vía CSS
+      const _sidebarLogo = `<div class="sidebar-logo"><div class="sidebar-logo-icon">📈</div><div class="sidebar-logo-text">Bet<span>Stats</span></div></div>`;
+      nav.innerHTML = _sidebarLogo + NAV_ITEMS.map(n => `<button class="nav-item" data-tab="${n.id}"><span class="nav-icon">${n.icon}</span><span class="nav-label">${n.label}</span></button>`).join("");
+      const saved = tabActual;
+      setTimeout(() => { const btn = nav.querySelector(`[data-tab="${saved}"]`); showTab(saved, btn); }, 0);
+    }
 
-/* ── Tab: Resumen ── */
-function renderResumen(){
-  const r=DATA.resumen;
-  const wr=((r.winrate??0)).toFixed(1);
-  const rachaHtml=r.racha>=2?`<div class="racha-badge ${r.tipo_racha==="win"?"racha-win":"racha-loss"}"><span class="racha-icon">${r.tipo_racha==="win"?"🔥":"🧊"}</span>Racha de ${r.racha} ${r.tipo_racha==="win"?"victorias":"derrotas"} seguidas</div>`:"";
-  return`<div class="section-header">General <span>·</span> Historial</div>
+    /* ── Tab: Resumen ── */
+    function renderResumen() {
+      const r = DATA.resumen;
+      const wr = ((r.winrate ?? 0)).toFixed(1);
+      const rachaHtml = r.racha >= 2 ? `<div class="racha-badge ${r.tipo_racha === "win" ? "racha-win" : "racha-loss"}"><span class="racha-icon">${r.tipo_racha === "win" ? "🔥" : "🧊"}</span>Racha de ${r.racha} ${r.tipo_racha === "win" ? "victorias" : "derrotas"} seguidas</div>` : "";
+      return `<div class="section-header">General <span>·</span> Historial</div>
     <div class="stats-grid">
       <div class="stat-card win-card"><div class="stat-value green">${r.wins}</div><div class="stat-label">Ganadas</div></div>
       <div class="stat-card loss-card"><div class="stat-value red">${r.losses}</div><div class="stat-label">Perdidas</div></div>
       <div class="stat-card pend-card"><div class="stat-value yellow">${r.pending}</div><div class="stat-label">Pendientes</div></div>
     </div>
-    ${(r.voids??0)>0?`<div class="kpi-row"><div class="kpi"><div class="kpi-label">Nulas (void)</div><div class="kpi-value accent">${r.voids??0}</div></div></div>`:""}
+    ${(r.voids ?? 0) > 0 ? `<div class="kpi-row"><div class="kpi"><div class="kpi-label">Nulas (void)</div><div class="kpi-value accent">${r.voids ?? 0}</div></div></div>` : ""}
     <div class="kpi-row">
       <div class="kpi"><div class="kpi-label">Neto total</div><div class="kpi-value ${signColor(r.neto)}">${fmts(r.neto)}</div></div>
-      <div class="kpi"><div class="kpi-label">ROI</div><div class="kpi-value ${signColor(r.roi)}">${(r.roi??0)>=0?"+":""}${fmtp(r.roi)}</div></div>
+      <div class="kpi"><div class="kpi-label">ROI</div><div class="kpi-value ${signColor(r.roi)}">${(r.roi ?? 0) >= 0 ? "+" : ""}${fmtp(r.roi)}</div></div>
     </div>
     <div class="kpi-row">
       <div class="kpi"><div class="kpi-label">Total apostado</div><div class="kpi-value accent">${fmt(r.apostado)}</div></div>
@@ -779,23 +2065,23 @@ function renderResumen(){
     <div class="card"><div class="card-title">Win rate — ${wr}%</div>
       <div class="progress-wrap"><div class="progress-labels"><span class="green">${r.wins}W</span><span class="muted">${wr}%</span><span class="red">${r.losses}L</span></div>
       <div class="progress-track"><div class="progress-fill" style="width:${wr}%"></div></div></div></div>
-    <div class="card"><div class="card-title">Neto acumulado</div>${chartPlaceholder("chartNeto","neto")}</div>
-    <div class="card"><div class="card-title">Apostado vs Ganado</div>${chartPlaceholder("chartMeses","meses")}</div>`;
-}
+    <div class="card"><div class="card-title">Neto acumulado</div>${chartPlaceholder("chartNeto", "neto")}</div>
+    <div class="card"><div class="card-title">Apostado vs Ganado</div>${chartPlaceholder("chartMeses", "meses")}</div>`;
+    }
 
-/* ── Tab: Semana ── */
-function renderSemana(){
-  const s=DATA.stats_semana;
-  if(!s)return'<div class="empty">Sin datos esta semana</div>';
-  const wr=((s.winrate??0)).toFixed(1);
-  const ap7 = DATA.apuestas.filter(a => {
-  const f = a.fecha_partido || a.fecha;
-  if (!f) return false;
-  // fecha_partido es YYYY-MM-DD, fecha_reg es YYYY-MM-DD HH:MM (UTC)
-  const iso = f.length === 10 ? f + "T12:00:00" : f.replace(" ", "T") + "Z";
-  return new Date(iso).getTime() >= Date.now() - 7 * 24 * 3600 * 1000;
-});
-  return`<div class="section-header">Últimos <span>7 días</span></div>
+    /* ── Tab: Semana ── */
+    function renderSemana() {
+      const s = DATA.stats_semana;
+      if (!s) return '<div class="empty">Sin datos esta semana</div>';
+      const wr = ((s.winrate ?? 0)).toFixed(1);
+      const ap7 = DATA.apuestas.filter(a => {
+        const f = a.fecha_partido || a.fecha;
+        if (!f) return false;
+        // fecha_partido es YYYY-MM-DD, fecha_reg es YYYY-MM-DD HH:MM (UTC)
+        const iso = f.length === 10 ? f + "T12:00:00" : f.replace(" ", "T") + "Z";
+        return new Date(iso).getTime() >= Date.now() - 7 * 24 * 3600 * 1000;
+      });
+      return `<div class="section-header">Últimos <span>7 días</span></div>
     <div class="stats-grid">
       <div class="stat-card win-card"><div class="stat-value green">${s.wins}</div><div class="stat-label">Ganadas</div></div>
       <div class="stat-card loss-card"><div class="stat-value red">${s.losses}</div><div class="stat-label">Perdidas</div></div>
@@ -803,160 +2089,162 @@ function renderSemana(){
     </div>
     <div class="kpi-row">
       <div class="kpi"><div class="kpi-label">Neto</div><div class="kpi-value ${signColor(s.neto)}">${fmts(s.neto)}</div></div>
-      <div class="kpi"><div class="kpi-label">ROI</div><div class="kpi-value ${signColor(s.roi)}">${(s.roi??0)>=0?"+":""}${fmtp(s.roi)}</div></div>
+      <div class="kpi"><div class="kpi-label">ROI</div><div class="kpi-value ${signColor(s.roi)}">${(s.roi ?? 0) >= 0 ? "+" : ""}${fmtp(s.roi)}</div></div>
     </div>
     <div class="kpi-row">
       <div class="kpi"><div class="kpi-label">Apostado</div><div class="kpi-value accent">${fmt(s.apostado)}</div></div>
       <div class="kpi"><div class="kpi-label">Win rate</div><div class="kpi-value">${wr}%</div></div>
     </div>
-    <div class="card"><div class="card-title">Apuestas (${ap7.length})</div>${ap7.length===0?'<div class="empty">Sin apuestas</div>':[...ap7].reverse().map(renderBetItem).join("")}</div>`;
-}
+    <div class="card"><div class="card-title">Apuestas (${ap7.length})</div>${ap7.length === 0 ? '<div class="empty">Sin apuestas</div>' : [...ap7].reverse().map(renderBetItem).join("")}</div>`;
+    }
 
-/* ── Tab: Mes ── */
-function renderMes(){
-  if(!DATA||!mesesDisponibles.length)return'<div class="empty">No hay datos de meses</div>';
-  const idx=mesesDisponibles.indexOf(mesActual);
-  return`<div class="mes-selector">
-    <button class="mes-nav" data-mes-dir="-1" ${idx<=0?"disabled style='opacity:0.3;cursor:default'":""}>‹</button>
+    /* ── Tab: Mes ── */
+    function renderMes() {
+      if (!DATA || !mesesDisponibles.length) return '<div class="empty">No hay datos de meses</div>';
+      const idx = mesesDisponibles.indexOf(mesActual);
+      return `<div class="mes-selector">
+    <button class="mes-nav" data-mes-dir="-1" ${idx <= 0 ? "disabled style='opacity:0.3;cursor:default'" : ""}>‹</button>
     <span class="mes-label" id="mesLabel">${mesLabel(mesActual)}</span>
-    <button class="mes-nav" data-mes-dir="1" ${idx>=mesesDisponibles.length-1?"disabled style='opacity:0.3;cursor:default'":""}>›</button>
+    <button class="mes-nav" data-mes-dir="1" ${idx >= mesesDisponibles.length - 1 ? "disabled style='opacity:0.3;cursor:default'" : ""}>›</button>
   </div>
   <div id="mesContent">${renderMesContent()}</div>`;
-}
-function renderMesContent(){
-  if(!mesActual)return'<div class="empty">No hay datos este mes</div>';
-  const ap=DATA.apuestas.filter(a=>(a.fecha_partido||a.fecha)?.startsWith(mesActual));
-  let w=0,l=0,p=0,apo=0,gan=0;
-  ap.forEach(a=>{if(a.status==="win"){w++;apo+=a.monto;gan+=a.ganancia||a.monto||0;}else if(a.status==="loss"){l++;apo+=a.monto;}else p++;});
-  const neto=gan-apo,roi=apo>0?neto/apo*100:0,wr=(w+l)>0?(w/(w+l)*100).toFixed(1):"N/A";
-  const _mesData=DATA.grafica_meses.find(m=>m.mes===mesActual);
-  const _netoMax=_mesData!=null?_mesData.neto_max:null;
-  return`<div class="stats-grid">
+    }
+    function renderMesContent() {
+      if (!mesActual) return '<div class="empty">No hay datos este mes</div>';
+      const ap = DATA.apuestas.filter(a => (a.fecha_partido || a.fecha)?.startsWith(mesActual));
+      let w = 0, l = 0, p = 0, apo = 0, gan = 0;
+      ap.forEach(a => { if (a.status === "win") { w++; apo += a.monto; gan += a.ganancia || a.monto || 0; } else if (a.status === "loss") { l++; apo += a.monto; } else p++; });
+      const neto = gan - apo, roi = apo > 0 ? neto / apo * 100 : 0, wr = (w + l) > 0 ? (w / (w + l) * 100).toFixed(1) : "N/A";
+      const _mesData = DATA.grafica_meses.find(m => m.mes === mesActual);
+      const _netoMax = _mesData != null ? _mesData.neto_max : null;
+      return `<div class="stats-grid">
       <div class="stat-card win-card"><div class="stat-value green">${w}</div><div class="stat-label">Ganadas</div></div>
       <div class="stat-card loss-card"><div class="stat-value red">${l}</div><div class="stat-label">Perdidas</div></div>
       <div class="stat-card pend-card"><div class="stat-value yellow">${p}</div><div class="stat-label">Pendientes</div></div>
     </div>
     <div class="kpi-row">
       <div class="kpi"><div class="kpi-label">Neto del mes</div><div class="kpi-value ${signColor(neto)}">${fmts(neto)}</div></div>
-      <div class="kpi"><div class="kpi-label">ROI</div><div class="kpi-value ${signColor(roi)}">${roi>=0?"+":""}${fmtp(roi)}</div></div>
+      <div class="kpi"><div class="kpi-label">ROI</div><div class="kpi-value ${signColor(roi)}">${roi >= 0 ? "+" : ""}${fmtp(roi)}</div></div>
     </div>
-    ${_netoMax!==null?`<div class="kpi-row">
+    ${_netoMax !== null ? `<div class="kpi-row">
       <div class="kpi"><div class="kpi-label">📈 Pico neto (acum.)</div><div class="kpi-value ${signColor(_netoMax)}">${fmts(_netoMax)}</div><div style="font-size:9px;color:var(--text-2);margin-top:3px">Máx. global alcanzado este mes</div></div>
-    </div>`:""}
+    </div>`: ""}
     <div class="kpi-row">
       <div class="kpi"><div class="kpi-label">Apostado</div><div class="kpi-value accent">${fmt(apo)}</div></div>
       <div class="kpi"><div class="kpi-label">Win rate</div><div class="kpi-value">${wr}%</div></div>
     </div>
-    <div class="card"><div class="card-title">Apuestas (${ap.length})</div>${ap.length===0?'<div class="empty">Sin apuestas</div>':ap.slice(-12).reverse().map(renderBetItem).join("")}</div>`;
-}
-function cambiarMes(dir){
-  const idx=mesesDisponibles.indexOf(mesActual),nuevo=idx+dir;
-  if(nuevo<0||nuevo>=mesesDisponibles.length)return;
-  mesActual=mesesDisponibles[nuevo];
-  document.getElementById("mesLabel").textContent=mesLabel(mesActual);
-  document.getElementById("mesContent").innerHTML=renderMesContent();
-  const ni=mesesDisponibles.indexOf(mesActual);
-  document.querySelectorAll("[data-mes-dir]").forEach(btn=>{const d=parseInt(btn.dataset.mesDir,10),dis=(d===-1&&ni<=0)||(d===1&&ni>=mesesDisponibles.length-1);btn.disabled=dis;btn.style.opacity=dis?"0.3":"";btn.style.cursor=dis?"default":"";});
-}
+    <div class="card"><div class="card-title">Apuestas (${ap.length})</div>${ap.length === 0 ? '<div class="empty">Sin apuestas</div>' : ap.slice(-12).reverse().map(renderBetItem).join("")}</div>`;
+    }
+    function cambiarMes(dir) {
+      const idx = mesesDisponibles.indexOf(mesActual), nuevo = idx + dir;
+      if (nuevo < 0 || nuevo >= mesesDisponibles.length) return;
+      mesActual = mesesDisponibles[nuevo];
+      document.getElementById("mesLabel").textContent = mesLabel(mesActual);
+      document.getElementById("mesContent").innerHTML = renderMesContent();
+      const ni = mesesDisponibles.indexOf(mesActual);
+      document.querySelectorAll("[data-mes-dir]").forEach(btn => { const d = parseInt(btn.dataset.mesDir, 10), dis = (d === -1 && ni <= 0) || (d === 1 && ni >= mesesDisponibles.length - 1); btn.disabled = dis; btn.style.opacity = dis ? "0.3" : ""; btn.style.cursor = dis ? "default" : ""; });
+    }
 
-/* ── Tab: Deportes ── */
-function renderDeportes(){
-  const deps=[...DATA.deportes].sort((a,b)=>b.roi-a.roi);
-  if(!deps.length)return'<div class="empty">Sin datos</div>';
-  return`<div class="section-header">ROI por <span>deporte</span></div>
+    /* ── Tab: Deportes ── */
+    function renderDeportes() {
+      const deps = [...DATA.deportes].sort((a, b) => b.roi - a.roi);
+      if (!deps.length) return '<div class="empty">Sin datos</div>';
+      return `<div class="section-header">ROI por <span>deporte</span></div>
     <div class="kpi-row">
-      <div class="kpi"><div class="kpi-label">🟢 Mejor</div><div class="kpi-value green" style="font-size:14px;margin-top:4px">${esc(deps[0].nombre)}</div><div style="font-family:var(--font-num);font-size:12px;color:var(--win);margin-top:4px">${deps[0].roi>=0?"+":""}${fmtp(deps[0].roi)}</div></div>
-      <div class="kpi"><div class="kpi-label">🔴 Peor</div><div class="kpi-value red" style="font-size:14px;margin-top:4px">${esc(deps[deps.length-1].nombre)}</div><div style="font-family:var(--font-num);font-size:12px;color:var(--loss);margin-top:4px">${fmtp(deps[deps.length-1].roi)}</div></div>
+      <div class="kpi"><div class="kpi-label">🟢 Mejor</div><div class="kpi-value green" style="font-size:14px;margin-top:4px">${esc(deps[0].nombre)}</div><div style="font-family:var(--font-num);font-size:12px;color:var(--win);margin-top:4px">${deps[0].roi >= 0 ? "+" : ""}${fmtp(deps[0].roi)}</div></div>
+      <div class="kpi"><div class="kpi-label">🔴 Peor</div><div class="kpi-value red" style="font-size:14px;margin-top:4px">${esc(deps[deps.length - 1].nombre)}</div><div style="font-family:var(--font-num);font-size:12px;color:var(--loss);margin-top:4px">${fmtp(deps[deps.length - 1].roi)}</div></div>
     </div>
-    <div class="card"><div class="card-title">ROI comparativo</div>${chartPlaceholder("chartDep","dep")}</div>
-    <div class="card"><div class="card-title">Desglose</div>${deps.map(d=>{const total=d.wins+d.losses,wr=total>0?(d.wins/total*100).toFixed(0):0;return`<div class="sport-item"><div><div class="sport-name">${esc(d.nombre)}</div><div class="sport-sub">${d.wins}W·${d.losses}L·${wr}%WR·${fmt(d.apostado)}</div></div><div class="sport-roi ${d.roi>=0?"green":"red"}">${d.roi>=0?"+":""}${fmtp(d.roi)}</div></div>`;}).join("")}</div>`;
-}
+    <div class="card"><div class="card-title">ROI comparativo</div>${chartPlaceholder("chartDep", "dep")}</div>
+    <div class="card"><div class="card-title">Desglose</div>${deps.map(d => { const total = d.wins + d.losses, wr = total > 0 ? (d.wins / total * 100).toFixed(0) : 0; return `<div class="sport-item"><div><div class="sport-name">${esc(d.nombre)}</div><div class="sport-sub">${d.wins}W·${d.losses}L·${wr}%WR·${fmt(d.apostado)}</div></div><div class="sport-roi ${d.roi >= 0 ? "green" : "red"}">${d.roi >= 0 ? "+" : ""}${fmtp(d.roi)}</div></div>`; }).join("")}</div>`;
+    }
 
-/* ── Tab: Tipos ── */
-function renderTipos(){
-  const tipos=calcRoiPorTipo();
-  if(!tipos.length)return`<div class="section-header">ROI por <span>tipo de apuesta</span></div><div class="empty">Aún no tienes apuestas resueltas (win/loss) para ver este análisis.</div>`;
-  const maxAbsRoi=Math.max(...tipos.map(t=>Math.abs(t.roi)),1);
-  const kpisMejorPeor=tipos.length>1?`
+    /* ── Tab: Tipos ── */
+    function renderTipos() {
+      const tipos = calcRoiPorTipo();
+      if (!tipos.length) return `<div class="section-header">ROI por <span>tipo de apuesta</span></div><div class="empty">Aún no tienes apuestas resueltas (win/loss) para ver este análisis.</div>`;
+      const maxAbsRoi = Math.max(...tipos.map(t => Math.abs(t.roi)), 1);
+      const kpisMejorPeor = tipos.length > 1 ? `
     <div class="kpi-row">
-      <div class="kpi"><div class="kpi-label">🏆 Mejor tipo</div><div class="kpi-value green" style="font-size:14px;margin-top:4px">${esc(tipos[0].tipo)}</div><div style="font-family:var(--font-num);font-size:12px;color:var(--win);margin-top:4px">${tipos[0].roi>=0?"+":""}${fmtp(tipos[0].roi)}</div></div>
-      <div class="kpi"><div class="kpi-label">⚠️ Peor tipo</div><div class="kpi-value red" style="font-size:14px;margin-top:4px">${esc(tipos[tipos.length-1].tipo)}</div><div style="font-family:var(--font-num);font-size:12px;color:var(--loss);margin-top:4px">${fmtp(tipos[tipos.length-1].roi)}</div></div>
-    </div>`:"";
-  return`<div class="section-header">ROI por <span>tipo</span></div>
+      <div class="kpi"><div class="kpi-label">🏆 Mejor tipo</div><div class="kpi-value green" style="font-size:14px;margin-top:4px">${esc(tipos[0].tipo)}</div><div style="font-family:var(--font-num);font-size:12px;color:var(--win);margin-top:4px">${tipos[0].roi >= 0 ? "+" : ""}${fmtp(tipos[0].roi)}</div></div>
+      <div class="kpi"><div class="kpi-label">⚠️ Peor tipo</div><div class="kpi-value red" style="font-size:14px;margin-top:4px">${esc(tipos[tipos.length - 1].tipo)}</div><div style="font-family:var(--font-num);font-size:12px;color:var(--loss);margin-top:4px">${fmtp(tipos[tipos.length - 1].roi)}</div></div>
+    </div>`: "";
+      return `<div class="section-header">ROI por <span>tipo</span></div>
     ${kpisMejorPeor}
-    <div class="card"><div class="card-title">ROI por tipo</div>${chartPlaceholder("chartTipo","tipo")}</div>
+    <div class="card"><div class="card-title">ROI por tipo</div>${chartPlaceholder("chartTipo", "tipo")}</div>
     <div class="card"><div class="card-title">Detalle completo</div>
-      ${tipos.map(t=>{
-        const barW=Math.min(100,Math.abs(t.roi)/maxAbsRoi*100);
-        const barColor=t.roi>=0?"var(--win)":"var(--loss)";
-        const cuotaTxt=t.cuotaMedia>0?`· cuota media ${t.cuotaMedia.toFixed(2)}`:"";
-        const muestraTxt=(t.wins+t.losses)<3?`<span style="font-size:10px;color:var(--text-2);font-weight:400"> · muestra pequeña</span>`:"";
-        return`<div class="tipo-item">
+      ${tipos.map(t => {
+        const barW = Math.min(100, Math.abs(t.roi) / maxAbsRoi * 100);
+        const barColor = t.roi >= 0 ? "var(--win)" : "var(--loss)";
+        const cuotaTxt = t.cuotaMedia > 0 ? `· cuota media ${t.cuotaMedia.toFixed(2)}` : "";
+        const muestraTxt = (t.wins + t.losses) < 3 ? `<span style="font-size:10px;color:var(--text-2);font-weight:400"> · muestra pequeña</span>` : "";
+        return `<div class="tipo-item">
           <div style="flex:1">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
               <span style="font-size:13px;font-weight:700">${esc(t.tipo)}${muestraTxt}</span>
-              <span style="font-family:var(--font-num);font-size:13px;font-weight:700;color:${barColor}">${t.roi>=0?"+":""}${t.roi.toFixed(1)}%</span>
+              <span style="font-family:var(--font-num);font-size:13px;font-weight:700;color:${barColor}">${t.roi >= 0 ? "+" : ""}${t.roi.toFixed(1)}%</span>
             </div>
             <div style="font-size:11px;color:var(--text-2);margin-bottom:6px">${t.wins}W·${t.losses}L·WR ${t.wr.toFixed(0)}% ${cuotaTxt}</div>
-            <div style="font-size:11px;color:${barColor};margin-bottom:6px">Neto: ${t.neto>=0?"+":""}${fmt(t.neto)}</div>
+            <div style="font-size:11px;color:${barColor};margin-bottom:6px">Neto: ${t.neto >= 0 ? "+" : ""}${fmt(t.neto)}</div>
             <div class="tipo-bar-wrap"><div class="tipo-bar-fill" style="width:${barW}%;background:${barColor}"></div></div>
           </div>
         </div>`;
       }).join("")}
     </div>
     <div class="explainer"><strong>Tip:</strong> Enfoca tu capital en los tipos de apuesta con ROI positivo consistente. Si un tipo tiene &lt;5 apuestas, el ROI puede ser engañoso.</div>`;
-}
+    }
 
-/* ── Tab: Temporal ── */
-function renderTemporal(){
-  const data=calcTemporal();
-  if(!data.porDia.length&&!data.porHora.length)return`<div class="section-header">Análisis <span>temporal</span></div><div class="empty">No hay suficientes datos con fechas registradas.</div>`;
-  const maxAbsDia=Math.max(...data.porDia.map(d=>Math.abs(d.roi)),1);
-  const maxAbsHora=Math.max(...data.porHora.map(d=>Math.abs(d.roi)),1);
-  return`<div class="section-header">¿Cuándo <span>rinde más</span>?</div>
-    ${data.porDia.length?`
+    /* ── Tab: Temporal ── */
+    function renderTemporal() {
+      const data = calcTemporal();
+      if (!data.porDia.length && !data.porHora.length) return `<div class="section-header">Análisis <span>temporal</span></div><div class="empty">No hay suficientes datos con fechas registradas.</div>`;
+      const maxAbsDia = Math.max(...data.porDia.map(d => Math.abs(d.roi)), 1);
+      const maxAbsHora = Math.max(...data.porHora.map(d => Math.abs(d.roi)), 1);
+      return `<div class="section-header">¿Cuándo <span>rinde más</span>?</div>
+    ${data.porDia.length ? `
     <div class="card">
       <div class="card-title">Por día de la semana</div>
-      ${data.porDia.map(d=>{
-        const barW=Math.min(100,Math.abs(d.roi)/maxAbsDia*100);
-        const col=d.roi>=0?"var(--win)":"var(--loss)";
-        const best=d.roi===Math.max(...data.porDia.map(x=>x.roi));
-        return`<div class="dia-row">
-          <span class="dia-label" style="color:${best?"var(--accent)":"var(--text-2)"}">${d.label}${best?" ⭐":""}</span>
+      ${data.porDia.map(d => {
+        const barW = Math.min(100, Math.abs(d.roi) / maxAbsDia * 100);
+        const col = d.roi >= 0 ? "var(--win)" : "var(--loss)";
+        const best = d.roi === Math.max(...data.porDia.map(x => x.roi));
+        return `<div class="dia-row">
+          <span class="dia-label" style="color:${best ? "var(--accent)" : "var(--text-2)"}">${d.label}${best ? " ⭐" : ""}</span>
           <div class="dia-bar-wrap"><div class="dia-bar-fill" style="width:${barW}%;background:${col}"></div></div>
-          <span class="dia-roi" style="color:${col}">${d.roi>=0?"+":""}${d.roi.toFixed(1)}%</span>
+          <span class="dia-roi" style="color:${col}">${d.roi >= 0 ? "+" : ""}${d.roi.toFixed(1)}%</span>
           <span class="dia-wl">${d.wins}W-${d.losses}L</span>
-        </div>`;}).join("")}
-    </div>`:""}
-    ${data.porHora.length?`
+        </div>`;
+      }).join("")}
+    </div>`: ""}
+    ${data.porHora.length ? `
     <div class="card">
       <div class="card-title">Por franja horaria (hora de registro)</div>
-      ${data.porHora.map(d=>{
-        const barW=Math.min(100,Math.abs(d.roi)/maxAbsHora*100);
-        const col=d.roi>=0?"var(--win)":"var(--loss)";
-        const best=d.roi===Math.max(...data.porHora.map(x=>x.roi));
-        return`<div class="dia-row">
-          <span class="dia-label" style="color:${best?"var(--accent)":"var(--text-2)"};font-size:10px">${d.label}${best?" ⭐":""}</span>
+      ${data.porHora.map(d => {
+        const barW = Math.min(100, Math.abs(d.roi) / maxAbsHora * 100);
+        const col = d.roi >= 0 ? "var(--win)" : "var(--loss)";
+        const best = d.roi === Math.max(...data.porHora.map(x => x.roi));
+        return `<div class="dia-row">
+          <span class="dia-label" style="color:${best ? "var(--accent)" : "var(--text-2)"};font-size:10px">${d.label}${best ? " ⭐" : ""}</span>
           <div class="dia-bar-wrap"><div class="dia-bar-fill" style="width:${barW}%;background:${col}"></div></div>
-          <span class="dia-roi" style="color:${col}">${d.roi>=0?"+":""}${d.roi.toFixed(1)}%</span>
+          <span class="dia-roi" style="color:${col}">${d.roi >= 0 ? "+" : ""}${d.roi.toFixed(1)}%</span>
           <span class="dia-wl">${d.wins}W-${d.losses}L</span>
-        </div>`;}).join("")}
-    </div>`:""}
+        </div>`;
+      }).join("")}
+    </div>`: ""}
     <div class="explainer"><strong>Nota:</strong> El día de semana usa la fecha del evento. La franja horaria usa cuándo registraste la apuesta (hora CDMX). Con más datos este análisis se vuelve más preciso.</div>`;
-}
+    }
 
-/* ── Tab: Rolling ROI ── */
-function renderRolling(){
-  const VENTANA=20;
-  const points=calcRolling(VENTANA);
-  const res=DATA.apuestas.filter(a=>a.status==="win"||a.status==="loss").length;
-  if(!points.length)return`<div class="section-header">ROI <span>rodante</span></div><div class="empty">Necesitas al menos ${VENTANA} apuestas resueltas. Tienes ${res}.</div>`;
-  const ultimo=points[points.length-1];
-  const tendencia=points.length>=3?(()=>{const t=points.slice(-3).map(p=>p.roi);return t[2]>t[0]+3?"📈 Mejorando":t[2]<t[0]-3?"📉 Empeorando":"➡️ Estable";})():"—";
-  return`<div class="section-header">ROI <span>rodante</span></div>
+    /* ── Tab: Rolling ROI ── */
+    function renderRolling() {
+      const VENTANA = 20;
+      const points = calcRolling(VENTANA);
+      const res = DATA.apuestas.filter(a => a.status === "win" || a.status === "loss").length;
+      if (!points.length) return `<div class="section-header">ROI <span>rodante</span></div><div class="empty">Necesitas al menos ${VENTANA} apuestas resueltas. Tienes ${res}.</div>`;
+      const ultimo = points[points.length - 1];
+      const tendencia = points.length >= 3 ? (() => { const t = points.slice(-3).map(p => p.roi); return t[2] > t[0] + 3 ? "📈 Mejorando" : t[2] < t[0] - 3 ? "📉 Empeorando" : "➡️ Estable"; })() : "—";
+      return `<div class="section-header">ROI <span>rodante</span></div>
     <div class="rolling-kpi">
       <div class="rolling-kpi-item">
-        <div class="rolling-kpi-val ${signColor(ultimo.roi)}">${ultimo.roi>=0?"+":""}${ultimo.roi.toFixed(1)}%</div>
+        <div class="rolling-kpi-val ${signColor(ultimo.roi)}">${ultimo.roi >= 0 ? "+" : ""}${ultimo.roi.toFixed(1)}%</div>
         <div class="rolling-kpi-lbl">ROI últimas ${VENTANA}</div>
       </div>
       <div class="rolling-kpi-item">
@@ -972,21 +2260,21 @@ function renderRolling(){
       <div style="font-size:13px;font-weight:700;margin-bottom:6px">Tendencia reciente</div>
       <div style="font-size:24px">${tendencia.split(" ")[0]} <span style="font-size:14px;color:var(--text-2)">${tendencia.split(" ").slice(1).join(" ")}</span></div>
     </div>
-    <div class="card"><div class="card-title">ROI rodante (ventana ${VENTANA})</div>${chartPlaceholder("chartRolling","rolling",true)}</div>
+    <div class="card"><div class="card-title">ROI rodante (ventana ${VENTANA})</div>${chartPlaceholder("chartRolling", "rolling", true)}</div>
     <div class="explainer"><strong>ROI rodante:</strong> Calcula el rendimiento de las últimas ${VENTANA} apuestas cerradas. Si la línea sube, el tipster está mejorando. Si baja, hay una racha negativa real — no solo mala suerte en 1-2 apuestas.</div>`;
-}
+    }
 
-/* ── Tab: Kelly ── */
-function renderKelly(){
-  const k=calcKelly();
-  if(!k)return`<div class="section-header">Kelly <span>Criterion</span></div><div class="empty">Necesitas al menos 10 apuestas con cuota registrada.</div>`;
-  const evColor=k.ev>0?"green":"red";
-  const evEmoji=k.ev>0?"✅":"❌";
-  const kellyPct=Math.min(k.f*100,25);
-  return`<div class="section-header">Kelly <span>Criterion</span></div>
+    /* ── Tab: Kelly ── */
+    function renderKelly() {
+      const k = calcKelly();
+      if (!k) return `<div class="section-header">Kelly <span>Criterion</span></div><div class="empty">Necesitas al menos 10 apuestas con cuota registrada.</div>`;
+      const evColor = k.ev > 0 ? "green" : "red";
+      const evEmoji = k.ev > 0 ? "✅" : "❌";
+      const kellyPct = Math.min(k.f * 100, 25);
+      return `<div class="section-header">Kelly <span>Criterion</span></div>
     <div class="card">
       <div class="card-title">Valor esperado (EV)</div>
-      <div style="font-family:var(--font-num);font-size:32px;font-weight:700;color:var(--${evColor});margin-bottom:8px">${evEmoji} ${k.ev>=0?"+":""}${k.ev.toFixed(3)}</div>
+      <div style="font-family:var(--font-num);font-size:32px;font-weight:700;color:var(--${evColor});margin-bottom:8px">${evEmoji} ${k.ev >= 0 ? "+" : ""}${k.ev.toFixed(3)}</div>
       <div style="font-size:12px;color:var(--text-2)">Por unidad apostada. Positivo = ventaja estadística sobre la casa.</div>
     </div>
     <div class="kpi-row">
@@ -995,35 +2283,35 @@ function renderKelly(){
     </div>
     <div class="card">
       <div class="card-title">Fracción Kelly óptima: ${kellyPct.toFixed(1)}% del capital</div>
-      <div class="kelly-meter"><div class="kelly-fill" style="width:${(kellyPct/25)*100}%"></div></div>
+      <div class="kelly-meter"><div class="kelly-fill" style="width:${(kellyPct / 25) * 100}%"></div></div>
       <div class="kelly-grid">
         <div class="kelly-card">
-          <div class="kelly-card-pct green">${(k.f*100).toFixed(1)}%</div>
+          <div class="kelly-card-pct green">${(k.f * 100).toFixed(1)}%</div>
           <div class="kelly-card-lbl">Kelly completo</div>
           <div class="kelly-card-sub">Alta volatilidad</div>
         </div>
         <div class="kelly-card" style="border-color:var(--border-hi)">
-          <div class="kelly-card-pct accent">${(k.fMedio*100).toFixed(1)}%</div>
+          <div class="kelly-card-pct accent">${(k.fMedio * 100).toFixed(1)}%</div>
           <div class="kelly-card-lbl">Kelly medio ⭐</div>
           <div class="kelly-card-sub">Recomendado</div>
         </div>
         <div class="kelly-card">
-          <div class="kelly-card-pct">${(k.fCuarto*100).toFixed(1)}%</div>
+          <div class="kelly-card-pct">${(k.fCuarto * 100).toFixed(1)}%</div>
           <div class="kelly-card-lbl">Kelly/4</div>
           <div class="kelly-card-sub">Ultra-seguro</div>
         </div>
       </div>
     </div>
     <div class="explainer"><strong>Kelly Criterion</strong> calcula el tamaño óptimo de apuesta para maximizar el crecimiento del capital a largo plazo sin riesgo de ruina. <strong>Kelly medio</strong> es el balance ideal entre crecimiento y seguridad. Los porcentajes son sobre tu capital total disponible.</div>`;
-}
+    }
 
-/* ── Tab: Capital ── */
-function renderCapital(){
-  const c=DATA.capital,cm=DATA.capital_mes;
-  if(!c)return'<div class="empty">Faltan datos</div>';
+    /* ── Tab: Capital ── */
+    function renderCapital() {
+      const c = DATA.capital, cm = DATA.capital_mes;
+      if (!c) return '<div class="empty">Faltan datos</div>';
 
-  // ── Card desglose capital mínimo ──────────────────────────────────────
-  const desglose = (c.exp_maxima != null && c.drawdown_racha != null) ? `
+      // ── Card desglose capital mínimo ──────────────────────────────────────
+      const desglose = (c.exp_maxima != null && c.drawdown_racha != null) ? `
     <div style="margin-top:10px;padding:10px 12px;background:var(--card2);border-radius:var(--radius-md);border:1px solid var(--border)">
       <div style="font-size:10px;font-weight:700;color:var(--text-2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">Composición del mínimo</div>
       <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
@@ -1040,7 +2328,7 @@ function renderCapital(){
       </div>
     </div>` : "";
 
-  const capMesHtml = cm ? `
+      const capMesHtml = cm ? `
     <div class="card" style="margin-top:10px">
       <div class="card-title">Capital — Este mes</div>
       <div class="capital-hero" style="padding:12px 0 8px">
@@ -1050,12 +2338,12 @@ function renderCapital(){
       <div class="cap-grid">
         <div class="cap-stat"><div class="cap-stat-val yellow">${fmt(cm.capital_minimo)}</div><div class="cap-stat-lbl">Mínimo</div></div>
         <div class="cap-stat"><div class="cap-stat-val accent">${cm.max_simultaneas}</div><div class="cap-stat-lbl">Simultáneas</div></div>
-        <div class="cap-stat"><div class="cap-stat-val">${(cm.promedio_dia??0).toFixed(1)}</div><div class="cap-stat-lbl">Bets/día</div></div>
+        <div class="cap-stat"><div class="cap-stat-val">${(cm.promedio_dia ?? 0).toFixed(1)}</div><div class="cap-stat-lbl">Bets/día</div></div>
         <div class="cap-stat"><div class="cap-stat-val red">${cm.peor_racha}</div><div class="cap-stat-lbl">Peor racha</div></div>
       </div>
     </div>` : "";
 
-  return `<div class="section-header">Gestión de <span>capital</span></div>
+      return `<div class="section-header">Gestión de <span>capital</span></div>
     <div class="card">
       <div class="capital-hero">
         <div class="capital-label">Capital cómodo recomendado</div>
@@ -1066,7 +2354,7 @@ function renderCapital(){
       <div class="cap-grid" style="margin-top:12px">
         <div class="cap-stat"><div class="cap-stat-val yellow">${fmt(c.capital_minimo)}</div><div class="cap-stat-lbl">Capital mínimo</div></div>
         <div class="cap-stat"><div class="cap-stat-val accent">${c.max_simultaneas}</div><div class="cap-stat-lbl">Máx simultáneas</div></div>
-        <div class="cap-stat"><div class="cap-stat-val">${(c.promedio_dia??0).toFixed(1)}</div><div class="cap-stat-lbl">Bets/día prom.</div></div>
+        <div class="cap-stat"><div class="cap-stat-val">${(c.promedio_dia ?? 0).toFixed(1)}</div><div class="cap-stat-lbl">Bets/día prom.</div></div>
         <div class="cap-stat"><div class="cap-stat-val red">${c.peor_racha}</div><div class="cap-stat-lbl">Peor racha</div></div>
         <div class="cap-stat"><div class="cap-stat-val">${fmt(c.monto_promedio)}</div><div class="cap-stat-lbl">Monto prom.</div></div>
         <div class="cap-stat"><div class="cap-stat-val green">${c.total_apuestas}</div><div class="cap-stat-lbl">Total bets</div></div>
@@ -1077,171 +2365,171 @@ function renderCapital(){
       El <strong>capital mínimo</strong> es el mayor entre: la exposición simultánea máxima histórica, el drawdown estimado de la peor racha perdedora y el drawdown histórico real (curva de balance).
       El <strong>capital cómodo</strong> añade un 50% de colchón de seguridad sobre ese mínimo.
     </div>`;
-}
-
-/* ── Tab: Apuestas ── */
-function renderApuestas(){
-  const deportesUnicos=["Todos",...new Set(DATA.apuestas.map(a=>a.deporte).filter(Boolean))];
-  return`<div class="section-header">Historial de <span>bets</span></div>
-    <div class="search-wrap"><span class="search-icon">🔍</span><input class="search-input" placeholder="Buscar por equipo..." data-search-equipo value="${esc(filtroEquipo)}"></div>
-    <div class="filter-row">${deportesUnicos.map(d=>`<button class="filter-chip ${d===filtroDeporte?"active":""}" data-filtro-deporte="${esc(d)}">${esc(d)}</button>`).join("")}</div>
-    <div id="apuestasLista">${renderApuestasList()}</div>`;
-}
-function renderApuestasList(){
-  const term=filtroEquipo.toLowerCase().trim();
-  const filt=DATA.apuestas.filter(a=>filtroDeporte==="Todos"||a.deporte===filtroDeporte).filter(a=>!term||(a.equipo1||"").toLowerCase().includes(term)||(a.equipo2||"").toLowerCase().includes(term));
-  const mostrar=[...filt].reverse().slice(0,50);
-  const truncated=filt.length>50;  return`<div class="card"><div class="card-title">${filt.length} apuesta${filt.length!==1?"s":""}${truncated?" <span style='color:var(--text-2);font-weight:400;font-size:10px'>(mostrando últimas 50)</span>":""}</div>${mostrar.length===0?'<div class="empty">Sin resultados</div>':mostrar.map(renderBetItem).join("")}</div>`;
-}
-const _RE_SUFIJO_HOME_AWAY = /^((?:Asian\s+Handicap|Handicap|Moneyline|1X2)(?:\s+[+\-]?\d+(?:\.\d+)?)?)\s*-\s*(Home|Away|Draw|Empate|Local|Visitante)\s*$/i;
-
-function formatTipoApuesta(a){
-  let t = (a?.tipo || "").trim();
-  if(!t) return "";
-
-  // 1) Unificar 1X2 → Moneyline.
-  t = t.replace(/^1X2\b/i, "Moneyline");
-
-  // 2) Traducir Home/Away/Draw → equipo concreto.
-  const m = t.match(_RE_SUFIJO_HOME_AWAY);
-  if(!m) return t;
-
-  const base = m[1].trim();
-  const sel  = m[2].trim().toLowerCase();
-  const eq1  = (a.equipo1 || "").trim();
-  const eq2  = (a.equipo2 || "").trim();
-
-  if(sel === "home" || sel === "local")        return eq1 ? `${base} - ${eq1}` : t;
-  if(sel === "away" || sel === "visitante")    return eq2 ? `${base} - ${eq2}` : t;
-  if((sel === "draw" || sel === "empate") && /^moneyline/i.test(base))
-                                               return `${base} - Empate`;
-  return t;
-}
-
-function renderBetItem(a){
-  const icon=a.status==="win"?"win":a.status==="loss"?"loss":a.status==="void"?"pend":"pend";
-  const res=a.status==="win"?`+${fmt(a.ganancia)}`:a.status==="loss"?`-${fmt(a.monto)}`:a.status==="void"?`🔄 Nula`:` ⏳ ${fmt(a.potencial)}`;
-  const rc=a.status==="win"?"green":a.status==="loss"?"red":a.status==="void"?"accent":"yellow";
-  const esParlay=(a.equipo2||"").startsWith("PARLAY");
-  const teamsLabel=esParlay?`🎯 Parlay · ${esc(a.equipo2||"")}`:  `${esc(a.equipo1||"?")} vs ${esc(a.equipo2||"?")}`;
-  const metaLabel=esParlay?`${esc(a.deporte)} · Acumulador @ ${esc(a.cuota)} · ${(a.fecha_partido||a.fecha)?.slice(0,10)||""}`:  `${esc(a.deporte)} · ${esc(formatTipoApuesta(a))} @ ${esc(a.cuota)} · ${(a.fecha_partido||a.fecha)?.slice(0,10)||""}`;
-  return`<div class="bet-item"><div class="bet-dot ${icon}"></div><div class="bet-info"><div class="bet-teams">${teamsLabel}</div><div class="bet-meta">${metaLabel}</div></div><div class="bet-right"><div class="bet-monto">${fmt(a.monto)}</div><div class="bet-result ${rc}">${res}</div></div></div>`;
-}
-
-/* ── Charts ── */
-function axisM(v){const a=Math.abs(v);return a>=1000?`$${(v/1000).toFixed(1)}k`:`$${v}`}
-function destroyChart(k){if(charts[k]){charts[k].destroy();delete charts[k];}}
-
-function makeChartNeto(){
-  const c=document.getElementById("chartNeto");
-  if(!c||!DATA.grafica_meses.length)return;
-  destroyChart("neto");
-  let acum=0;
-  charts.neto=new Chart(c,{type:"bar",data:{labels:DATA.grafica_meses.map(m=>mesLabel(m.mes)),datasets:[{label:"Neto acumulado",data:DATA.grafica_meses.map(m=>{acum+=m.neto;return acum;}),backgroundColor:DATA.grafica_meses.map((_,i,arr)=>{let s=0;arr.slice(0,i+1).forEach(x=>s+=x.neto);return s>=0?"rgba(0,205,150,0.75)":"rgba(255,61,90,0.75)"}),borderRadius:5,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:"rgba(255,255,255,0.04)"},ticks:{font:{size:10,family:"Space Mono"},color:"#4A5568"}},y:{grid:{color:"rgba(255,255,255,0.04)"},ticks:{callback:axisM,font:{size:10,family:"Space Mono"},color:"#4A5568"}}}}});
-}
-
-function makeChartMeses(){
-  const c=document.getElementById("chartMeses");
-  if(!c||!DATA.grafica_meses.length)return;
-  destroyChart("meses");
-  charts.meses=new Chart(c,{type:"bar",data:{labels:DATA.grafica_meses.map(m=>mesLabel(m.mes)),datasets:[{label:"Apostado",data:DATA.grafica_meses.map(m=>m.apostado),backgroundColor:"rgba(108,99,255,0.6)",borderRadius:4,borderSkipped:false},{label:"Ganado",data:DATA.grafica_meses.map(m=>m.ganado),backgroundColor:"rgba(0,205,150,0.6)",borderRadius:4,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,labels:{font:{size:11,family:"DM Sans"},boxWidth:10,padding:10,color:"#8896A8"}}},scales:{x:{grid:{color:"rgba(255,255,255,0.04)"},ticks:{font:{size:10,family:"Space Mono"},color:"#4A5568"}},y:{grid:{color:"rgba(255,255,255,0.04)"},ticks:{callback:axisM,font:{size:10,family:"Space Mono"},color:"#4A5568"}}}}});
-}
-
-function makeChartDep(){
-  const c=document.getElementById("chartDep");
-  if(!c||!DATA.deportes.length)return;
-  destroyChart("dep");
-  const deps=[...DATA.deportes].sort((a,b)=>b.roi-a.roi);
-  charts.dep=new Chart(c,{type:"bar",data:{labels:deps.map(d=>d.nombre),datasets:[{label:"ROI %",data:deps.map(d=>parseFloat(d.roi.toFixed(1))),backgroundColor:deps.map(d=>d.roi>=0?"rgba(0,205,150,0.75)":"rgba(255,61,90,0.75)"),borderRadius:5,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:"rgba(255,255,255,0.04)"},ticks:{font:{size:10,family:"Space Mono"},color:"#4A5568"}},y:{grid:{color:"rgba(255,255,255,0.04)"},ticks:{callback:v=>`${v}%`,font:{size:10,family:"Space Mono"},color:"#4A5568"}}}}});
-}
-
-function makeChartTipo(){
-  const c=document.getElementById("chartTipo");
-  if(!c)return;
-  destroyChart("tipo");
-  const tipos=calcRoiPorTipo();
-  if(!tipos.length)return;
-  charts.tipo=new Chart(c,{type:"bar",data:{labels:tipos.map(t=>t.tipo),datasets:[{label:"ROI %",data:tipos.map(t=>parseFloat(t.roi.toFixed(1))),backgroundColor:tipos.map(t=>t.roi>=0?"rgba(0,205,150,0.75)":"rgba(255,61,90,0.75)"),borderRadius:5,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:"rgba(255,255,255,0.04)"},ticks:{font:{size:10,family:"Space Mono"},color:"#4A5568"}},y:{grid:{color:"rgba(255,255,255,0.04)"},ticks:{callback:v=>`${v}%`,font:{size:10,family:"Space Mono"},color:"#4A5568"}}}}});
-}
-
-function makeChartRolling(){
-  const c=document.getElementById("chartRolling");
-  if(!c)return;
-  destroyChart("rolling");
-  const points=calcRolling(20);
-  if(!points.length)return;
-  charts.rolling=new Chart(c,{type:"line",data:{labels:points.map(p=>`#${p.i+1}`),datasets:[{label:"ROI rodante",data:points.map(p=>parseFloat(p.roi.toFixed(2))),borderColor:"var(--accent)",backgroundColor:"rgba(0,205,150,0.08)",borderWidth:2,pointRadius:0,fill:true,tension:0.3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.parsed.y>=0?"+":""}${ctx.parsed.y.toFixed(1)}%`}}},scales:{x:{grid:{color:"rgba(255,255,255,0.04)"},ticks:{display:false}},y:{grid:{color:"rgba(255,255,255,0.04)"},ticks:{callback:v=>`${v>=0?"+":""}${v}%`,font:{size:10,family:"Space Mono"},color:"#4A5568"},afterDataLimits:scale=>{const pad=Math.abs(scale.max-scale.min)*0.15;scale.max+=pad;scale.min-=pad;}}}}});
-}
-
-function initCharts(){
-  if(!DATA||typeof Chart==="undefined")return;
-  if(_noBlur)return; // en Linux/tdesktop los charts son lazy (botón manual)
-  Chart.defaults.color="#8896A8";
-  Chart.defaults.borderColor="rgba(255,255,255,0.04)";
-  if(tabActual==="resumen"){makeChartNeto();makeChartMeses();}
-  if(tabActual==="deportes"){makeChartDep();}
-  if(tabActual==="tipos"){makeChartTipo();}
-  if(tabActual==="rolling"){makeChartRolling();}
-}
-
-/* ── Events ── */
-document.addEventListener("click",e=>{
-  const chip=e.target.closest("[data-filtro-deporte]");
-  if(chip){filtroDeporte=chip.dataset.filtroDeporte;document.querySelectorAll("[data-filtro-deporte]").forEach(c=>c.classList.toggle("active",c.dataset.filtroDeporte===filtroDeporte));const l=document.getElementById("apuestasLista");if(l)l.innerHTML=renderApuestasList();return;}
-  const tab=e.target.closest("[data-tab]");
-  if(tab){showTab(tab.dataset.tab,tab);return;}
-  const mes=e.target.closest("[data-mes-dir]");
-  if(mes){cambiarMes(parseInt(mes.dataset.mesDir,10));return;}
-  const act=e.target.closest("[data-action]");
-  if(act?.dataset.action==="recargar"){recargar();return;}
-});
-document.addEventListener("input",e=>{
-  const el=e.target.closest("[data-search-equipo]");
-  if(el){filtroEquipo=el.value;const l=document.getElementById("apuestasLista");if(l)l.innerHTML=renderApuestasList();}
-});
-
-const _ALWAYS_RERENDER = new Set(["apuestas","mes","gestion"]);
-
-function showTab(id,btn){
-  // Liberar canvases del tab anterior antes de cambiar
-  if(tabActual==="resumen"){destroyChart("neto");destroyChart("meses");}
-  if(tabActual==="deportes"){destroyChart("dep");}
-  if(tabActual==="tipos"){destroyChart("tipo");}
-  if(tabActual==="rolling"){destroyChart("rolling");}
-  document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));
-  document.querySelectorAll(".nav-item").forEach(t=>t.classList.remove("active"));
-  const sec=document.getElementById(id);
-  if(sec){
-    if(_RENDER_FNS[id]&&(!_renderedSections.has(id)||_ALWAYS_RERENDER.has(id))){
-      sec.innerHTML=_RENDER_FNS[id]();
-      _renderedSections.add(id);
     }
-    sec.classList.add("active");
-  }
-  if(btn)btn.classList.add("active");
-  else{const nb=document.querySelector(`.nav-item[data-tab="${id}"]`);if(nb)nb.classList.add("active");}
-  tabActual=id;
-  setTimeout(initCharts,80);
-}
 
-async function recargar(){
-  if(cargando)return;
-  cargando=true;
-  document.getElementById("app").innerHTML=`<div class="loader"><div class="loader-logo">Bet<span>Stats</span></div><div class="loader-bar"><div class="loader-bar-fill"></div></div><p>Actualizando...</p></div>`;
-  const nav=document.getElementById("bottomNav");
-  if(nav)nav.style.display="none";
-  try{await cargarDatos();}finally{cargando=false;}
-}
+    /* ── Tab: Apuestas ── */
+    function renderApuestas() {
+      const deportesUnicos = ["Todos", ...new Set(DATA.apuestas.map(a => a.deporte).filter(Boolean))];
+      return `<div class="section-header">Historial de <span>bets</span></div>
+    <div class="search-wrap"><span class="search-icon">🔍</span><input class="search-input" placeholder="Buscar por equipo..." data-search-equipo value="${esc(filtroEquipo)}"></div>
+    <div class="filter-row">${deportesUnicos.map(d => `<button class="filter-chip ${d === filtroDeporte ? "active" : ""}" data-filtro-deporte="${esc(d)}">${esc(d)}</button>`).join("")}</div>
+    <div id="apuestasLista">${renderApuestasList()}</div>`;
+    }
+    function renderApuestasList() {
+      const term = filtroEquipo.toLowerCase().trim();
+      const filt = DATA.apuestas.filter(a => filtroDeporte === "Todos" || a.deporte === filtroDeporte).filter(a => !term || (a.equipo1 || "").toLowerCase().includes(term) || (a.equipo2 || "").toLowerCase().includes(term));
+      const mostrar = [...filt].reverse().slice(0, 50);
+      const truncated = filt.length > 50; return `<div class="card"><div class="card-title">${filt.length} apuesta${filt.length !== 1 ? "s" : ""}${truncated ? " <span style='color:var(--text-2);font-weight:400;font-size:10px'>(mostrando últimas 50)</span>" : ""}</div>${mostrar.length === 0 ? '<div class="empty">Sin resultados</div>' : mostrar.map(renderBetItem).join("")}</div>`;
+    }
+    const _RE_SUFIJO_HOME_AWAY = /^((?:Asian\s+Handicap|Handicap|Moneyline|1X2)(?:\s+[+\-]?\d+(?:\.\d+)?)?)\s*-\s*(Home|Away|Draw|Empate|Local|Visitante)\s*$/i;
 
-/* ════════════════════════════════════════════════════════════════
-   TAB GESTIÓN — CRUD completo + análisis de ticket con IA
-   ════════════════════════════════════════════════════════════════ */
+    function formatTipoApuesta(a) {
+      let t = (a?.tipo || "").trim();
+      if (!t) return "";
 
-let _editRowId = null;
+      // 1) Unificar 1X2 → Moneyline.
+      t = t.replace(/^1X2\b/i, "Moneyline");
 
-function renderGestion(){
-  const ok = !!getSecret();
-  return `
+      // 2) Traducir Home/Away/Draw → equipo concreto.
+      const m = t.match(_RE_SUFIJO_HOME_AWAY);
+      if (!m) return t;
+
+      const base = m[1].trim();
+      const sel = m[2].trim().toLowerCase();
+      const eq1 = (a.equipo1 || "").trim();
+      const eq2 = (a.equipo2 || "").trim();
+
+      if (sel === "home" || sel === "local") return eq1 ? `${base} - ${eq1}` : t;
+      if (sel === "away" || sel === "visitante") return eq2 ? `${base} - ${eq2}` : t;
+      if ((sel === "draw" || sel === "empate") && /^moneyline/i.test(base))
+        return `${base} - Empate`;
+      return t;
+    }
+
+    function renderBetItem(a) {
+      const icon = a.status === "win" ? "win" : a.status === "loss" ? "loss" : a.status === "void" ? "pend" : "pend";
+      const res = a.status === "win" ? `+${fmt(a.ganancia)}` : a.status === "loss" ? `-${fmt(a.monto)}` : a.status === "void" ? `🔄 Nula` : ` ⏳ ${fmt(a.potencial)}`;
+      const rc = a.status === "win" ? "green" : a.status === "loss" ? "red" : a.status === "void" ? "accent" : "yellow";
+      const esParlay = (a.equipo2 || "").startsWith("PARLAY");
+      const teamsLabel = esParlay ? `🎯 Parlay · ${esc(a.equipo2 || "")}` : `${esc(a.equipo1 || "?")} vs ${esc(a.equipo2 || "?")}`;
+      const metaLabel = esParlay ? `${esc(a.deporte)} · Acumulador @ ${esc(a.cuota)} · ${(a.fecha_partido || a.fecha)?.slice(0, 10) || ""}` : `${esc(a.deporte)} · ${esc(formatTipoApuesta(a))} @ ${esc(a.cuota)} · ${(a.fecha_partido || a.fecha)?.slice(0, 10) || ""}`;
+      return `<div class="bet-item"><div class="bet-dot ${icon}"></div><div class="bet-info"><div class="bet-teams">${teamsLabel}</div><div class="bet-meta">${metaLabel}</div></div><div class="bet-right"><div class="bet-monto">${fmt(a.monto)}</div><div class="bet-result ${rc}">${res}</div></div></div>`;
+    }
+
+    /* ── Charts ── */
+    function axisM(v) { const a = Math.abs(v); return a >= 1000 ? `$${(v / 1000).toFixed(1)}k` : `$${v}` }
+    function destroyChart(k) { if (charts[k]) { charts[k].destroy(); delete charts[k]; } }
+
+    function makeChartNeto() {
+      const c = document.getElementById("chartNeto");
+      if (!c || !DATA.grafica_meses.length) return;
+      destroyChart("neto");
+      let acum = 0;
+      charts.neto = new Chart(c, { type: "bar", data: { labels: DATA.grafica_meses.map(m => mesLabel(m.mes)), datasets: [{ label: "Neto acumulado", data: DATA.grafica_meses.map(m => { acum += m.neto; return acum; }), backgroundColor: DATA.grafica_meses.map((_, i, arr) => { let s = 0; arr.slice(0, i + 1).forEach(x => s += x.neto); return s >= 0 ? "rgba(0,205,150,0.75)" : "rgba(255,61,90,0.75)" }), borderRadius: 5, borderSkipped: false }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { color: "rgba(255,255,255,0.04)" }, ticks: { font: { size: 10, family: "Space Mono" }, color: "#4A5568" } }, y: { grid: { color: "rgba(255,255,255,0.04)" }, ticks: { callback: axisM, font: { size: 10, family: "Space Mono" }, color: "#4A5568" } } } } });
+    }
+
+    function makeChartMeses() {
+      const c = document.getElementById("chartMeses");
+      if (!c || !DATA.grafica_meses.length) return;
+      destroyChart("meses");
+      charts.meses = new Chart(c, { type: "bar", data: { labels: DATA.grafica_meses.map(m => mesLabel(m.mes)), datasets: [{ label: "Apostado", data: DATA.grafica_meses.map(m => m.apostado), backgroundColor: "rgba(108,99,255,0.6)", borderRadius: 4, borderSkipped: false }, { label: "Ganado", data: DATA.grafica_meses.map(m => m.ganado), backgroundColor: "rgba(0,205,150,0.6)", borderRadius: 4, borderSkipped: false }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true, labels: { font: { size: 11, family: "DM Sans" }, boxWidth: 10, padding: 10, color: "#8896A8" } } }, scales: { x: { grid: { color: "rgba(255,255,255,0.04)" }, ticks: { font: { size: 10, family: "Space Mono" }, color: "#4A5568" } }, y: { grid: { color: "rgba(255,255,255,0.04)" }, ticks: { callback: axisM, font: { size: 10, family: "Space Mono" }, color: "#4A5568" } } } } });
+    }
+
+    function makeChartDep() {
+      const c = document.getElementById("chartDep");
+      if (!c || !DATA.deportes.length) return;
+      destroyChart("dep");
+      const deps = [...DATA.deportes].sort((a, b) => b.roi - a.roi);
+      charts.dep = new Chart(c, { type: "bar", data: { labels: deps.map(d => d.nombre), datasets: [{ label: "ROI %", data: deps.map(d => parseFloat(d.roi.toFixed(1))), backgroundColor: deps.map(d => d.roi >= 0 ? "rgba(0,205,150,0.75)" : "rgba(255,61,90,0.75)"), borderRadius: 5, borderSkipped: false }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { color: "rgba(255,255,255,0.04)" }, ticks: { font: { size: 10, family: "Space Mono" }, color: "#4A5568" } }, y: { grid: { color: "rgba(255,255,255,0.04)" }, ticks: { callback: v => `${v}%`, font: { size: 10, family: "Space Mono" }, color: "#4A5568" } } } } });
+    }
+
+    function makeChartTipo() {
+      const c = document.getElementById("chartTipo");
+      if (!c) return;
+      destroyChart("tipo");
+      const tipos = calcRoiPorTipo();
+      if (!tipos.length) return;
+      charts.tipo = new Chart(c, { type: "bar", data: { labels: tipos.map(t => t.tipo), datasets: [{ label: "ROI %", data: tipos.map(t => parseFloat(t.roi.toFixed(1))), backgroundColor: tipos.map(t => t.roi >= 0 ? "rgba(0,205,150,0.75)" : "rgba(255,61,90,0.75)"), borderRadius: 5, borderSkipped: false }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { color: "rgba(255,255,255,0.04)" }, ticks: { font: { size: 10, family: "Space Mono" }, color: "#4A5568" } }, y: { grid: { color: "rgba(255,255,255,0.04)" }, ticks: { callback: v => `${v}%`, font: { size: 10, family: "Space Mono" }, color: "#4A5568" } } } } });
+    }
+
+    function makeChartRolling() {
+      const c = document.getElementById("chartRolling");
+      if (!c) return;
+      destroyChart("rolling");
+      const points = calcRolling(20);
+      if (!points.length) return;
+      charts.rolling = new Chart(c, { type: "line", data: { labels: points.map(p => `#${p.i + 1}`), datasets: [{ label: "ROI rodante", data: points.map(p => parseFloat(p.roi.toFixed(2))), borderColor: "var(--accent)", backgroundColor: "rgba(0,205,150,0.08)", borderWidth: 2, pointRadius: 0, fill: true, tension: 0.3 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `${ctx.parsed.y >= 0 ? "+" : ""}${ctx.parsed.y.toFixed(1)}%` } } }, scales: { x: { grid: { color: "rgba(255,255,255,0.04)" }, ticks: { display: false } }, y: { grid: { color: "rgba(255,255,255,0.04)" }, ticks: { callback: v => `${v >= 0 ? "+" : ""}${v}%`, font: { size: 10, family: "Space Mono" }, color: "#4A5568" }, afterDataLimits: scale => { const pad = Math.abs(scale.max - scale.min) * 0.15; scale.max += pad; scale.min -= pad; } } } } });
+    }
+
+    function initCharts() {
+      if (!DATA || typeof Chart === "undefined") return;
+      if (_noBlur) return; // en Linux/tdesktop los charts son lazy (botón manual)
+      Chart.defaults.color = "#8896A8";
+      Chart.defaults.borderColor = "rgba(255,255,255,0.04)";
+      if (tabActual === "resumen") { makeChartNeto(); makeChartMeses(); }
+      if (tabActual === "deportes") { makeChartDep(); }
+      if (tabActual === "tipos") { makeChartTipo(); }
+      if (tabActual === "rolling") { makeChartRolling(); }
+    }
+
+    /* ── Events ── */
+    document.addEventListener("click", e => {
+      const chip = e.target.closest("[data-filtro-deporte]");
+      if (chip) { filtroDeporte = chip.dataset.filtroDeporte; document.querySelectorAll("[data-filtro-deporte]").forEach(c => c.classList.toggle("active", c.dataset.filtroDeporte === filtroDeporte)); const l = document.getElementById("apuestasLista"); if (l) l.innerHTML = renderApuestasList(); return; }
+      const tab = e.target.closest("[data-tab]");
+      if (tab) { showTab(tab.dataset.tab, tab); return; }
+      const mes = e.target.closest("[data-mes-dir]");
+      if (mes) { cambiarMes(parseInt(mes.dataset.mesDir, 10)); return; }
+      const act = e.target.closest("[data-action]");
+      if (act?.dataset.action === "recargar") { recargar(); return; }
+    });
+    document.addEventListener("input", e => {
+      const el = e.target.closest("[data-search-equipo]");
+      if (el) { filtroEquipo = el.value; const l = document.getElementById("apuestasLista"); if (l) l.innerHTML = renderApuestasList(); }
+    });
+
+    const _ALWAYS_RERENDER = new Set(["apuestas", "mes", "gestion"]);
+
+    function showTab(id, btn) {
+      // Liberar canvases del tab anterior antes de cambiar
+      if (tabActual === "resumen") { destroyChart("neto"); destroyChart("meses"); }
+      if (tabActual === "deportes") { destroyChart("dep"); }
+      if (tabActual === "tipos") { destroyChart("tipo"); }
+      if (tabActual === "rolling") { destroyChart("rolling"); }
+      document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
+      document.querySelectorAll(".nav-item").forEach(t => t.classList.remove("active"));
+      const sec = document.getElementById(id);
+      if (sec) {
+        if (_RENDER_FNS[id] && (!_renderedSections.has(id) || _ALWAYS_RERENDER.has(id))) {
+          sec.innerHTML = _RENDER_FNS[id]();
+          _renderedSections.add(id);
+        }
+        sec.classList.add("active");
+      }
+      if (btn) btn.classList.add("active");
+      else { const nb = document.querySelector(`.nav-item[data-tab="${id}"]`); if (nb) nb.classList.add("active"); }
+      tabActual = id;
+      setTimeout(initCharts, 80);
+    }
+
+    async function recargar() {
+      if (cargando) return;
+      cargando = true;
+      document.getElementById("app").innerHTML = `<div class="loader"><div class="loader-logo">Bet<span>Stats</span></div><div class="loader-bar"><div class="loader-bar-fill"></div></div><p>Actualizando...</p></div>`;
+      const nav = document.getElementById("bottomNav");
+      if (nav) nav.style.display = "none";
+      try { await cargarDatos(); } finally { cargando = false; }
+    }
+
+    /* ════════════════════════════════════════════════════════════════
+       TAB GESTIÓN — CRUD completo + análisis de ticket con IA
+       ════════════════════════════════════════════════════════════════ */
+
+    let _editRowId = null;
+
+    function renderGestion() {
+      const ok = !!getSecret();
+      return `
   <div class="section-header">Gestión de <span>apuestas</span></div>
 
   ${!ok ? `<div class="secret-banner">
@@ -1258,24 +2546,24 @@ function renderGestion(){
 
   <div class="g-toolbar">
     <button class="btn-add" onclick="openModal(null,null)">➕ Nueva apuesta</button>
-    <span style="font-size:11px;color:var(--text-3)">${DATA?.apuestas?.length??0} registradas</span>
+    <span style="font-size:11px;color:var(--text-3)">${DATA?.apuestas?.length ?? 0} registradas</span>
   </div>
 
   <div id="gLista">${renderGLista()}</div>`;
-}
+    }
 
-function renderGLista(){
-  if(!DATA?.apuestas?.length) return '<div class="empty">Sin apuestas registradas</div>';
-  const total = DATA.apuestas.length;
-  return [...DATA.apuestas].reverse().slice(0,40).map((a,idx)=>{
-    const rowId = a.row_id ?? (total - idx);
-    const si = a.status==="win"?"✅":a.status==="loss"?"❌":a.status==="void"?"🔄":"⏳";
-    const gStr = a.status==="win"?` → +${fmt(a.ganancia)}`:a.status==="loss"?` → -${fmt(a.monto)}`:"";
-    return `<div class="g-card">
+    function renderGLista() {
+      if (!DATA?.apuestas?.length) return '<div class="empty">Sin apuestas registradas</div>';
+      const total = DATA.apuestas.length;
+      return [...DATA.apuestas].reverse().slice(0, 40).map((a, idx) => {
+        const rowId = a.row_id ?? (total - idx);
+        const si = a.status === "win" ? "✅" : a.status === "loss" ? "❌" : a.status === "void" ? "🔄" : "⏳";
+        const gStr = a.status === "win" ? ` → +${fmt(a.ganancia)}` : a.status === "loss" ? ` → -${fmt(a.monto)}` : "";
+        return `<div class="g-card">
       <div class="g-card-head">
         <div>
           <div class="g-teams">${si} ${esc(a.equipo1)} vs ${esc(a.equipo2)}</div>
-          <div class="g-meta">${esc(a.deporte||"")}${a.deporte?" · ":""}${esc(a.tipo||"")} @ ${esc(String(a.cuota||""))} · ${fmt(a.monto)}${gStr}${a.fecha_partido?" · 📅 "+a.fecha_partido:""}</div>
+          <div class="g-meta">${esc(a.deporte || "")}${a.deporte ? " · " : ""}${esc(a.tipo || "")} @ ${esc(String(a.cuota || ""))} · ${fmt(a.monto)}${gStr}${a.fecha_partido ? " · 📅 " + a.fecha_partido : ""}</div>
         </div>
         <div class="g-actions">
           <button class="btn-edit" onclick="openModal(${rowId},${idx})">✏️</button>
@@ -1283,81 +2571,81 @@ function renderGLista(){
         </div>
       </div>
     </div>`;
-  }).join("");
-}
+      }).join("");
+    }
 
-function handleSecretPaste(e){
-  const text = (e.clipboardData || window.clipboardData).getData('text');
-  if(text){
-    e.preventDefault();
-    document.getElementById('sInput').value = text.trim();
-  }
-}
+    function handleSecretPaste(e) {
+      const text = (e.clipboardData || window.clipboardData).getData('text');
+      if (text) {
+        e.preventDefault();
+        document.getElementById('sInput').value = text.trim();
+      }
+    }
 
-async function pasteSecret(){
-  const el = document.getElementById("sInput");
-  if(!el) return;
-  el.focus();
-  el.select();
-  el.style.outline = "2px solid var(--accent)";
-  setTimeout(()=>{ el.style.outline=""; }, 2500);
-}
+    async function pasteSecret() {
+      const el = document.getElementById("sInput");
+      if (!el) return;
+      el.focus();
+      el.select();
+      el.style.outline = "2px solid var(--accent)";
+      setTimeout(() => { el.style.outline = ""; }, 2500);
+    }
 
-function saveSecret(){
-  const v = document.getElementById("sInput")?.value?.trim();
-  if(!v){ alert("Escribe la clave primero."); return; }
-  sessionStorage.setItem("miniapp_secret", v);
-  loadData();
-}
+    function saveSecret() {
+      const v = document.getElementById("sInput")?.value?.trim();
+      if (!v) { alert("Escribe la clave primero."); return; }
+      sessionStorage.setItem("miniapp_secret", v);
+      loadData();
+    }
 
-function saveSecret(){
-  const v=document.getElementById("sInput")?.value?.trim();
-  if(!v) return;
-  sessionStorage.setItem("miniapp_secret",v);
-  location.reload();
-}
+    function saveSecret() {
+      const v = document.getElementById("sInput")?.value?.trim();
+      if (!v) return;
+      sessionStorage.setItem("miniapp_secret", v);
+      location.reload();
+    }
 
-/* ── Viewport helper ── */
-function getVH(){
-  if(tg?.viewportStableHeight&&tg.viewportStableHeight>100)return tg.viewportStableHeight;
-  if(window.visualViewport)return window.visualViewport.height;
-  return window.innerHeight;
-}
+    /* ── Viewport helper ── */
+    function getVH() {
+      if (tg?.viewportStableHeight && tg.viewportStableHeight > 100) return tg.viewportStableHeight;
+      if (window.visualViewport) return window.visualViewport.height;
+      return window.innerHeight;
+    }
 
-/* ── Ajusta el sheet cuando el teclado abre/cierra ── */
-function syncModalToViewport(){
-  const sheet=document.getElementById("mSheet");
-  if(!sheet)return;
-  // En desktop (≥768px) el CSS ya maneja max-height con min(88vh,700px); no sobreescribir.
-  if(window.matchMedia("(min-width:768px)").matches)return;
-  const vh=window.visualViewport?window.visualViewport.height:getVH();
-  const navH=parseInt(getComputedStyle(document.documentElement).getPropertyValue("--nav-h"))||72;
-  sheet.style.maxHeight=Math.floor((vh-navH)*0.94)+"px";
-}
+    /* ── Ajusta el sheet cuando el teclado abre/cierra ── */
+    function syncModalToViewport() {
+      const sheet = document.getElementById("mSheet");
+      if (!sheet) return;
+      // En desktop (≥768px) el CSS ya maneja max-height con min(88vh,700px); no sobreescribir.
+      if (window.matchMedia("(min-width:768px)").matches) return;
+      const vh = window.visualViewport ? window.visualViewport.height : getVH();
+      const navH = parseInt(getComputedStyle(document.documentElement).getPropertyValue("--nav-h")) || 72;
+      sheet.style.maxHeight = Math.floor((vh - navH) * 0.94) + "px";
+    }
 
-function openModal(rowId,idx){
-  _editRowId=rowId;
-  const a=(rowId!==null&&DATA?.apuestas)?[...DATA.apuestas].reverse()[idx]:{};
-  const v={
-    eq1:a.equipo1||"",eq2:a.equipo2||"",tipo:a.tipo||"",cuota:a.cuota||"",
-    monto:a.monto||"",dep:a.deporte||"",liga:a.liga||"",
-    fecha:a.fecha_partido||"",
-    hora:a.hora_partido||"",
-    status:a.status||"pending",
-  };
-  // archivo: index.html — dentro de openModal()
-  document.getElementById("gModal").innerHTML=`
+    function openModal(rowId, idx) {
+      _editRowId = rowId;
+      const a = (rowId !== null && DATA?.apuestas) ? [...DATA.apuestas].reverse()[idx] : {};
+      const v = {
+        eq1: a.equipo1 || "", eq2: a.equipo2 || "", tipo: a.tipo || "", cuota: a.cuota || "",
+        monto: a.monto || "", dep: a.deporte || "", liga: a.liga || "",
+        fecha: a.fecha_partido || "",
+        hora: a.hora_partido || "",
+        status: a.status || "pending",
+      };
+      // archivo: index.html — dentro de openModal()
+      document.getElementById("gModal").innerHTML = `
   <div class="m-overlay" id="mOverlay" onclick="if(event.target===this)closeModal()">
-    <div class="m-sheet" id="mSheet" style="max-height:${window.matchMedia('(min-width:768px)').matches?'':''+Math.floor((getVH()-72)*0.94)+'px'}">
+    <div class="m-sheet" id="mSheet" style="max-height:${window.matchMedia('(min-width:768px)').matches ? '' : '' + Math.floor((getVH() - 72) * 0.94) + 'px'}">
       <div class="m-handle"></div>
       <div class="m-head">
         <div class="m-title">
-          <span>${rowId===null?"➕ Nueva apuesta":"✏️ Editar apuesta"}</span>
+          <span>${rowId === null ? "➕ Nueva apuesta" : "✏️ Editar apuesta"}</span>
           <button class="m-close" onclick="closeModal()">✕</button>
         </div>
       </div>
       <div class="m-body">
-        ${rowId===null?`
+        ${rowId === null ? `
         <div class="u-zone" id="uZone"
              onclick="document.getElementById('uInput').click()"
              ondragover="event.preventDefault();this.classList.add('drag')"
@@ -1368,10 +2656,10 @@ function openModal(rowId,idx){
           <div class="u-sub">Toca o arrastra la imagen</div>
         </div>
         <input id="uInput" type="file" accept="image/*" style="display:none" onchange="analyzeTicket(this.files[0])">
-        <div class="u-analyzing" id="uAn">⏳ Analizando con IA…</div>`:""}
+        <div class="u-analyzing" id="uAn">⏳ Analizando con IA…</div>`: ""}
 
         <!-- Toggle Parlay (solo en creación nueva) -->
-        ${rowId===null?`
+        ${rowId === null ? `
         <div class="m-group" style="display:flex;align-items:center;gap:10px;margin-top:8px">
           <label class="m-label" style="margin:0;flex:1">🎯 Es Parlay / Acumulador</label>
           <label style="position:relative;display:inline-block;width:44px;height:24px">
@@ -1386,7 +2674,7 @@ function openModal(rowId,idx){
               border-radius:50%;background:#fff;transition:.3s;
             "></span>
           </label>
-        </div>`:""}
+        </div>`: ""}
 
         <!-- Campos apuesta simple (ocultos en modo parlay) -->
         <div id="simpleFields">
@@ -1449,71 +2737,71 @@ function openModal(rowId,idx){
           <label class="m-label">Notas (opcional)</label>
           <input id="mNotasVisible" class="m-input" value="" placeholder="Notas adicionales…">
         </div>
-        ${rowId!==null?`
+        ${rowId !== null ? `
         <div class="m-group"><label class="m-label">Resultado</label>
           <select id="mStatus" class="m-input">
-            <option value="pending" ${v.status==="pending"?"selected":""}>⏳ Pendiente</option>
-            <option value="win"     ${v.status==="win"?"selected":""}>✅ Win</option>
-            <option value="loss"    ${v.status==="loss"?"selected":""}>❌ Loss</option>
-            <option value="void"    ${v.status==="void"?"selected":""}>🔄 Void</option>
-          </select></div>`:""}
+            <option value="pending" ${v.status === "pending" ? "selected" : ""}>⏳ Pendiente</option>
+            <option value="win"     ${v.status === "win" ? "selected" : ""}>✅ Win</option>
+            <option value="loss"    ${v.status === "loss" ? "selected" : ""}>❌ Loss</option>
+            <option value="void"    ${v.status === "void" ? "selected" : ""}>🔄 Void</option>
+          </select></div>`: ""}
       </div>
       <div class="m-foot">
         <div class="m-err" id="mErr"></div>
-        <button class="m-submit" id="mSubmitBtn" onclick="submitBet()">${rowId===null?"✅ Registrar apuesta":"💾 Guardar cambios"}</button>
+        <button class="m-submit" id="mSubmitBtn" onclick="submitBet()">${rowId === null ? "✅ Registrar apuesta" : "💾 Guardar cambios"}</button>
       </div>
     </div>
   </div>`;
-  /* Escuchar cambios de viewport (teclado) */
-  if(window.visualViewport){
-    window.visualViewport.addEventListener("resize",syncModalToViewport);
-    window.visualViewport.addEventListener("scroll",syncModalToViewport);
-  }
-  /* Ajuste inicial */
-  syncModalToViewport();
-}
+      /* Escuchar cambios de viewport (teclado) */
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener("resize", syncModalToViewport);
+        window.visualViewport.addEventListener("scroll", syncModalToViewport);
+      }
+      /* Ajuste inicial */
+      syncModalToViewport();
+    }
 
-// archivo: index.html
-function closeModal(){
-  if(window.visualViewport){
-    window.visualViewport.removeEventListener("resize",syncModalToViewport);
-    window.visualViewport.removeEventListener("scroll",syncModalToViewport);
-  }
-  document.getElementById("gModal").innerHTML="";
-  _editRowId   = null;
-  _parlayPicks = [];  // ← limpiar picks al cerrar
-}
-// archivo: index.html — funciones del modo Parlay
+    // archivo: index.html
+    function closeModal() {
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener("resize", syncModalToViewport);
+        window.visualViewport.removeEventListener("scroll", syncModalToViewport);
+      }
+      document.getElementById("gModal").innerHTML = "";
+      _editRowId = null;
+      _parlayPicks = [];  // ← limpiar picks al cerrar
+    }
+    // archivo: index.html — funciones del modo Parlay
 
-let _parlayPicks = [];  // array de picks del parlay actual
+    let _parlayPicks = [];  // array de picks del parlay actual
 
-function toggleParlay(on) {
-  const slider = document.getElementById("parlaySlider");
-  const thumb  = document.getElementById("parlayThumb");
-  if(slider){ slider.style.background = on ? "var(--accent)" : "var(--border)"; }
-  if(thumb){  thumb.style.left = on ? "23px" : "3px"; }
-  document.getElementById("simpleFields").style.display = on ? "none" : "";
-  document.getElementById("parlaySection").style.display = on ? "" : "none";
-  if(on && _parlayPicks.length === 0) addParlayPick();
-}
+    function toggleParlay(on) {
+      const slider = document.getElementById("parlaySlider");
+      const thumb = document.getElementById("parlayThumb");
+      if (slider) { slider.style.background = on ? "var(--accent)" : "var(--border)"; }
+      if (thumb) { thumb.style.left = on ? "23px" : "3px"; }
+      document.getElementById("simpleFields").style.display = on ? "none" : "";
+      document.getElementById("parlaySection").style.display = on ? "" : "none";
+      if (on && _parlayPicks.length === 0) addParlayPick();
+    }
 
-function addParlayPick() {
-  _parlayPicks.push({ equipo1:"", equipo2:"", tipo_apuesta:"", cuota:"" });
-  renderParlayPicks();
-}
+    function addParlayPick() {
+      _parlayPicks.push({ equipo1: "", equipo2: "", tipo_apuesta: "", cuota: "" });
+      renderParlayPicks();
+    }
 
-function removeParlayPick(idx) {
-  _parlayPicks.splice(idx, 1);
-  renderParlayPicks();
-}
+    function removeParlayPick(idx) {
+      _parlayPicks.splice(idx, 1);
+      renderParlayPicks();
+    }
 
-function renderParlayPicks() {
-  const container = document.getElementById("picksContainer");
-  if(!container) return;
-  container.innerHTML = _parlayPicks.map((p, i) => `
+    function renderParlayPicks() {
+      const container = document.getElementById("picksContainer");
+      if (!container) return;
+      container.innerHTML = _parlayPicks.map((p, i) => `
     <div style="background:var(--surface,#151929);border-radius:8px;padding:8px;margin-bottom:6px;position:relative">
       <div style="font-size:11px;font-weight:700;color:var(--text-2);margin-bottom:6px">
-        Pick #${i+1}
+        Pick #${i + 1}
         ${_parlayPicks.length > 1
           ? `<button onclick="removeParlayPick(${i})"
                      style="position:absolute;right:8px;top:8px;background:transparent;
@@ -1534,259 +2822,260 @@ function renderParlayPicks() {
       </div>
     </div>
   `).join("");
-}
+    }
 
-function calcCuotaAuto() {
-  const cuotas = _parlayPicks.map(p => parseFloat(p.cuota)).filter(c => c > 0);
-  if(cuotas.length < 2) return;
-  const total = cuotas.reduce((a,b) => a*b, 1);
-  const el = document.getElementById("mCuotaTotal");
-  const msg = document.getElementById("cuotaAutoMsg");
-  if(el && !el.value) { el.value = total.toFixed(3); }
-  if(msg) { msg.textContent = `Calculado: ${total.toFixed(3)} (producto de ${cuotas.length} cuotas)`; msg.style.display="block"; }
-}
-function setFechaNow(){ const n=new Date(); document.getElementById("mFecha").value=n.toISOString().slice(0,10); document.getElementById("mHora").value=n.toTimeString().slice(0,5); }
+    function calcCuotaAuto() {
+      const cuotas = _parlayPicks.map(p => parseFloat(p.cuota)).filter(c => c > 0);
+      if (cuotas.length < 2) return;
+      const total = cuotas.reduce((a, b) => a * b, 1);
+      const el = document.getElementById("mCuotaTotal");
+      const msg = document.getElementById("cuotaAutoMsg");
+      if (el && !el.value) { el.value = total.toFixed(3); }
+      if (msg) { msg.textContent = `Calculado: ${total.toFixed(3)} (producto de ${cuotas.length} cuotas)`; msg.style.display = "block"; }
+    }
+    function setFechaNow() { const n = new Date(); document.getElementById("mFecha").value = n.toISOString().slice(0, 10); document.getElementById("mHora").value = n.toTimeString().slice(0, 5); }
 
-function handleDrop(e){
-  e.preventDefault(); document.getElementById("uZone").classList.remove("drag");
-  const f=e.dataTransfer.files[0]; if(f?.type.startsWith("image/")) analyzeTicket(f);
-}
+    function handleDrop(e) {
+      e.preventDefault(); document.getElementById("uZone").classList.remove("drag");
+      const f = e.dataTransfer.files[0]; if (f?.type.startsWith("image/")) analyzeTicket(f);
+    }
 
-// Pre-comprime imagen via canvas. Reduce 5-12MB → <1MB sin pérdida visible para tickets.
-// Re-compresión adaptativa: si el primer preset (1920px q=0.85) excede el umbral,
-// reintenta con presets más agresivos antes de rendirse. Si ningún preset baja
-// del umbral, lanza error local — nunca enviamos un body que el bot rechazaría.
-const _COMPRESS_PRESETS = [
-  { maxDim: 1920, quality: 0.85 },
-  { maxDim: 1600, quality: 0.75 },
-  { maxDim: 1280, quality: 0.70 },
-];
-// 6MB de blob comprimido. Margen de seguridad bajo el client_max_size=10MB del bot
-// considerando overhead de base64 (×4/3) + envoltura JSON.
-const _MAX_BLOB_BYTES_TO_SEND = 6 * 1024 * 1024;
+    // Pre-comprime imagen via canvas. Reduce 5-12MB → <1MB sin pérdida visible para tickets.
+    // Re-compresión adaptativa: si el primer preset (1920px q=0.85) excede el umbral,
+    // reintenta con presets más agresivos antes de rendirse. Si ningún preset baja
+    // del umbral, lanza error local — nunca enviamos un body que el bot rechazaría.
+    const _COMPRESS_PRESETS = [
+      { maxDim: 1920, quality: 0.85 },
+      { maxDim: 1600, quality: 0.75 },
+      { maxDim: 1280, quality: 0.70 },
+    ];
+    // 6MB de blob comprimido. Margen de seguridad bajo el client_max_size=10MB del bot
+    // considerando overhead de base64 (×4/3) + envoltura JSON.
+    const _MAX_BLOB_BYTES_TO_SEND = 6 * 1024 * 1024;
 
-async function _compressOnce(file, {maxDim, quality}){
-  const bmp = await createImageBitmap(file).catch(()=>null);
-  if(!bmp) throw new Error("No se pudo decodificar la imagen");
-  let {width:w, height:h} = bmp;
-  const scale = Math.min(1, maxDim/Math.max(w,h));
-  w = Math.round(w*scale); h = Math.round(h*scale);
-  const canvas = document.createElement("canvas");
-  canvas.width = w; canvas.height = h;
-  const ctx = canvas.getContext("2d");
-  ctx.drawImage(bmp, 0, 0, w, h);
-  bmp.close?.();
-  const blob = await new Promise(r => canvas.toBlob(r, "image/jpeg", quality));
-  if(!blob) throw new Error("Fallo en compresión");
-  return { blob, dim:{w, h} };
-}
+    async function _compressOnce(file, { maxDim, quality }) {
+      const bmp = await createImageBitmap(file).catch(() => null);
+      if (!bmp) throw new Error("No se pudo decodificar la imagen");
+      let { width: w, height: h } = bmp;
+      const scale = Math.min(1, maxDim / Math.max(w, h));
+      w = Math.round(w * scale); h = Math.round(h * scale);
+      const canvas = document.createElement("canvas");
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(bmp, 0, 0, w, h);
+      bmp.close?.();
+      const blob = await new Promise(r => canvas.toBlob(r, "image/jpeg", quality));
+      if (!blob) throw new Error("Fallo en compresión");
+      return { blob, dim: { w, h } };
+    }
 
-async function compressImage(file){
-  if(!file || !file.size) throw new Error("Archivo vacío");
-  let lastBlob=null, lastDim=null, lastPreset=null;
-  for(const preset of _COMPRESS_PRESETS){
-    const {blob, dim} = await _compressOnce(file, preset);
-    lastBlob=blob; lastDim=dim; lastPreset=preset;
-    if(blob.size <= _MAX_BLOB_BYTES_TO_SEND) break;
-    console.warn(`[compressImage] preset ${preset.maxDim}px q=${preset.quality} → ${(blob.size/1024/1024).toFixed(2)}MB, reintentando más agresivo`);
-  }
-  if(lastBlob.size > _MAX_BLOB_BYTES_TO_SEND){
-    throw new Error(`Imagen demasiado grande tras compresión (${(lastBlob.size/1024/1024).toFixed(1)}MB). Recorta el ticket o usa otra captura.`);
-  }
-  const b64 = await new Promise((res,rej)=>{
-    const r=new FileReader();
-    r.onload=()=>res(r.result.split(",")[1]);
-    r.onerror=()=>rej(new Error("Error leyendo blob comprimido"));
-    r.readAsDataURL(lastBlob);
-  });
-  return {
-    blob: lastBlob,
-    b64,
-    originalSize: file.size,
-    compressedSize: lastBlob.size,
-    dim: lastDim,
-    preset: lastPreset,
-  };
-}
+    async function compressImage(file) {
+      if (!file || !file.size) throw new Error("Archivo vacío");
+      let lastBlob = null, lastDim = null, lastPreset = null;
+      for (const preset of _COMPRESS_PRESETS) {
+        const { blob, dim } = await _compressOnce(file, preset);
+        lastBlob = blob; lastDim = dim; lastPreset = preset;
+        if (blob.size <= _MAX_BLOB_BYTES_TO_SEND) break;
+        console.warn(`[compressImage] preset ${preset.maxDim}px q=${preset.quality} → ${(blob.size / 1024 / 1024).toFixed(2)}MB, reintentando más agresivo`);
+      }
+      if (lastBlob.size > _MAX_BLOB_BYTES_TO_SEND) {
+        throw new Error(`Imagen demasiado grande tras compresión (${(lastBlob.size / 1024 / 1024).toFixed(1)}MB). Recorta el ticket o usa otra captura.`);
+      }
+      const b64 = await new Promise((res, rej) => {
+        const r = new FileReader();
+        r.onload = () => res(r.result.split(",")[1]);
+        r.onerror = () => rej(new Error("Error leyendo blob comprimido"));
+        r.readAsDataURL(lastBlob);
+      });
+      return {
+        blob: lastBlob,
+        b64,
+        originalSize: file.size,
+        compressedSize: lastBlob.size,
+        dim: lastDim,
+        preset: lastPreset,
+      };
+    }
 
-async function analyzeTicket(file){
-  if(!file) return;
-  if(!getSecret()){ showErr("Configura la clave de API primero."); return; }
-  const an=document.getElementById("uAn"); const uz=document.getElementById("uZone");
-  an.style.display="flex"; uz.style.opacity="0.5";
-  try{
-    const {b64, originalSize, compressedSize, dim, preset} = await compressImage(file);
-    const mbIn  = (originalSize/1024/1024).toFixed(2);
-    const mbOut = (compressedSize/1024/1024).toFixed(2);
-    console.log(`[analyzeTicket] ${mbIn}MB → ${mbOut}MB · ${dim.w}x${dim.h} · q=${preset.quality}`);
-    // Feedback visible: en Telegram WebApp móvil no hay acceso a la consola.
-    // Mostramos los tamaños en la zona de upload para diagnóstico inmediato.
-    const uTextEl = uz.querySelector(".u-text");
-    if(uTextEl) uTextEl.textContent = `Comprimida ${mbIn}→${mbOut}MB · analizando…`;
-    const resp=await fetch(`${API_URL}/api/analyze-ticket`,{method:"POST",headers:apiHeaders(),body:JSON.stringify({image_b64:b64})});
-    const j=await resp.json();
-    if(!j.ok) throw new Error(j.error||"No se detectó ticket");
-    const d=j.datos;
-    const esParlay = d.es_parlay && Array.isArray(d.picks) && d.picks.length > 1;
+    async function analyzeTicket(file) {
+      if (!file) return;
+      if (!getSecret()) { showErr("Configura la clave de API primero."); return; }
+      const an = document.getElementById("uAn"); const uz = document.getElementById("uZone");
+      an.style.display = "flex"; uz.style.opacity = "0.5";
+      try {
+        const { b64, originalSize, compressedSize, dim, preset } = await compressImage(file);
+        const mbIn = (originalSize / 1024 / 1024).toFixed(2);
+        const mbOut = (compressedSize / 1024 / 1024).toFixed(2);
+        console.log(`[analyzeTicket] ${mbIn}MB → ${mbOut}MB · ${dim.w}x${dim.h} · q=${preset.quality}`);
+        // Feedback visible: en Telegram WebApp móvil no hay acceso a la consola.
+        // Mostramos los tamaños en la zona de upload para diagnóstico inmediato.
+        const uTextEl = uz.querySelector(".u-text");
+        if (uTextEl) uTextEl.textContent = `Comprimida ${mbIn}→${mbOut}MB · analizando…`;
+        const resp = await fetch(`${API_URL}/api/analyze-ticket`, { method: "POST", headers: apiHeaders(), body: JSON.stringify({ image_b64: b64 }) });
+        const j = await resp.json();
+        if (!j.ok) throw new Error(j.error || "No se detectó ticket");
+        const d = j.datos;
+        const esParlay = d.es_parlay && Array.isArray(d.picks) && d.picks.length > 1;
 
-    if(d.equipo1)       document.getElementById("mEq1").value=d.equipo1;
-    if(d.equipo2)       document.getElementById("mEq2").value=d.equipo2;
-    if(d.tipo_apuesta)  document.getElementById("mTipo").value=d.tipo_apuesta;
-    if(d.cuota)         document.getElementById("mCuota").value=d.cuota;
-    if(d.monto)         document.getElementById("mMonto").value=d.monto;
-    if(d.deporte)       document.getElementById("mDep").value=d.deporte;
-    if(d.liga)          document.getElementById("mLiga").value=d.liga;
-    if(d.fecha_partido) document.getElementById("mFecha").value=d.fecha_partido;
-    if(d.hora_partido)  document.getElementById("mHora").value=d.hora_partido;
+        if (d.equipo1) document.getElementById("mEq1").value = d.equipo1;
+        if (d.equipo2) document.getElementById("mEq2").value = d.equipo2;
+        if (d.tipo_apuesta) document.getElementById("mTipo").value = d.tipo_apuesta;
+        if (d.cuota) document.getElementById("mCuota").value = d.cuota;
+        if (d.monto) document.getElementById("mMonto").value = d.monto;
+        if (d.deporte) document.getElementById("mDep").value = d.deporte;
+        if (d.liga) document.getElementById("mLiga").value = d.liga;
+        if (d.fecha_partido) document.getElementById("mFecha").value = d.fecha_partido;
+        if (d.hora_partido) document.getElementById("mHora").value = d.hora_partido;
 
-    const mNotasEl=document.getElementById("mNotas");
-    if(mNotasEl) mNotasEl.value=d.notas||"";
+        const mNotasEl = document.getElementById("mNotas");
+        if (mNotasEl) mNotasEl.value = d.notas || "";
 
-    if(esParlay){
-      const picksHtml=d.picks.map((p,i)=>
-        `<div style="font-size:11px;padding:3px 0;border-bottom:1px solid var(--border)">
-          <b>#${i+1}</b> ${esc(p.equipo1||"?")} vs ${esc(p.equipo2||"?")}
-          <span style="color:var(--text-2)"> | ${esc(p.tipo_apuesta||"")} @ ${esc(String(p.cuota||""))}</span>
+        if (esParlay) {
+          const picksHtml = d.picks.map((p, i) =>
+            `<div style="font-size:11px;padding:3px 0;border-bottom:1px solid var(--border)">
+          <b>#${i + 1}</b> ${esc(p.equipo1 || "?")} vs ${esc(p.equipo2 || "?")}
+          <span style="color:var(--text-2)"> | ${esc(p.tipo_apuesta || "")} @ ${esc(String(p.cuota || ""))}</span>
         </div>`
-      ).join("");
-      uz.innerHTML=`
+          ).join("");
+          uz.innerHTML = `
         <div class="u-icon">🎯</div>
         <div class="u-text" style="color:var(--accent);font-weight:700">
-          Parlay · ${d.picks.length} picks · Cuota total: ${esc(String(d.cuota||""))}
+          Parlay · ${d.picks.length} picks · Cuota total: ${esc(String(d.cuota || ""))}
         </div>
         <div style="width:100%;margin-top:8px;text-align:left">${picksHtml}</div>
         <div class="u-sub" style="margin-top:6px">Revisa el monto y guarda ↓</div>`;
-    } else {
-      uz.innerHTML=`<div class="u-icon">✅</div><div class="u-text" style="color:var(--win)">Ticket detectado — revisa los campos</div>`;
-    }
-  }catch(err){ showErr("⚠️ "+err.message); uz.style.opacity="1"; }
-  finally{ an.style.display="none"; }
-}
-
-// archivo: index.html
-async function submitBet(){
-  if(!getSecret()){ showErr("🔑 Configura la clave de API primero."); return; }
-  const esParlay = document.getElementById("mEsParlay")?.checked || false;
-  const monto    = document.getElementById("mMonto")?.value.trim();
-  const dep      = document.getElementById("mDep")?.value.trim();
-  const liga     = document.getElementById("mLiga")?.value.trim();
-  const fecha    = document.getElementById("mFecha")?.value.trim();
-  const hora     = document.getElementById("mHora")?.value.trim();
-  const st       = document.getElementById("mStatus")?.value || "pending";
-  const notasVis = document.getElementById("mNotasVisible")?.value.trim() || "";
-
-  if(!monto){ showErr("⚠️ Ingresa el monto."); return; }
-
-  let payload;
-
-  if(esParlay && _editRowId === null){
-    // ── Validar picks ────────────────────────────────────────────────────────
-    // Sync picks desde el DOM (por si el usuario escribió sin disparar oninput)
-    document.querySelectorAll("#picksContainer > div").forEach((el, i) => {
-      const inputs = el.querySelectorAll("input");
-      if(_parlayPicks[i]){
-        _parlayPicks[i].equipo1      = inputs[0]?.value.trim() || "";
-        _parlayPicks[i].equipo2      = inputs[1]?.value.trim() || "";
-        _parlayPicks[i].tipo_apuesta = inputs[2]?.value.trim() || "";
-        _parlayPicks[i].cuota        = inputs[3]?.value.trim() || "";
-      }
-    });
-
-    const validPicks = _parlayPicks.filter(p => p.equipo1 && p.equipo2 && p.tipo_apuesta && p.cuota);
-    if(validPicks.length < 2){ showErr("⚠️ Un parlay necesita al menos 2 picks completos."); return; }
-
-    const cuotaTotal = parseFloat(document.getElementById("mCuotaTotal")?.value) ||
-                       validPicks.reduce((a,b) => a * parseFloat(b.cuota||1), 1);
-
-    const notasPicks = validPicks.map((p,i) =>
-      `#${i+1}: ${p.equipo1} vs ${p.equipo2} | ${p.tipo_apuesta} @ ${p.cuota}`
-    ).join(" || ");
-
-    const notas = notasVis ? `${notasPicks} || Nota: ${notasVis}` : notasPicks;
-    const ganancia = (parseFloat(monto) * cuotaTotal).toFixed(2);
-    const p0 = validPicks[0];
-
-    payload = {
-      equipo1:            p0.equipo1,
-      equipo2:            `PARLAY x${validPicks.length}`,
-      tipo_apuesta:       "Parlay",
-      cuota:              String(cuotaTotal.toFixed(3)),
-      monto,
-      deporte:            dep || "Multi",
-      liga:               liga || "",
-      fecha_partido:      fecha || "",
-      hora_partido:       hora  || "",
-      notas,
-      ganancia_potencial: ganancia,
-    };
-
-  } else {
-    // ── Apuesta simple ───────────────────────────────────────────────────────
-    const eq1  = document.getElementById("mEq1")?.value.trim();
-    const eq2  = document.getElementById("mEq2")?.value.trim();
-    const tipo = document.getElementById("mTipo")?.value.trim();
-    const cuota= document.getElementById("mCuota")?.value.trim();
-    if(!eq1||!eq2||!tipo||!cuota){ showErr("⚠️ Completa: equipos, tipo y cuota."); return; }
-
-    const notas = document.getElementById("mNotas")?.value || notasVis;
-    payload = { equipo1:eq1, equipo2:eq2, tipo_apuesta:tipo, cuota, monto, deporte:dep||"Otro", liga, fecha_partido:fecha, hora_partido:hora, notas };
-  }
-
-  const btn = document.getElementById("mSubmitBtn");
-  const originalTxt = btn?.textContent || "";
-  if(btn){ btn.disabled=true; btn.textContent="⏳ Guardando…"; }
-
-  try{
-    let resp;
-    if(_editRowId===null){
-      resp = await fetch(`${API_URL}/api/bets`,{method:"POST",headers:apiHeaders(),body:JSON.stringify(payload)});
-    } else {
-      if(st!=="pending"){
-        payload.status_final = st.charAt(0).toUpperCase()+st.slice(1);
-        const cuotaEdit = parseFloat(document.getElementById("mCuota")?.value||"0");
-        const montoEdit = parseFloat(monto||"0");
-        if(st==="win"){
-          // Retorno bruto: monto × cuota. Si no hay cuota, al menos devolver el monto.
-          payload.ganancia_real = cuotaEdit > 0
-            ? String((cuotaEdit * montoEdit).toFixed(2))
-            : String(montoEdit.toFixed(2));
+        } else {
+          uz.innerHTML = `<div class="u-icon">✅</div><div class="u-text" style="color:var(--win)">Ticket detectado — revisa los campos</div>`;
         }
-        if(st==="loss") payload.ganancia_real = "0";   // consistente con bot.py
-        if(st==="void") payload.ganancia_real = "0";
-      }
-      resp = await fetch(`${API_URL}/api/bets/${_editRowId}`,{method:"PUT",headers:apiHeaders(),body:JSON.stringify(payload)});
+      } catch (err) { showErr("⚠️ " + err.message); uz.style.opacity = "1"; }
+      finally { an.style.display = "none"; }
     }
-    const j = await resp.json();
-    if(!j.ok) throw new Error(j.error||`Error ${resp.status}`);
-    _parlayPicks = [];
-    closeModal();
-    await recargar();
-    showTab("gestion",document.querySelector('[data-tab="gestion"]'));
-  }catch(err){
-    showErr("❌ "+err.message);
-    if(btn){ btn.disabled=false; btn.textContent=originalTxt; }
-  }
-}
 
-function confirmDel(rowId,label){
-  if(!confirm(`¿Borrar?\n\n${label}\n\nAcción irreversible.`)) return;
-  deleteBet(rowId);
-}
+    // archivo: index.html
+    async function submitBet() {
+      if (!getSecret()) { showErr("🔑 Configura la clave de API primero."); return; }
+      const esParlay = document.getElementById("mEsParlay")?.checked || false;
+      const monto = document.getElementById("mMonto")?.value.trim();
+      const dep = document.getElementById("mDep")?.value.trim();
+      const liga = document.getElementById("mLiga")?.value.trim();
+      const fecha = document.getElementById("mFecha")?.value.trim();
+      const hora = document.getElementById("mHora")?.value.trim();
+      const st = document.getElementById("mStatus")?.value || "pending";
+      const notasVis = document.getElementById("mNotasVisible")?.value.trim() || "";
 
-async function deleteBet(rowId){
-  if(!getSecret()){ alert("Configura la clave de API."); return; }
-  try{
-    const resp=await fetch(`${API_URL}/api/bets/${rowId}`,{method:"DELETE",headers:apiHeaders()});
-    const j=await resp.json();
-    if(!j.ok) throw new Error(j.error);
-    await recargar();
-    showTab("gestion",document.querySelector('[data-tab="gestion"]'));
-  }catch(err){ alert("❌ "+err.message); }
-}
+      if (!monto) { showErr("⚠️ Ingresa el monto."); return; }
 
-function showErr(msg){ const el=document.getElementById("mErr"); if(el){el.textContent=msg;el.style.display="block";} }
+      let payload;
 
-cargarDatos();
-</script>
+      if (esParlay && _editRowId === null) {
+        // ── Validar picks ────────────────────────────────────────────────────────
+        // Sync picks desde el DOM (por si el usuario escribió sin disparar oninput)
+        document.querySelectorAll("#picksContainer > div").forEach((el, i) => {
+          const inputs = el.querySelectorAll("input");
+          if (_parlayPicks[i]) {
+            _parlayPicks[i].equipo1 = inputs[0]?.value.trim() || "";
+            _parlayPicks[i].equipo2 = inputs[1]?.value.trim() || "";
+            _parlayPicks[i].tipo_apuesta = inputs[2]?.value.trim() || "";
+            _parlayPicks[i].cuota = inputs[3]?.value.trim() || "";
+          }
+        });
+
+        const validPicks = _parlayPicks.filter(p => p.equipo1 && p.equipo2 && p.tipo_apuesta && p.cuota);
+        if (validPicks.length < 2) { showErr("⚠️ Un parlay necesita al menos 2 picks completos."); return; }
+
+        const cuotaTotal = parseFloat(document.getElementById("mCuotaTotal")?.value) ||
+          validPicks.reduce((a, b) => a * parseFloat(b.cuota || 1), 1);
+
+        const notasPicks = validPicks.map((p, i) =>
+          `#${i + 1}: ${p.equipo1} vs ${p.equipo2} | ${p.tipo_apuesta} @ ${p.cuota}`
+        ).join(" || ");
+
+        const notas = notasVis ? `${notasPicks} || Nota: ${notasVis}` : notasPicks;
+        const ganancia = (parseFloat(monto) * cuotaTotal).toFixed(2);
+        const p0 = validPicks[0];
+
+        payload = {
+          equipo1: p0.equipo1,
+          equipo2: `PARLAY x${validPicks.length}`,
+          tipo_apuesta: "Parlay",
+          cuota: String(cuotaTotal.toFixed(3)),
+          monto,
+          deporte: dep || "Multi",
+          liga: liga || "",
+          fecha_partido: fecha || "",
+          hora_partido: hora || "",
+          notas,
+          ganancia_potencial: ganancia,
+        };
+
+      } else {
+        // ── Apuesta simple ───────────────────────────────────────────────────────
+        const eq1 = document.getElementById("mEq1")?.value.trim();
+        const eq2 = document.getElementById("mEq2")?.value.trim();
+        const tipo = document.getElementById("mTipo")?.value.trim();
+        const cuota = document.getElementById("mCuota")?.value.trim();
+        if (!eq1 || !eq2 || !tipo || !cuota) { showErr("⚠️ Completa: equipos, tipo y cuota."); return; }
+
+        const notas = document.getElementById("mNotas")?.value || notasVis;
+        payload = { equipo1: eq1, equipo2: eq2, tipo_apuesta: tipo, cuota, monto, deporte: dep || "Otro", liga, fecha_partido: fecha, hora_partido: hora, notas };
+      }
+
+      const btn = document.getElementById("mSubmitBtn");
+      const originalTxt = btn?.textContent || "";
+      if (btn) { btn.disabled = true; btn.textContent = "⏳ Guardando…"; }
+
+      try {
+        let resp;
+        if (_editRowId === null) {
+          resp = await fetch(`${API_URL}/api/bets`, { method: "POST", headers: apiHeaders(), body: JSON.stringify(payload) });
+        } else {
+          if (st !== "pending") {
+            payload.status_final = st.charAt(0).toUpperCase() + st.slice(1);
+            const cuotaEdit = parseFloat(document.getElementById("mCuota")?.value || "0");
+            const montoEdit = parseFloat(monto || "0");
+            if (st === "win") {
+              // Retorno bruto: monto × cuota. Si no hay cuota, al menos devolver el monto.
+              payload.ganancia_real = cuotaEdit > 0
+                ? String((cuotaEdit * montoEdit).toFixed(2))
+                : String(montoEdit.toFixed(2));
+            }
+            if (st === "loss") payload.ganancia_real = "0";   // consistente con bot.py
+            if (st === "void") payload.ganancia_real = "0";
+          }
+          resp = await fetch(`${API_URL}/api/bets/${_editRowId}`, { method: "PUT", headers: apiHeaders(), body: JSON.stringify(payload) });
+        }
+        const j = await resp.json();
+        if (!j.ok) throw new Error(j.error || `Error ${resp.status}`);
+        _parlayPicks = [];
+        closeModal();
+        await recargar();
+        showTab("gestion", document.querySelector('[data-tab="gestion"]'));
+      } catch (err) {
+        showErr("❌ " + err.message);
+        if (btn) { btn.disabled = false; btn.textContent = originalTxt; }
+      }
+    }
+
+    function confirmDel(rowId, label) {
+      if (!confirm(`¿Borrar?\n\n${label}\n\nAcción irreversible.`)) return;
+      deleteBet(rowId);
+    }
+
+    async function deleteBet(rowId) {
+      if (!getSecret()) { alert("Configura la clave de API."); return; }
+      try {
+        const resp = await fetch(`${API_URL}/api/bets/${rowId}`, { method: "DELETE", headers: apiHeaders() });
+        const j = await resp.json();
+        if (!j.ok) throw new Error(j.error);
+        await recargar();
+        showTab("gestion", document.querySelector('[data-tab="gestion"]'));
+      } catch (err) { alert("❌ " + err.message); }
+    }
+
+    function showErr(msg) { const el = document.getElementById("mErr"); if (el) { el.textContent = msg; el.style.display = "block"; } }
+
+    cargarDatos();
+  </script>
 </body>
+
 </html>
