@@ -1778,7 +1778,7 @@
     function chartPlaceholder(canvasId, makeKey, tall = false) {
       const cls = tall ? "chart-wrap-tall" : "chart-wrap";
       if (_noBlur && window.innerWidth < 768) {
-        return `<div class="${cls}" id="cwrap-${canvasId}" style="display:flex;align-items:center;justify-content:center;background:var(--card2);border-radius:var(--radius-md)"><button style="background:transparent;border:1px solid var(--border);color:var(--text-2);padding:10px 20px;border-radius:var(--radius-md);font-size:12px;font-weight:600;cursor:pointer" onclick="loadLazyChart('${canvasId}','${makeKey}')">📊 Cargar gráfica</button></div>`;
+        return `<div class="${cls}" id="cwrap-${canvasId}" style="display:flex;align-items:center;justify-content:center;background:var(--card2);border-radius:var(--radius-md)"><button style="background:transparent;border:1px solid var(--border);color:var(--text-2);padding:10px 20px;border-radius:var(--radius-md);font-size:12px;font-weight:600;cursor:pointer" data-action="load-lazy-chart" data-canvas-id="${canvasId}" data-make-key="${makeKey}">📊 Cargar gráfica</button></div>`;
       }
       return `<div class="${cls}"><canvas id="${canvasId}" aria-label="Gráfica ${canvasId}" role="img"></canvas></div>`;
     }
@@ -2491,12 +2491,58 @@
       if (tab) { showTab(tab.dataset.tab, tab); return; }
       const mes = e.target.closest("[data-mes-dir]");
       if (mes) { cambiarMes(parseInt(mes.dataset.mesDir, 10)); return; }
-      const act = e.target.closest("[data-action]");
-      if (act?.dataset.action === "recargar") { recargar(); return; }
+      
+      const actEl = e.target.closest("[data-action]");
+      const act = actEl?.dataset.action;
+      
+      if (e.target.id === "mOverlay") { closeModal(); return; }
+      
+      if (act) {
+        if (act === "recargar") { recargar(); return; }
+        if (act === "paste-secret") { pasteSecret(); return; }
+        if (act === "save-secret") { saveSecret(); return; }
+        if (act === "new-bet") { openModal(null, null); return; }
+        if (act === "edit-bet") { openModal(parseInt(actEl.dataset.rowid, 10), parseInt(actEl.dataset.idx, 10)); return; }
+        if (act === "delete-bet") { confirmDel(parseInt(actEl.dataset.rowid, 10), actEl.dataset.label); return; }
+        if (act === "close-modal") { closeModal(); return; }
+        if (act === "trigger-upload") { document.getElementById("uInput").click(); return; }
+        if (act === "add-parlay-pick") { addParlayPick(); return; }
+        if (act === "calc-cuota") { calcCuotaAuto(); return; }
+        if (act === "set-fecha-now") { setFechaNow(); return; }
+        if (act === "submit-bet") { submitBet(); return; }
+        if (act === "remove-parlay-pick") { removeParlayPick(parseInt(actEl.dataset.idx, 10)); return; }
+        if (act === "load-lazy-chart") { loadLazyChart(actEl.dataset.canvasId, actEl.dataset.makeKey); return; }
+      }
     });
     document.addEventListener("input", e => {
       const el = e.target.closest("[data-search-equipo]");
-      if (el) { filtroEquipo = el.value; const l = document.getElementById("apuestasLista"); if (l) l.innerHTML = renderApuestasList(); }
+      if (el) { filtroEquipo = el.value; const l = document.getElementById("apuestasLista"); if (l) l.innerHTML = renderApuestasList(); return; }
+      
+      const pInput = e.target.closest("[data-parlay-idx]");
+      if (pInput) {
+        const idx = parseInt(pInput.dataset.parlayIdx, 10);
+        const field = pInput.dataset.parlayField;
+        if (_parlayPicks[idx]) {
+          _parlayPicks[idx][field] = pInput.value;
+          if (field === "cuota") calcCuotaAuto();
+        }
+      }
+      
+      if (e.target.id === "mCuotaTotal") {
+        const msg = document.getElementById("cuotaAutoMsg");
+        if (msg) msg.style.display = "none";
+      }
+    });
+    document.addEventListener("change", e => {
+      const el = e.target.closest("#mEsParlay");
+      if (el) { toggleParlay(el.checked); return; }
+      
+      const uEl = e.target.closest("[data-action='upload-image']");
+      if (uEl && uEl.files?.length) { analyzeTicket(uEl.files[0]); }
+    });
+    document.addEventListener("paste", e => {
+      const el = e.target.closest("[data-action='secret-input']");
+      if (el) { handleSecretPaste(e); }
     });
 
     const _ALWAYS_RERENDER = new Set(["apuestas", "mes", "gestion"]);
@@ -2548,15 +2594,15 @@
     Pega tu <code>MINIAPP_SECRET</code> de Railway para habilitar el CRUD.
 <input id="sInput" class="secret-input" type="text" placeholder="MINIAPP_SECRET..."
   autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
-  onpaste="handleSecretPaste(event)">
+  data-action="secret-input">
 <div style="display:flex;gap:8px;margin-top:6px">
-  <button class="secret-save" onclick="pasteSecret()">📋 Pegar</button>
-  <button class="secret-save" onclick="saveSecret()">Guardar</button>
+  <button class="secret-save" data-action="paste-secret">📋 Pegar</button>
+  <button class="secret-save" data-action="save-secret">Guardar</button>
 </div>
   </div>` : ""}
 
   <div class="g-toolbar">
-    <button class="btn-add" onclick="openModal(null,null)">➕ Nueva apuesta</button>
+    <button class="btn-add" data-action="new-bet">➕ Nueva apuesta</button>
     <span style="font-size:11px;color:var(--text-3)">${DATA?.apuestas?.length ?? 0} registradas</span>
   </div>
 
@@ -2577,8 +2623,8 @@
           <div class="g-meta">${esc(a.deporte || "")}${a.deporte ? " · " : ""}${esc(a.tipo || "")} @ ${esc(String(a.cuota || ""))} · ${fmt(a.monto)}${gStr}${a.fecha_partido ? " · 📅 " + a.fecha_partido : ""}</div>
         </div>
         <div class="g-actions">
-          <button class="btn-edit" onclick="openModal(${rowId},${idx})">✏️</button>
-          <button class="btn-del"  onclick="confirmDel(${rowId},'${esc(a.equipo1)} vs ${esc(a.equipo2)}')">🗑️</button>
+          <button class="btn-edit" data-action="edit-bet" data-rowid="${rowId}" data-idx="${idx}">✏️</button>
+          <button class="btn-del"  data-action="delete-bet" data-rowid="${rowId}" data-label="${esc(a.equipo1)} vs ${esc(a.equipo2)}">🗑️</button>
         </div>
       </div>
     </div>`;
@@ -2644,21 +2690,21 @@
         hora: a.hora_partido || "",
         status: a.status || "pending",
       };
-      // archivo: index.html — dentro de openModal()
+      
       document.getElementById("gModal").innerHTML = `
-  <div class="m-overlay" id="mOverlay" onclick="if(event.target===this)closeModal()">
+  <div class="m-overlay" id="mOverlay">
     <div class="m-sheet" id="mSheet" style="max-height:${window.matchMedia('(min-width:768px)').matches ? '' : '' + Math.floor((getVH() - 72) * 0.94) + 'px'}">
       <div class="m-handle"></div>
       <div class="m-head">
         <div class="m-title">
           <span>${rowId === null ? "➕ Nueva apuesta" : "✏️ Editar apuesta"}</span>
-          <button class="m-close" onclick="closeModal()">✕</button>
+          <button class="m-close" data-action="close-modal">✕</button>
         </div>
       </div>
       <div class="m-body">
         ${rowId === null ? `
         <div class="u-zone" id="uZone"
-             onclick="document.getElementById('uInput').click()"
+             data-action="trigger-upload"
              ondragover="event.preventDefault();this.classList.add('drag')"
              ondragleave="this.classList.remove('drag')"
              ondrop="handleDrop(event)">
@@ -2666,7 +2712,7 @@
           <div class="u-text">Foto del ticket → auto-rellena el formulario</div>
           <div class="u-sub">Toca o arrastra la imagen</div>
         </div>
-        <input id="uInput" type="file" accept="image/*" style="display:none" onchange="analyzeTicket(this.files[0])">
+        <input id="uInput" type="file" accept="image/*" style="display:none" data-action="upload-image">
         <div class="u-analyzing" id="uAn">⏳ Analizando con IA…</div>`: ""}
 
         <!-- Toggle Parlay (solo en creación nueva) -->
@@ -2674,7 +2720,7 @@
         <div class="m-group" style="display:flex;align-items:center;gap:10px;margin-top:8px">
           <label class="m-label" style="margin:0;flex:1">🎯 Es Parlay / Acumulador</label>
           <label style="position:relative;display:inline-block;width:44px;height:24px">
-            <input type="checkbox" id="mEsParlay" onchange="toggleParlay(this.checked)"
+            <input type="checkbox" id="mEsParlay"
                    style="opacity:0;width:0;height:0">
             <span id="parlaySlider" style="
               position:absolute;cursor:pointer;inset:0;border-radius:24px;
@@ -2705,7 +2751,7 @@
           <div class="m-group" style="background:var(--surface-2,#1e2235);border-radius:10px;padding:10px">
             <div style="font-size:12px;color:var(--accent);font-weight:700;margin-bottom:8px">🎯 PICKS DEL PARLAY</div>
             <div id="picksContainer"></div>
-            <button onclick="addParlayPick()"
+            <button data-action="add-parlay-pick"
                     style="width:100%;margin-top:8px;padding:8px;border:1px dashed var(--accent);
                            border-radius:8px;background:transparent;color:var(--accent);
                            font-size:13px;cursor:pointer">
@@ -2716,9 +2762,8 @@
             <div class="m-group">
               <label class="m-label">Cuota total</label>
               <div style="display:flex;gap:6px;align-items:center">
-                <input id="mCuotaTotal" class="m-input" type="number" step="0.001" placeholder="Auto" style="flex:1"
-                       oninput="document.getElementById('cuotaAutoMsg').style.display='none'">
-                <button onclick="calcCuotaAuto()"
+                <input id="mCuotaTotal" class="m-input" type="number" step="0.001" placeholder="Auto" style="flex:1">
+                <button data-action="calc-cuota"
                         style="padding:8px 10px;border-radius:8px;background:var(--accent);
                                color:#fff;border:none;cursor:pointer;white-space:nowrap;font-size:12px">
                   🔄 Calcular
@@ -2738,7 +2783,7 @@
         <div class="m-group">
           <label class="m-label">Fecha del partido</label>
           <div class="m-date-row">
-            <button class="m-now-btn" onclick="setFechaNow()">📅 Ahora</button>
+            <button class="m-now-btn" data-action="set-fecha-now">📅 Ahora</button>
             <input id="mFecha" class="m-input" type="date" value="${esc(v.fecha)}" style="flex:1">
           </div>
           <input id="mHora" class="m-input" type="time" value="${esc(v.hora)}" style="margin-top:6px">
@@ -2759,16 +2804,14 @@
       </div>
       <div class="m-foot">
         <div class="m-err" id="mErr"></div>
-        <button class="m-submit" id="mSubmitBtn" onclick="submitBet()">${rowId === null ? "✅ Registrar apuesta" : "💾 Guardar cambios"}</button>
+        <button class="m-submit" id="mSubmitBtn" data-action="submit-bet">${rowId === null ? "✅ Registrar apuesta" : "💾 Guardar cambios"}</button>
       </div>
     </div>
   </div>`;
-      /* Escuchar cambios de viewport (teclado) */
       if (window.visualViewport) {
         window.visualViewport.addEventListener("resize", syncModalToViewport);
         window.visualViewport.addEventListener("scroll", syncModalToViewport);
       }
-      /* Ajuste inicial */
       syncModalToViewport();
     }
 
@@ -2814,22 +2857,22 @@
       <div style="font-size:11px;font-weight:700;color:var(--text-2);margin-bottom:6px">
         Pick #${i + 1}
         ${_parlayPicks.length > 1
-          ? `<button onclick="removeParlayPick(${i})"
+          ? `<button data-action="remove-parlay-pick" data-idx="${i}"
                      style="position:absolute;right:8px;top:8px;background:transparent;
                             border:none;color:var(--red,#e05);cursor:pointer;font-size:13px">✕</button>`
           : ""}
       </div>
       <div style="display:flex;gap:6px;margin-bottom:4px">
         <input class="m-input" placeholder="Equipo 1" value="${esc(p.equipo1)}"
-               oninput="_parlayPicks[${i}].equipo1=this.value" style="flex:1;font-size:12px">
+               data-parlay-idx="${i}" data-parlay-field="equipo1" style="flex:1;font-size:12px">
         <input class="m-input" placeholder="Equipo 2" value="${esc(p.equipo2)}"
-               oninput="_parlayPicks[${i}].equipo2=this.value" style="flex:1;font-size:12px">
+               data-parlay-idx="${i}" data-parlay-field="equipo2" style="flex:1;font-size:12px">
       </div>
       <div style="display:flex;gap:6px">
         <input class="m-input" placeholder="Tipo (moneyline, over 2.5…)" value="${esc(p.tipo_apuesta)}"
-               oninput="_parlayPicks[${i}].tipo_apuesta=this.value" style="flex:2;font-size:12px">
+               data-parlay-idx="${i}" data-parlay-field="tipo_apuesta" style="flex:2;font-size:12px">
         <input class="m-input" placeholder="Cuota" type="number" step="0.01" value="${esc(String(p.cuota))}"
-               oninput="_parlayPicks[${i}].cuota=this.value;calcCuotaAuto()" style="flex:1;font-size:12px">
+               data-parlay-idx="${i}" data-parlay-field="cuota" style="flex:1;font-size:12px">
       </div>
     </div>
   `).join("");
