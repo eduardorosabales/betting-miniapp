@@ -1799,6 +1799,7 @@
     let mesActual = null, mesesDisponibles = [];
     let charts = {}, tabActual = "resumen", cargando = false;
     let _renderedSections = new Set();
+    let _patronesData = null, _patronesCargando = false;
 
     const NAV_ITEMS = [
       { id: "resumen", icon: "📊", label: "General" },
@@ -1809,6 +1810,7 @@
       { id: "temporal", icon: "⏱", label: "Timing" },
       { id: "rolling", icon: "📈", label: "Tendencia" },
       { id: "kelly", icon: "🧮", label: "Kelly" },
+      { id: "patrones", icon: "🤖", label: "Patrones" },
       { id: "capital", icon: "💼", label: "Capital" },
       { id: "apuestas", icon: "📋", label: "Bets" },
       { id: "gestion", icon: "⚙️", label: "Gestión" },
@@ -2009,6 +2011,7 @@
       temporal: () => renderTemporal(),
       rolling: () => renderRolling(),
       kelly: () => renderKelly(),
+      patrones: () => renderPatrones(),
       capital: () => renderCapital(),
       apuestas: () => renderApuestas(),
       gestion: () => renderGestion(),
@@ -2033,6 +2036,7 @@
       <div id="temporal" class="section"></div>
       <div id="rolling"  class="section"></div>
       <div id="kelly"    class="section"></div>
+      <div id="patrones" class="section"></div>
       <div id="capital"  class="section"></div>
       <div id="apuestas" class="section"></div>
       <div id="gestion"  class="section"></div>
@@ -2316,6 +2320,101 @@
     <div class="explainer"><strong>Kelly Criterion</strong> calcula el tamaño óptimo de apuesta para maximizar el crecimiento del capital a largo plazo sin riesgo de ruina. <strong>Kelly medio</strong> es el balance ideal entre crecimiento y seguridad. Los porcentajes son sobre tu capital total disponible.</div>`;
     }
 
+    /* ── Tab: Patrones IA ── */
+    async function fetchPatrones(force = false) {
+      if (_patronesCargando) return;
+      _patronesCargando = true;
+      const el = document.getElementById("patrones");
+      if (el) {
+        el.innerHTML = `<div class="section-header">Patrones <span>IA</span></div>
+          <div class="empty" style="display:flex;flex-direction:column;align-items:center;gap:12px;padding:40px 20px">
+            <div class="loader-logo" style="animation:pulse 1s infinite alternate;font-size:32px">🤖</div>
+            <p>Claude está analizando todo tu historial para encontrar patrones EV+...</p>
+            <small style="color:var(--text-3)">(Este proceso puede tardar unos 10-20 segundos)</small>
+          </div>`;
+      }
+      try {
+        const url = `${API_URL}/api/patterns` + (force ? "?force=true" : "");
+        const res = await fetch(url, { headers: apiHeaders() });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        _patronesData = await res.json();
+      } catch (e) {
+        _patronesData = { error: e.message };
+      } finally {
+        _patronesCargando = false;
+        renderPatrones();
+      }
+    }
+
+    function renderPatrones() {
+      const el = document.getElementById("patrones");
+      if (!el) return "";
+
+      if (!_patronesData && !_patronesCargando) {
+        setTimeout(() => fetchPatrones(false), 0);
+        el.innerHTML = `<div class="section-header">Patrones <span>IA</span></div>
+          <div class="empty"><p>Inicializando análisis...</p></div>`;
+        return el.innerHTML;
+      }
+
+      if (_patronesCargando) {
+        el.innerHTML = `<div class="section-header">Patrones <span>IA</span></div>
+          <div class="empty" style="display:flex;flex-direction:column;align-items:center;gap:12px;padding:40px 20px">
+            <div class="loader-logo" style="animation:pulse 1s infinite alternate;font-size:32px">🤖</div>
+            <p>Claude está analizando todo tu historial para encontrar patrones EV+...</p>
+            <small style="color:var(--text-3)">(Este proceso puede tardar unos 10-20 segundos)</small>
+          </div>`;
+        return el.innerHTML;
+      }
+
+      if (_patronesData.error) {
+        el.innerHTML = `<div class="section-header">Patrones <span>IA</span></div>
+          <div class="empty">
+            <p>⚠️ Error al cargar los patrones</p>
+            <small style="color:var(--loss)">${esc(_patronesData.error)}</small>
+            <br><br>
+            <button class="retry-btn" data-action="retry-patrones">↻ Reintentar</button>
+          </div>`;
+        return el.innerHTML;
+      }
+
+      // Convertir markdown básico de Claude a HTML
+      let htmlContent = esc(_patronesData.analisis || "");
+      // Reemplazar negritas
+      htmlContent = htmlContent.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+      // Reemplazar saltos de línea
+      htmlContent = htmlContent.replace(/\n/g, '<br>');
+      // Reemplazar listas con viñetas
+      htmlContent = htmlContent.replace(/^- (.*?)(<br>|$)/gm, '• $1$2');
+      // Formatear bloques de código
+      htmlContent = htmlContent.replace(/`(.*?)`/g, '<code>$1</code>');
+
+      // Formato bonito de timestamp
+      let fechaTxt = "—";
+      if (_patronesData.timestamp > 0) {
+        const fecha = new Date(_patronesData.timestamp * 1000);
+        fechaTxt = fecha.toLocaleString("es-MX", { dateStyle: "short", timeStyle: "short" });
+      }
+
+      const totalRes = _patronesData.total_resueltas || 0;
+      const deshabilitado = totalRes < 30 ? "style='display:none'" : "";
+
+      el.innerHTML = `<div class="section-header">Patrones <span>IA</span></div>
+        <div class="explainer" style="margin-bottom:16px;background:rgba(0,168,128,0.06);border-color:rgba(0,168,128,0.25)">
+          🤖 <strong>BetStats IA:</strong> Claude analiza la distribución de tu ROI por Deporte, Mercado, Día y Cuotas para encontrar sesgos estadísticos.
+        </div>
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+            <div style="font-size:11px;color:var(--text-3)">Generado: <strong>${fechaTxt}</strong></div>
+            <button class="retry-btn" data-action="force-patrones" ${deshabilitado} style="margin:0;padding:6px 12px;font-size:11px;background:var(--card);border:1px solid var(--border);color:var(--text)">⚡ Regenerar análisis</button>
+          </div>
+          <div style="font-size:13px;line-height:1.6;color:var(--text-2);white-space:normal;word-break:break-word">
+            ${htmlContent}
+          </div>
+        </div>`;
+      return el.innerHTML;
+    }
+
     /* ── Tab: Capital ── */
     function renderCapital() {
       const c = DATA.capital, cm = DATA.capital_mes;
@@ -2512,6 +2611,8 @@
         if (act === "submit-bet") { submitBet(); return; }
         if (act === "remove-parlay-pick") { removeParlayPick(parseInt(actEl.dataset.idx, 10)); return; }
         if (act === "load-lazy-chart") { loadLazyChart(actEl.dataset.canvasId, actEl.dataset.makeKey); return; }
+        if (act === "retry-patrones") { fetchPatrones(false); return; }
+        if (act === "force-patrones") { fetchPatrones(true); return; }
       }
     });
     document.addEventListener("input", e => {
@@ -2545,7 +2646,7 @@
       if (el) { handleSecretPaste(e); }
     });
 
-    const _ALWAYS_RERENDER = new Set(["apuestas", "mes", "gestion"]);
+    const _ALWAYS_RERENDER = new Set(["apuestas", "mes", "gestion", "patrones"]);
 
     function showTab(id, btn) {
       // Liberar canvases del tab anterior antes de cambiar
@@ -2575,6 +2676,7 @@
       document.getElementById("app").innerHTML = `<div class="loader"><div class="loader-logo">Bet<span>Stats</span></div><div class="loader-bar"><div class="loader-bar-fill"></div></div><p>Actualizando...</p></div>`;
       const nav = document.getElementById("bottomNav");
       if (nav) nav.style.display = "none";
+      _patronesData = null;
       try { await cargarDatos(); } finally { cargando = false; }
     }
 
