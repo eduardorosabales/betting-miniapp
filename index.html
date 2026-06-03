@@ -1610,6 +1610,7 @@
     .nm-neto { font-family: var(--font-num); font-size:14px; font-weight:800; }
     .nm-neto.pos { color: var(--win); }
     .nm-neto.neg { color: var(--loss); }
+    .nm-neto-tag { font-family: var(--font-base); font-size:9px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; color: var(--text-3); margin-left:4px; vertical-align:middle; }
     .nm-driver { display:flex; flex-wrap:wrap; align-items:center; gap:7px; }
     .nm-chip {
       display:inline-flex; align-items:center; padding:3px 9px; border-radius:999px;
@@ -2634,6 +2635,8 @@
       const money = v => (v >= 0 ? "+" : "") + Math.round(v).toLocaleString("es-MX");
       const dom = nm.patron_dominante;
       const mejor = nm.mejor_mes;
+      // Pico neto del mejor mes, con fallback a neto final (datos cacheados sin neto_max).
+      const _mejorPico = mm => (typeof mm.neto_max === "number") ? mm.neto_max : mm.neto;
 
       const resumen = `
         <div class="nm-resumen">
@@ -2644,8 +2647,8 @@
           </div>
           <div class="nm-stat">
             <span class="nm-stat-k">Mejor mes</span>
-            <span class="nm-stat-v ${mejor && mejor.neto >= 0 ? "pos" : ""}">${mejor ? esc(mejor.mes) : "—"}</span>
-            <small>${mejor ? `neto ${money(mejor.neto)} · ${esc(mejor.driver.patron)}` : ""}</small>
+            <span class="nm-stat-v ${mejor && _mejorPico(mejor) >= 0 ? "pos" : ""}">${mejor ? esc(mejor.mes) : "—"}</span>
+            <small>${mejor ? `pico ${money(_mejorPico(mejor))} · ${esc(mejor.driver.patron)}` : ""}</small>
           </div>
           <div class="nm-stat">
             <span class="nm-stat-k">Estabilidad</span>
@@ -2656,6 +2659,9 @@
 
       const tarjetas = nm.por_mes.slice().reverse().map(m => {
         const d = m.driver;
+        // Pico neto intra-mes (neto máximo alcanzado). Fallback a neto final si el
+        // backend aún no envía neto_max (análisis cacheado previo).
+        const pico = (typeof m.neto_max === "number") ? m.neto_max : m.neto;
         const conc = Math.min(100, Math.max(0, m.concentracion_pct || 0));
         const lowBadge = d.muestra_baja ? `<span class="nm-badge low">muestra baja</span>` : "";
         const dims = ["deporte", "tipo", "dia", "cuota"].map(k => {
@@ -2666,7 +2672,7 @@
           <div class="nm-card">
             <div class="nm-card-head">
               <span class="nm-mes">${esc(m.mes)}</span>
-              <span class="nm-neto ${m.neto >= 0 ? "pos" : "neg"}">${money(m.neto)}</span>
+              <span class="nm-neto ${pico >= 0 ? "pos" : "neg"}">${money(pico)}<small class="nm-neto-tag">pico</small></span>
             </div>
             <div class="nm-driver">
               <span class="nm-chip">${esc(d.patron)}</span>${lowBadge}
