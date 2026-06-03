@@ -2197,7 +2197,7 @@
     </div>
     ${r.mejor_mes ? `<div class="kpi-row">
       <div class="kpi"><div class="kpi-label">🏆 Mejor mes</div><div class="kpi-value accent">${mesLabel(r.mejor_mes.mes)}</div></div>
-      <div class="kpi"><div class="kpi-label">Pico neto alcanzado</div><div class="kpi-value green">${fmts(r.mejor_mes.neto_max)}</div></div>
+      <div class="kpi"><div class="kpi-label">Neto del mes</div><div class="kpi-value ${signColor(r.mejor_mes.neto)}">${fmts(r.mejor_mes.neto)}</div></div>
     </div>` : ""}
     ${rachaHtml}
     <div class="card"><div class="card-title">Win rate — ${wr}%</div>
