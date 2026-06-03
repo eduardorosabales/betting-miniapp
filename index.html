@@ -2644,7 +2644,7 @@
           </div>
           <div class="nm-stat">
             <span class="nm-stat-k">Mejor mes</span>
-            <span class="nm-stat-v pos">${mejor ? esc(mejor.mes) : "—"}</span>
+            <span class="nm-stat-v ${mejor && mejor.neto >= 0 ? "pos" : ""}">${mejor ? esc(mejor.mes) : "—"}</span>
             <small>${mejor ? `neto ${money(mejor.neto)} · ${esc(mejor.driver.patron)}` : ""}</small>
           </div>
           <div class="nm-stat">
