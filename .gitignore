@@ -1,0 +1,11 @@
+# Repo PÚBLICO — nunca versionar secretos ni entornos (§6 / INV-MINI-10/11)
+.env
+.env.*
+*.session
+credentials.json
+
+# Config local de herramientas / IDE
+.claude/settings.local.json
+.vscode/
+.idea/
+.DS_Store

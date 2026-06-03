@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
   <meta name="api-url" content="https://betting-stats-bot-production.up.railway.app">
   <meta http-equiv="Content-Security-Policy"
-    content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://telegram.org; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://*.up.railway.app wss://*.up.railway.app; img-src 'self' data: blob:; object-src 'none'; base-uri 'self';">
+    content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://telegram.org; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://*.up.railway.app; img-src 'self' data: blob:; object-src 'none'; base-uri 'self';">
   <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon-180.png">
   <title>Betting Stats</title>
@@ -1676,10 +1676,6 @@
         color: var(--accent)
       }
 
-      /* Hide mobile header on desktop -- keep it visible but adjust */
-      .header {
-        left: var(--sidebar-w)
-      }
 
       .header .logo {
         display: none;
@@ -1743,14 +1739,9 @@
 
     // ── Auth para endpoints CRUD ──────────────────────────────────────────────────
     function getSecret() {
-      // FIX-XSS: sessionStorage en lugar de localStorage. Si hay XSS, el atacante
-      // solo accede a la key durante la sesión activa, no para siempre.
-      // Migración silenciosa: lee de localStorage si existe, lo pasa a session, y borra.
-      const legacy = localStorage.getItem("miniapp_secret");
-      if (legacy) {
-        sessionStorage.setItem("miniapp_secret", legacy);
-        localStorage.removeItem("miniapp_secret");
-      }
+      // INV-MINI-04 / INV-SEC-03: almacenamiento cliente EXCLUSIVAMENTE en sessionStorage.
+      // localStorage está prohibido (vector XSS persistente) — sin excepciones, ni siquiera
+      // para "migración silenciosa". Se eliminó el bloque que tocaba localStorage.
       return sessionStorage.getItem("miniapp_secret") || "";
     }
     function apiHeaders(extra = {}) {
@@ -1884,7 +1875,7 @@
       // Marcador exacto
       if (/correct score|marcador exacto|resultado exacto|exact score/.test(t)) return "Marcador exacto";
       // Props — va ANTES de Total O/U: "Player Points Over 25.5" debe ser Prop, no Total O/U
-      if (/\bplayer\b|\bprop\b|anytime (scorer|td|goal|basket|touchd)|first (goal|scorer|td|basket|pitch|serve|touchd)|last (goal|scorer|td|touchd)|to score\b|rushing yards|receiving yards|passing yards|\bassists?\b|\rebounds?\b|strikeouts?\b|home run|top (batsman|bowler|scorer)|fall of wicket|wickets?\b|century\b/.test(t)) return "Props";
+      if (/\bplayer\b|\bprop\b|anytime (scorer|td|goal|basket|touchd)|first (goal|scorer|td|basket|pitch|serve|touchd)|last (goal|scorer|td|touchd)|to score\b|rushing yards|receiving yards|passing yards|\bassists?\b|\brebounds?\b|strikeouts?\b|home run|top (batsman|bowler|scorer)|fall of wicket|wickets?\b|century\b/.test(t)) return "Props";
       // Total O/U — \b evita "overtime", "overview", etc.
       if (/\bover\b|\bunder\b|\btotal\b|\bo\/u\b|más de|menos de|alt(ernate)? total|\bgames? o\/?u\b|\bsets? o\/?u\b|\bruns? o\/?u\b|half total|1st half total|q[1-4] total/.test(t)) return "Total O/U"; return "Otro";
     }
@@ -2595,7 +2586,7 @@
       destroyChart("rolling");
       const points = calcRolling(20);
       if (!points.length) return;
-      charts.rolling = new Chart(c, { type: "line", data: { labels: points.map(p => `#${p.i + 1}`), datasets: [{ label: "ROI rodante", data: points.map(p => parseFloat(p.roi.toFixed(2))), borderColor: "var(--accent)", backgroundColor: "rgba(0,205,150,0.08)", borderWidth: 2, pointRadius: 0, fill: true, tension: 0.3 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `${ctx.parsed.y >= 0 ? "+" : ""}${ctx.parsed.y.toFixed(1)}%` } } }, scales: { x: { grid: { color: "rgba(255,255,255,0.04)" }, ticks: { display: false } }, y: { grid: { color: "rgba(255,255,255,0.04)" }, ticks: { callback: v => `${v >= 0 ? "+" : ""}${v}%`, font: { size: 10, family: "Space Mono" }, color: "#4A5568" }, afterDataLimits: scale => { const pad = Math.abs(scale.max - scale.min) * 0.15; scale.max += pad; scale.min -= pad; } } } } });
+      charts.rolling = new Chart(c, { type: "line", data: { labels: points.map(p => `#${p.i + 1}`), datasets: [{ label: "ROI rodante", data: points.map(p => parseFloat(p.roi.toFixed(2))), borderColor: "#00CD96", backgroundColor: "rgba(0,205,150,0.08)", borderWidth: 2, pointRadius: 0, fill: true, tension: 0.3 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `${ctx.parsed.y >= 0 ? "+" : ""}${ctx.parsed.y.toFixed(1)}%` } } }, scales: { x: { grid: { color: "rgba(255,255,255,0.04)" }, ticks: { display: false } }, y: { grid: { color: "rgba(255,255,255,0.04)" }, ticks: { callback: v => `${v >= 0 ? "+" : ""}${v}%`, font: { size: 10, family: "Space Mono" }, color: "#4A5568" }, afterDataLimits: scale => { const pad = Math.abs(scale.max - scale.min) * 0.15; scale.max += pad; scale.min -= pad; } } } } });
     }
 
     function initCharts() {
@@ -2671,6 +2662,20 @@
     document.addEventListener("paste", e => {
       const el = e.target.closest("[data-action='secret-input']");
       if (el) { handleSecretPaste(e); }
+    });
+
+    // INV-MINI-13: drag&drop por delegación global (sin eventos inline en el HTML).
+    document.addEventListener("dragover", e => {
+      const z = e.target.closest("[data-dropzone]");
+      if (z) { e.preventDefault(); z.classList.add("drag"); }
+    });
+    document.addEventListener("dragleave", e => {
+      const z = e.target.closest("[data-dropzone]");
+      if (z) { z.classList.remove("drag"); }
+    });
+    document.addEventListener("drop", e => {
+      const z = e.target.closest("[data-dropzone]");
+      if (z) { handleDrop(e); }
     });
 
     const _ALWAYS_RERENDER = new Set(["apuestas", "mes", "gestion", "patrones"]);
@@ -2750,7 +2755,7 @@
       <div class="g-card-head">
         <div>
           <div class="g-teams">${si} ${esc(a.equipo1)} vs ${esc(a.equipo2)}</div>
-          <div class="g-meta">${esc(a.deporte || "")}${a.deporte ? " · " : ""}${esc(a.tipo || "")} @ ${esc(String(a.cuota || ""))} · ${fmt(a.monto)}${gStr}${a.fecha_partido ? " · 📅 " + a.fecha_partido : ""}</div>
+          <div class="g-meta">${esc(a.deporte || "")}${a.deporte ? " · " : ""}${esc(a.tipo || "")} @ ${esc(String(a.cuota || ""))} · ${fmt(a.monto)}${gStr}${a.fecha_partido ? " · 📅 " + esc(a.fecha_partido) : ""}</div>
         </div>
         <div class="g-actions">
           <button class="btn-edit" data-action="edit-bet" data-rowid="${rowId}" data-idx="${idx}">✏️</button>
@@ -2779,15 +2784,9 @@
     }
 
     function saveSecret() {
+      // Definición única (antes había dos; la primera llamaba a loadData() inexistente).
       const v = document.getElementById("sInput")?.value?.trim();
       if (!v) { alert("Escribe la clave primero."); return; }
-      sessionStorage.setItem("miniapp_secret", v);
-      loadData();
-    }
-
-    function saveSecret() {
-      const v = document.getElementById("sInput")?.value?.trim();
-      if (!v) return;
       sessionStorage.setItem("miniapp_secret", v);
       location.reload();
     }
@@ -2835,9 +2834,7 @@
         ${rowId === null ? `
         <div class="u-zone" id="uZone"
              data-action="trigger-upload"
-             ondragover="event.preventDefault();this.classList.add('drag')"
-             ondragleave="this.classList.remove('drag')"
-             ondrop="handleDrop(event)">
+             data-dropzone>
           <div class="u-icon">📸</div>
           <div class="u-text">Foto del ticket → auto-rellena el formulario</div>
           <div class="u-sub">Toca o arrastra la imagen</div>
@@ -3083,7 +3080,7 @@
 
     async function analyzeTicket(file) {
       if (!file) return;
-      if (!getSecret()) { showErr("Configura la clave de API primero."); return; }
+      if (!getSecret() && !tg?.initData) { showErr("Configura la clave de API primero."); return; }
       const an = document.getElementById("uAn"); const uz = document.getElementById("uZone");
       an.style.display = "flex"; uz.style.opacity = "0.5";
       try {
@@ -3137,7 +3134,7 @@
 
     // archivo: index.html
     async function submitBet() {
-      if (!getSecret()) { showErr("🔑 Configura la clave de API primero."); return; }
+      if (!getSecret() && !tg?.initData) { showErr("🔑 Configura la clave de API primero."); return; }
       const esParlay = document.getElementById("mEsParlay")?.checked || false;
       const monto = document.getElementById("mMonto")?.value.trim();
       const dep = document.getElementById("mDep")?.value.trim();
@@ -3246,7 +3243,7 @@
     }
 
     async function deleteBet(rowId) {
-      if (!getSecret()) { alert("Configura la clave de API."); return; }
+      if (!getSecret() && !tg?.initData) { alert("Configura la clave de API."); return; }
       try {
         const resp = await fetch(`${API_URL}/api/bets/${rowId}`, { method: "DELETE", headers: apiHeaders() });
         const j = await resp.json();
