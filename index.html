@@ -1738,12 +1738,6 @@
     }
 
     // ── Auth para endpoints CRUD ──────────────────────────────────────────────────
-    function getSecret() {
-      // INV-MINI-04 / INV-SEC-03: almacenamiento cliente EXCLUSIVAMENTE en sessionStorage.
-      // localStorage está prohibido (vector XSS persistente) — sin excepciones, ni siquiera
-      // para "migración silenciosa". Se eliminó el bloque que tocaba localStorage.
-      return sessionStorage.getItem("miniapp_secret") || "";
-    }
     // §7.2: parseo de respuesta con mensaje user-friendly por status. Evita exponer
     // errores crípticos de parseo ("Unexpected token <") cuando el proxy de Railway
     // devuelve un cuerpo no-JSON (502/503/504/413).
@@ -1777,22 +1771,12 @@
       return res;
     }
     function apiHeaders(extra = {}) {
-      // Auth híbrida: mientras dura la migración, enviamos AMBOS headers.
-      // El backend acepta cualquiera. Cuando confirmemos que initData funciona
-      // en producción ~1 semana, retiramos el X-Api-Key.
+      // Auth: X-Telegram-Init-Data es el ÚNICO mecanismo (X-Api-Key retirado, TODO-2).
+      // La app solo funciona abierta desde Telegram.
       const headers = { "Content-Type": "application/json", ...extra };
-
-      // 1) initData de Telegram (preferido) — válido si la Mini-App se abre desde Telegram
       if (tg?.initData) {
         headers["X-Telegram-Init-Data"] = tg.initData;
       }
-
-      // 2) Fallback: X-Api-Key (legacy) — útil para abrir la Mini-App fuera de Telegram
-      const apiKey = getSecret();
-      if (apiKey) {
-        headers["X-Api-Key"] = apiKey;
-      }
-
       return headers;
     }
     const _noBlur = document.documentElement.classList.contains("no-blur");
@@ -1862,7 +1846,7 @@
     /* ── Fetch ── */
     let _ctrl = null;
     async function cargarDatos() {
-      if (!getSecret() && !tg?.initData) {
+      if (!tg?.initData) {
         renderApp();
         setTimeout(() => {
           const btn = document.querySelector('[data-tab="gestion"]');
@@ -2648,8 +2632,6 @@
       
       if (act) {
         if (act === "recargar") { recargar(); return; }
-        if (act === "paste-secret") { pasteSecret(); return; }
-        if (act === "save-secret") { saveSecret(); return; }
         if (act === "new-bet") { openModal(null, null); return; }
         if (act === "edit-bet") { openModal(parseInt(actEl.dataset.rowid, 10), parseInt(actEl.dataset.idx, 10)); return; }
         if (act === "delete-bet") { confirmDel(parseInt(actEl.dataset.rowid, 10), actEl.dataset.label); return; }
@@ -2691,11 +2673,6 @@
       const uEl = e.target.closest("[data-action='upload-image']");
       if (uEl && uEl.files?.length) { analyzeTicket(uEl.files[0]); }
     });
-    document.addEventListener("paste", e => {
-      const el = e.target.closest("[data-action='secret-input']");
-      if (el) { handleSecretPaste(e); }
-    });
-
     // INV-MINI-13: drag&drop por delegación global (sin eventos inline en el HTML).
     document.addEventListener("dragover", e => {
       const z = e.target.closest("[data-dropzone]");
@@ -2752,21 +2729,14 @@
     let _editRowId = null;
 
     function renderGestion() {
-      const ok = !!getSecret();
+      const ok = !!tg?.initData;
       return `
   <div class="section-header">Gestión de <span>apuestas</span></div>
 
   ${!ok ? `<div class="secret-banner">
-    <strong>🔑 Ábrela desde Telegram o ingresa tu clave de API</strong><br>
-    Esta app funciona automáticamente al abrirla desde el bot en Telegram. Fuera de Telegram,
-    pega tu <code>MINIAPP_SECRET</code> de Railway para habilitar el CRUD.
-<input id="sInput" class="secret-input" type="text" placeholder="MINIAPP_SECRET..."
-  autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
-  data-action="secret-input">
-<div style="display:flex;gap:8px;margin-top:6px">
-  <button class="secret-save" data-action="paste-secret">📋 Pegar</button>
-  <button class="secret-save" data-action="save-secret">Guardar</button>
-</div>
+    <strong>🔑 Abre esta app desde Telegram</strong><br>
+    El CRUD requiere autenticación de Telegram (initData). Abre la Mini-App desde el
+    bot para registrar, editar o borrar apuestas.
   </div>` : ""}
 
   <div class="g-toolbar">
@@ -2797,31 +2767,6 @@
       </div>
     </div>`;
       }).join("");
-    }
-
-    function handleSecretPaste(e) {
-      const text = (e.clipboardData || window.clipboardData).getData('text');
-      if (text) {
-        e.preventDefault();
-        document.getElementById('sInput').value = text.trim();
-      }
-    }
-
-    async function pasteSecret() {
-      const el = document.getElementById("sInput");
-      if (!el) return;
-      el.focus();
-      el.select();
-      el.style.outline = "2px solid var(--accent)";
-      setTimeout(() => { el.style.outline = ""; }, 2500);
-    }
-
-    function saveSecret() {
-      // Definición única (antes había dos; la primera llamaba a loadData() inexistente).
-      const v = document.getElementById("sInput")?.value?.trim();
-      if (!v) { alert("Escribe la clave primero."); return; }
-      sessionStorage.setItem("miniapp_secret", v);
-      location.reload();
     }
 
     /* ── Viewport helper ── */
@@ -3113,7 +3058,7 @@
 
     async function analyzeTicket(file) {
       if (!file) return;
-      if (!getSecret() && !tg?.initData) { showErr("Configura la clave de API primero."); return; }
+      if (!tg?.initData) { showErr("Abre la app desde Telegram para usar esta función."); return; }
       const an = document.getElementById("uAn"); const uz = document.getElementById("uZone");
       an.style.display = "flex"; uz.style.opacity = "0.5";
       try {
@@ -3167,7 +3112,7 @@
 
     // archivo: index.html
     async function submitBet() {
-      if (!getSecret() && !tg?.initData) { showErr("🔑 Configura la clave de API primero."); return; }
+      if (!tg?.initData) { showErr("🔑 Abre la app desde Telegram para usar esta función."); return; }
       const esParlay = document.getElementById("mEsParlay")?.checked || false;
       const monto = document.getElementById("mMonto")?.value.trim();
       const dep = document.getElementById("mDep")?.value.trim();
@@ -3276,7 +3221,7 @@
     }
 
     async function deleteBet(rowId) {
-      if (!getSecret() && !tg?.initData) { alert("Configura la clave de API."); return; }
+      if (!tg?.initData) { alert("Abre la app desde Telegram para usar esta función."); return; }
       try {
         const resp = await fetch(`${API_URL}/api/bets/${rowId}`, { method: "DELETE", headers: apiHeaders() });
         const j = await safeJson(resp);

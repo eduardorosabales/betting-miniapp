@@ -44,9 +44,14 @@ Los gates de escritura aceptan cualquiera de los dos.
 
 ## Hosting
 
-> ⚠️ **Pendiente de confirmar (TODO-6).** Hipótesis principal: **GitHub Pages**
-> servido desde este repo público. Al confirmarlo, documentar aquí la **URL canónica**
-> y validar que esté configurada como `web_app` en BotFather.
+Servido por **GitHub Pages** desde este repositorio público (rama `main`).
+
+- **URL canónica:** `https://eduardorosabales.github.io/betting-miniapp/`
+- Configurada como `web_app` en **BotFather** (botón/menú de la Mini-App del bot).
+- Cualquier cambio en `main` se publica automáticamente vía GitHub Pages.
+
+> Si la URL del backend cambia, actualizar la constante `API_URL` en `index.html`
+> (no hay variables de entorno — es estático).
 
 ## Despliegue
 
