@@ -1806,19 +1806,22 @@
     let mesActual = null, mesesDisponibles = [];
     let charts = {}, tabActual = "resumen", cargando = false;
     let _renderedSections = new Set();
-    const _PATRONES_SS_KEY = "betstats_patrones_cache";
+    // Caché del análisis IA: localStorage (persiste entre cierres/reaperturas de
+    // la mini-app en Telegram). sessionStorage NO servía porque Telegram lo borra
+    // al cerrar el webview, forzando un análisis nuevo en cada sesión.
+    const _PATRONES_LS_KEY = "betstats_patrones_cache";
     let _patronesData = null, _patronesCargando = false;
 
-    function _cargarPatronesDesdeSession() {
+    function _cargarPatronesGuardados() {
       try {
-        const raw = sessionStorage.getItem(_PATRONES_SS_KEY);
+        const raw = localStorage.getItem(_PATRONES_LS_KEY);
         if (!raw) return null;
         return JSON.parse(raw);
       } catch (_) { return null; }
     }
 
-    function _guardarPatronesEnSession(data) {
-      try { sessionStorage.setItem(_PATRONES_SS_KEY, JSON.stringify(data)); } catch (_) {}
+    function _guardarPatrones(data) {
+      try { localStorage.setItem(_PATRONES_LS_KEY, JSON.stringify(data)); } catch (_) {}
     }
 
     const NAV_ITEMS = [
@@ -2358,7 +2361,7 @@
         const res = await fetchRetry503(url, { headers: apiHeaders() });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         _patronesData = await res.json();
-        if (!_patronesData.error) _guardarPatronesEnSession(_patronesData);
+        if (!_patronesData.error) _guardarPatrones(_patronesData);
       } catch (e) {
         _patronesData = { error: e.message };
       } finally {
@@ -2371,22 +2374,22 @@
       const el = document.getElementById("patrones");
       if (!el) return "";
 
-      // Si no hay datos en memoria, intentar recuperar de sessionStorage
-      // antes de lanzar una llamada a Claude.
+      // Si no hay datos en memoria, intentar recuperar del último análisis
+      // guardado (localStorage) antes de lanzar una llamada a Claude.
       if (!_patronesData && !_patronesCargando) {
-        const cached = _cargarPatronesDesdeSession();
+        const cached = _cargarPatronesGuardados();
         if (cached) {
           _patronesData = cached;
         } else {
-          // Primera vez en la sesión: no hay nada guardado → mostrar pantalla
-          // de bienvenida con botón explícito. NO lanzar análisis automático.
+          // Primera vez (nada guardado todavía) → mostrar pantalla de bienvenida
+          // con botón explícito. NO lanzar análisis automático.
           el.innerHTML = `<div class="section-header">Patrones <span>IA</span></div>
             <div class="explainer" style="margin-bottom:16px;background:rgba(0,168,128,0.06);border-color:rgba(0,168,128,0.25)">
               🤖 <strong>BetStats IA:</strong> Claude analiza la distribución de tu ROI por Deporte, Mercado, Día y Cuotas para encontrar sesgos estadísticos.
             </div>
             <div class="empty" style="display:flex;flex-direction:column;align-items:center;gap:16px;padding:32px 20px">
               <div style="font-size:40px">🤖</div>
-              <p style="text-align:center;margin:0">El análisis IA no se ha ejecutado todavía en esta sesión.</p>
+              <p style="text-align:center;margin:0">Aún no has ejecutado el análisis IA.</p>
               <small style="color:var(--text-3);text-align:center">Presiona el botón para que Claude analice tu historial y detecte patrones EV+.</small>
               <button class="retry-btn" data-action="force-patrones" style="margin:0;padding:10px 20px;font-size:13px">⚡ Iniciar análisis IA</button>
             </div>`;
@@ -2717,8 +2720,10 @@
       document.getElementById("app").innerHTML = `<div class="loader"><div class="loader-logo">Bet<span>Stats</span></div><div class="loader-bar"><div class="loader-bar-fill"></div></div><p>Actualizando...</p></div>`;
       const nav = document.getElementById("bottomNav");
       if (nav) nav.style.display = "none";
+      // No borramos el análisis IA guardado: persiste entre recargas y sesiones.
+      // El usuario pide uno nuevo con "⚡ Nuevo análisis" cuando lo necesite; la
+      // fecha de "Generado:" deja claro a qué historial corresponde.
       _patronesData = null;
-      try { sessionStorage.removeItem(_PATRONES_SS_KEY); } catch (_) {}
       try { await cargarDatos(); } finally { cargando = false; }
     }
 
