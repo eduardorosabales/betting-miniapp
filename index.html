@@ -1744,6 +1744,38 @@
       // para "migración silenciosa". Se eliminó el bloque que tocaba localStorage.
       return sessionStorage.getItem("miniapp_secret") || "";
     }
+    // §7.2: parseo de respuesta con mensaje user-friendly por status. Evita exponer
+    // errores crípticos de parseo ("Unexpected token <") cuando el proxy de Railway
+    // devuelve un cuerpo no-JSON (502/503/504/413).
+    async function safeJson(resp) {
+      let j = null;
+      try { j = await resp.json(); } catch (_) { j = null; }
+      if (!resp.ok || j === null) {
+        const byStatus = {
+          413: "Imagen demasiado grande. Reduce tamaño o resolución.",
+          429: "Demasiadas solicitudes o presupuesto diario agotado. Intenta más tarde.",
+          502: "Servidor no disponible (502). Reintenta en unos segundos.",
+          503: "Servidor no disponible (503). Reintenta en unos segundos.",
+          504: "El servidor tardó demasiado (504). Reintenta.",
+        };
+        throw new Error((j && j.error) || byStatus[resp.status] || `Error del servidor (HTTP ${resp.status}).`);
+      }
+      return j;
+    }
+    // §7.2: reintenta automáticamente SOLO en 503/504 (servicio no disponible),
+    // nunca en 4xx. Backoff corto. Las mutaciones no se reintentan (no idempotentes).
+    async function fetchRetry503(url, opts, attempts = 3) {
+      let res;
+      for (let i = 0; i < attempts; i++) {
+        res = await fetch(url, opts);
+        if ((res.status === 503 || res.status === 504) && i < attempts - 1) {
+          await new Promise(r => setTimeout(r, 600 * (i + 1)));
+          continue;
+        }
+        return res;
+      }
+      return res;
+    }
     function apiHeaders(extra = {}) {
       // Auth híbrida: mientras dura la migración, enviamos AMBOS headers.
       // El backend acepta cualquiera. Cuando confirmemos que initData funciona
@@ -1842,7 +1874,7 @@
       _ctrl = new AbortController();
       const timeout = setTimeout(() => _ctrl.abort(), 12000);
       try {
-        const res = await fetch(`${API_URL}/api/stats`, { headers: apiHeaders(), signal: _ctrl.signal });
+        const res = await fetchRetry503(`${API_URL}/api/stats`, { headers: apiHeaders(), signal: _ctrl.signal });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json = await res.json();
         if (!json.resumen || !Array.isArray(json.apuestas)) throw new Error("Datos inesperados");
@@ -2339,7 +2371,7 @@
       }
       try {
         const url = `${API_URL}/api/patterns` + (force ? "?force=true" : "");
-        const res = await fetch(url, { headers: apiHeaders() });
+        const res = await fetchRetry503(url, { headers: apiHeaders() });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         _patronesData = await res.json();
         if (!_patronesData.error) _guardarPatronesEnSession(_patronesData);
@@ -2725,8 +2757,9 @@
   <div class="section-header">Gestión de <span>apuestas</span></div>
 
   ${!ok ? `<div class="secret-banner">
-    <strong>🔑 Clave de API requerida</strong><br>
-    Pega tu <code>MINIAPP_SECRET</code> de Railway para habilitar el CRUD.
+    <strong>🔑 Ábrela desde Telegram o ingresa tu clave de API</strong><br>
+    Esta app funciona automáticamente al abrirla desde el bot en Telegram. Fuera de Telegram,
+    pega tu <code>MINIAPP_SECRET</code> de Railway para habilitar el CRUD.
 <input id="sInput" class="secret-input" type="text" placeholder="MINIAPP_SECRET..."
   autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
   data-action="secret-input">
@@ -3093,7 +3126,7 @@
         const uTextEl = uz.querySelector(".u-text");
         if (uTextEl) uTextEl.textContent = `Comprimida ${mbIn}→${mbOut}MB · analizando…`;
         const resp = await fetch(`${API_URL}/api/analyze-ticket`, { method: "POST", headers: apiHeaders(), body: JSON.stringify({ image_b64: b64 }) });
-        const j = await resp.json();
+        const j = await safeJson(resp);
         if (!j.ok) throw new Error(j.error || "No se detectó ticket");
         const d = j.datos;
         const esParlay = d.es_parlay && Array.isArray(d.picks) && d.picks.length > 1;
@@ -3225,7 +3258,7 @@
           }
           resp = await fetch(`${API_URL}/api/bets/${_editRowId}`, { method: "PUT", headers: apiHeaders(), body: JSON.stringify(payload) });
         }
-        const j = await resp.json();
+        const j = await safeJson(resp);
         if (!j.ok) throw new Error(j.error || `Error ${resp.status}`);
         _parlayPicks = [];
         closeModal();
@@ -3246,7 +3279,7 @@
       if (!getSecret() && !tg?.initData) { alert("Configura la clave de API."); return; }
       try {
         const resp = await fetch(`${API_URL}/api/bets/${rowId}`, { method: "DELETE", headers: apiHeaders() });
-        const j = await resp.json();
+        const j = await safeJson(resp);
         if (!j.ok) throw new Error(j.error);
         await recargar();
         showTab("gestion", document.querySelector('[data-tab="gestion"]'));
