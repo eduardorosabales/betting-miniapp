@@ -260,6 +260,69 @@
       cursor: default
     }
 
+    /* ── Header: saludo + avatar (móvil) ── */
+    .user-block {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      min-width: 0
+    }
+
+    .avatar {
+      width: 42px;
+      height: 42px;
+      border-radius: 13px;
+      background: linear-gradient(140deg, #2BE9B0, #009E74);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-head);
+      font-weight: 800;
+      font-size: 18px;
+      color: #04130d;
+      flex-shrink: 0;
+      box-shadow: 0 4px 14px -3px rgba(0, 205, 150, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.25)
+    }
+
+    .greet {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.18;
+      min-width: 0
+    }
+
+    .greet .hi {
+      font-size: 12px;
+      color: var(--text-2);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 62vw
+    }
+
+    .greet .nm {
+      font-family: var(--font-head);
+      font-weight: 800;
+      font-size: 16px;
+      letter-spacing: -0.3px
+    }
+
+    .greet .nm span {
+      background: linear-gradient(120deg, var(--accent) 0%, #5BE8C0 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      color: var(--accent)
+    }
+
+    .refresh-btn.refresh-round {
+      width: 44px;
+      height: 44px;
+      padding: 0;
+      border-radius: 50%;
+      font-size: 17px
+    }
+
     /* ── Content ── */
     .content {
       padding: 16px;
@@ -2084,7 +2147,8 @@
       }
 
 
-      .header .logo {
+      .header .logo,
+      .header .user-block {
         display: none;
       }
 
@@ -2324,10 +2388,21 @@
       if (!mesActual || !mesesDisponibles.includes(mesActual)) mesActual = mesesDisponibles[mesesDisponibles.length - 1] || null;
       renderApp();
     }
+    // Header con avatar + saludo (P2). Nombre desde Telegram, escapado (XSS, INV-MINI-13).
+    function _headerHTML(opts) {
+      const u = tg && tg.initDataUnsafe ? tg.initDataUnsafe.user : null;
+      const name = u && u.first_name ? String(u.first_name).trim() : "";
+      const initial = name ? name[0].toUpperCase() : "B";
+      const hi = name ? `Hola, ${esc(name)}` : "Hola 👋";
+      const refresh = opts && opts.refresh
+        ? `<button class="refresh-btn refresh-round" data-action="recargar" aria-label="Recargar">↻</button>`
+        : "";
+      return `<div class="header"><div class="header-inner"><div class="user-block"><div class="avatar">${esc(initial)}</div><div class="greet"><span class="hi">${hi}</span><span class="nm">Bet<span>Stats</span></span></div></div>${refresh}</div></div>`;
+    }
     function _renderSkeleton() {
       const c = `<div class="skeleton" style="height:86px"></div>`;
       document.getElementById("app").innerHTML = `
-    <div class="header"><div class="header-inner"><div class="logo"><div class="logo-icon"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="2.5" y="14" width="4" height="7" rx="1.4" fill="#fff" fill-opacity=".55"/><rect x="10" y="10.5" width="4" height="10.5" rx="1.4" fill="#fff" fill-opacity=".78"/><rect x="17.5" y="6.5" width="4" height="14.5" rx="1.4" fill="#fff"/><path d="M3 10.2L9.2 6.4 13 8.3 20.5 3.4" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M16.8 3.4H20.7V7.1" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="logo-text">Bet<span>Stats</span></div></div><div class="header-right"><div class="status-dot"></div></div></div></div>
+    ${_headerHTML({ refresh: false })}
     <div class="content">
       <div class="hero-grid">${c}${c}${c}${c}</div>
       <div class="skeleton" style="height:120px"></div>
@@ -2547,12 +2622,7 @@
     function renderApp() {
       _renderedSections.clear();
       document.getElementById("app").innerHTML = `
-    <div class="header">
-      <div class="header-inner">
-        <div class="logo"><div class="logo-icon"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="2.5" y="14" width="4" height="7" rx="1.4" fill="#fff" fill-opacity=".55"/><rect x="10" y="10.5" width="4" height="10.5" rx="1.4" fill="#fff" fill-opacity=".78"/><rect x="17.5" y="6.5" width="4" height="14.5" rx="1.4" fill="#fff"/><path d="M3 10.2L9.2 6.4 13 8.3 20.5 3.4" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M16.8 3.4H20.7V7.1" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="logo-text">Bet<span>Stats</span></div></div>
-        <div class="header-right"><div class="status-dot"></div><button class="refresh-btn" data-action="recargar">↻</button></div>
-      </div>
-    </div>
+    ${_headerHTML({ refresh: true })}
     <div class="content">
       <div id="subNav" class="sub-nav" style="display:none"></div>
       <div id="resumen"  class="section"></div>
