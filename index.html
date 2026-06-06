@@ -34,6 +34,11 @@
       --text: #E2E8F4;
       --text-2: #8896A8;
       --text-3: #3D4A5C;
+      --chart-grid: rgba(255, 255, 255, 0.04);
+      --chart-tick: #4A5568;
+      --header-bg: rgba(6, 8, 15, 0.85);
+      --nav-bg: rgba(10, 14, 28, 0.92);
+      --nav-bg-solid: rgba(10, 14, 28, 0.97);
       --radius-sm: 8px;
       --radius-md: 12px;
       --radius-lg: 16px;
@@ -100,12 +105,12 @@
     /* ── Performance overrides (Telegram Desktop / Linux) ── */
     .no-blur .header {
       backdrop-filter: none !important;
-      background: rgba(6, 8, 15, 0.97) !important
+      background: var(--header-bg) !important
     }
 
     .no-blur .bottom-nav {
       backdrop-filter: none !important;
-      background: rgba(10, 14, 28, 0.97) !important
+      background: var(--nav-bg-solid) !important
     }
 
     .no-blur body::before {
@@ -146,7 +151,7 @@
       position: sticky;
       top: 0;
       z-index: 100;
-      background: rgba(6, 8, 15, 0.85);
+      background: var(--header-bg);
       backdrop-filter: blur(20px) saturate(180%);
       border-bottom: 1px solid var(--border);
       padding: 14px 16px;
@@ -221,6 +226,11 @@
       background: var(--card2);
       border: 1px solid var(--border);
       color: var(--text-2);
+      min-width: 44px;
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       padding: 6px 14px;
       border-radius: var(--radius-sm);
       font-family: var(--font-body);
@@ -275,7 +285,7 @@
       left: 0;
       right: 0;
       height: var(--nav-h);
-      background: rgba(10, 14, 28, 0.92);
+      background: var(--nav-bg);
       backdrop-filter: blur(24px) saturate(200%);
       border-top: 1px solid var(--border);
       display: flex;
@@ -327,6 +337,88 @@
     .nav-icon {
       font-size: 20px;
       line-height: 1
+    }
+
+    /* ── Sub-navegación (segmented control) por grupo ── */
+    .sub-nav {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      margin: 0 0 14px;
+      padding-bottom: 2px
+    }
+
+    .sub-nav::-webkit-scrollbar {
+      display: none
+    }
+
+    .sub-chip {
+      flex: 0 0 auto;
+      min-height: 44px;
+      padding: 0 16px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--card2);
+      border: 1px solid var(--border);
+      color: var(--text-2);
+      border-radius: 999px;
+      font-family: var(--font-body);
+      font-size: 14px;
+      font-weight: 600;
+      white-space: nowrap;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: color .15s, background .15s, border-color .15s
+    }
+
+    .sub-chip.active {
+      color: var(--accent);
+      background: var(--accent-dim);
+      border-color: var(--border-hi)
+    }
+
+    .sub-chip:active {
+      transform: scale(0.97)
+    }
+
+    .sub-chip.sub-more,
+    .sub-chip.sub-back {
+      color: var(--text);
+      font-weight: 700
+    }
+
+    /* ── Resumen ejecutivo (hero) ── */
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 16px
+    }
+
+    .hero-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 16px 14px
+    }
+
+    .hero-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-2);
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      margin-bottom: 8px
+    }
+
+    .hero-value {
+      font-family: var(--font-num);
+      font-size: 26px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      line-height: 1.05
     }
 
     .nav-label {
@@ -505,8 +597,43 @@
     /* ── Chart ── */
     .chart-wrap {
       position: relative;
-      height: 180px;
+      height: 230px;
       margin-bottom: 4px
+    }
+
+    /* ── Selector de rango de gráficas ── */
+    .range-sel {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 10px
+    }
+
+    .range-chip {
+      flex: 0 0 auto;
+      min-height: 44px;
+      padding: 0 16px;
+      display: inline-flex;
+      align-items: center;
+      background: var(--card2);
+      border: 1px solid var(--border);
+      color: var(--text-2);
+      border-radius: 999px;
+      font-family: var(--font-body);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: color .15s, background .15s, border-color .15s
+    }
+
+    .range-chip.active {
+      color: var(--accent);
+      background: var(--accent-dim);
+      border-color: var(--border-hi)
+    }
+
+    .range-chip:active {
+      transform: scale(0.96)
     }
 
     .chart-wrap-tall {
@@ -647,7 +774,7 @@
     }
 
     .bet-teams {
-      font-size: 13px;
+      font-size: 14px;
       font-weight: 600;
       white-space: nowrap;
       overflow: hidden;
@@ -680,6 +807,103 @@
       margin-top: 1px
     }
 
+    .bet-badge {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border-radius: 999px;
+      margin-bottom: 4px
+    }
+
+    .bet-badge-win {
+      color: var(--win);
+      background: var(--win-bg)
+    }
+
+    .bet-badge-loss {
+      color: var(--loss);
+      background: var(--loss-bg)
+    }
+
+    .bet-badge-pend {
+      color: var(--pend);
+      background: var(--pend-bg)
+    }
+
+    .bet-badge-void {
+      color: var(--text-2);
+      background: var(--accent-dim)
+    }
+
+    /* Cifras alineadas (tabulares) en todos los valores numéricos. */
+    .stat-value,
+    .kpi-value,
+    .sport-roi,
+    .capital-amount,
+    .cap-stat-val,
+    .bet-monto,
+    .bet-result,
+    .rolling-kpi-val,
+    .kelly-card-pct,
+    .hero-value {
+      font-variant-numeric: tabular-nums
+    }
+
+    /* ── Skeleton loaders (carga en frío, nunca pantalla en blanco) ── */
+    .skeleton {
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border);
+      background-color: var(--card2);
+      background-image: linear-gradient(90deg, transparent 25%, rgba(128, 128, 128, 0.20) 50%, transparent 75%);
+      background-size: 200% 100%;
+      animation: sk-shimmer 1.3s ease-in-out infinite;
+      margin-bottom: 12px
+    }
+
+    .hero-grid .skeleton {
+      margin-bottom: 0
+    }
+
+    @keyframes sk-shimmer {
+      0% { background-position: 200% 0 }
+      100% { background-position: -200% 0 }
+    }
+
+    .no-blur .skeleton {
+      animation: none
+    }
+
+    /* ── Banner de datos en caché (fetch falló pero hay datos guardados) ── */
+    .stale-banner {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--pend-bg);
+      color: var(--pend);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 10px 12px;
+      border-radius: var(--radius-md);
+      margin-bottom: 12px
+    }
+
+    .stale-banner button {
+      margin-left: auto;
+      flex-shrink: 0;
+      background: var(--pend);
+      color: #000;
+      border: none;
+      border-radius: 999px;
+      padding: 0 16px;
+      min-height: 40px;
+      font-family: var(--font-body);
+      font-weight: 700;
+      cursor: pointer
+    }
+
     /* ── Filters ── */
     .filter-row {
       display: flex;
@@ -695,9 +919,12 @@
     }
 
     .filter-chip {
-      padding: 6px 14px;
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+      padding: 6px 16px;
       border-radius: 99px;
-      font-size: 12px;
+      font-size: 13px;
       font-weight: 700;
       border: 1px solid var(--border);
       background: var(--card);
@@ -767,8 +994,8 @@
       background: var(--card2);
       border: 1px solid var(--border);
       color: var(--text-2);
-      width: 32px;
-      height: 32px;
+      width: 44px;
+      height: 44px;
       border-radius: var(--radius-sm);
       font-size: 16px;
       cursor: pointer;
@@ -912,6 +1139,9 @@
 
     .retry-btn {
       margin-top: 14px;
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
       padding: 9px 22px;
       background: var(--accent);
       color: #000;
@@ -952,7 +1182,7 @@
     }
 
     .explainer {
-      font-size: 12px;
+      font-size: 14px;
       color: var(--text-2);
       line-height: 1.6;
       padding: 12px 14px;
@@ -1709,6 +1939,10 @@
       }
 
       /* Grids más amplios */
+      .hero-grid {
+        grid-template-columns: repeat(4, 1fr)
+      }
+
       .stats-grid {
         grid-template-columns: repeat(3, 1fr);
         gap: 12px
@@ -1796,7 +2030,7 @@
         top: 0;
         left: 0;
         width: var(--sidebar-w);
-        background: rgba(10, 14, 28, 0.97);
+        background: var(--nav-bg-solid);
         z-index: 201;
         text-decoration: none;
       }
@@ -1871,12 +2105,51 @@
     );
     const tg = window.Telegram?.WebApp;
     const _isLowGPU = navigator.userAgent.includes("Linux") && !navigator.userAgent.includes("Android");
+    // ── Tema: hereda el modo claro/oscuro del cliente Telegram ────────────────────
+    // Mapea themeParams → variables CSS de superficie/texto. Los colores SEMÁNTICOS
+    // (win=verde, loss=rojo, pend=ámbar, accent) NO cambian con el tema: significan lo
+    // mismo en claro y oscuro. Sin themeParams (fuera de Telegram o cliente viejo) se
+    // conserva la paleta oscura del :root.
+    function applyTelegramTheme() {
+      if (!tg) return;
+      const tp = tg.themeParams || {};
+      const dark = (tg.colorScheme || "dark") !== "light";
+      const root = document.documentElement;
+      root.dataset.theme = dark ? "dark" : "light";
+      const S = (v, c) => { if (c) root.style.setProperty(v, c); };
+      S("--bg", tp.bg_color);
+      S("--surface", tp.secondary_bg_color || tp.bg_color);
+      S("--card", tp.section_bg_color || tp.secondary_bg_color || tp.bg_color);
+      S("--card2", tp.secondary_bg_color || tp.section_bg_color);
+      S("--text", tp.text_color);
+      S("--text-2", tp.hint_color || tp.subtitle_text_color);
+      const line = dark ? "255,255,255" : "20,28,46";
+      root.style.setProperty("--border", `rgba(${line},${dark ? 0.06 : 0.12})`);
+      root.style.setProperty("--text-3", `rgba(${line},${dark ? 0.30 : 0.45})`);
+      root.style.setProperty("--chart-grid", `rgba(${line},${dark ? 0.06 : 0.10})`);
+      root.style.setProperty("--chart-tick", tp.hint_color || (dark ? "#4A5568" : "#6B7A90"));
+      // "Chrome" de la app (header + barra inferior): superficie sólida del tema para
+      // que texto e iconos de navegación mantengan contraste también en modo claro.
+      const chrome = tp.secondary_bg_color || tp.bg_color;
+      if (chrome) {
+        root.style.setProperty("--header-bg", chrome);
+        root.style.setProperty("--nav-bg", chrome);
+        root.style.setProperty("--nav-bg-solid", chrome);
+      }
+      try { tg.setBackgroundColor("bg_color"); } catch (_) {}
+      try { tg.setHeaderColor("secondary_bg_color"); } catch (_) {}
+    }
+    function refreshChartsTheme() {
+      if (typeof Chart === "undefined") return;
+      Object.keys(charts).forEach(destroyChart);
+      initCharts();
+    }
     if (tg) {
       tg.ready();
       if (tg.isVersionAtLeast("6.1")) tg.expand();
       tg.disableVerticalSwipes();
-      tg.setHeaderColor("#06080F");
-      tg.setBackgroundColor("#06080F");
+      applyTelegramTheme();
+      tg.onEvent("themeChanged", () => { applyTelegramTheme(); refreshChartsTheme(); });
       if (tg.platform === "tdesktop" || tg.platform === "weba" || tg.platform === "webk" || tg.platform === "webz" || _isLowGPU) {
         document.documentElement.classList.add("no-blur");
       }
@@ -1929,12 +2202,14 @@
       return headers;
     }
     const _noBlur = document.documentElement.classList.contains("no-blur");
+    // Lee una variable CSS (resuelta) para alimentar colores de Chart.js según el tema activo.
+    const cssVar = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim() || undefined;
 
     /* Renderiza un canvas o un botón lazy según el entorno */
     function chartPlaceholder(canvasId, makeKey, tall = false) {
       const cls = tall ? "chart-wrap-tall" : "chart-wrap";
       if (_noBlur && window.innerWidth < 768) {
-        return `<div class="${cls}" id="cwrap-${canvasId}" style="display:flex;align-items:center;justify-content:center;background:var(--card2);border-radius:var(--radius-md)"><button style="background:transparent;border:1px solid var(--border);color:var(--text-2);padding:10px 20px;border-radius:var(--radius-md);font-size:12px;font-weight:600;cursor:pointer" data-action="load-lazy-chart" data-canvas-id="${canvasId}" data-make-key="${makeKey}">📊 Cargar gráfica</button></div>`;
+        return `<div class="${cls}" id="cwrap-${canvasId}" style="display:flex;align-items:center;justify-content:center;background:var(--card2);border-radius:var(--radius-md)"><button style="background:transparent;border:1px solid var(--border);color:var(--text-2);padding:10px 20px;min-height:44px;display:inline-flex;align-items:center;border-radius:var(--radius-md);font-size:13px;font-weight:600;cursor:pointer" data-action="load-lazy-chart" data-canvas-id="${canvasId}" data-make-key="${makeKey}">📊 Cargar gráfica</button></div>`;
       }
       return `<div class="${cls}"><canvas id="${canvasId}" aria-label="Gráfica ${canvasId}" role="img"></canvas></div>`;
     }
@@ -1973,20 +2248,32 @@
       try { localStorage.setItem(_PATRONES_LS_KEY, JSON.stringify(data)); } catch (_) {}
     }
 
-    const NAV_ITEMS = [
-      { id: "resumen", icon: "📊", label: "General" },
-      { id: "semana", icon: "📅", label: "7 días" },
-      { id: "mes", icon: "🗓", label: "Mes" },
-      { id: "deportes", icon: "🏆", label: "Deportes" },
-      { id: "tipos", icon: "🎯", label: "Tipos" },
-      { id: "temporal", icon: "⏱", label: "Timing" },
-      { id: "rolling", icon: "📈", label: "Tendencia" },
-      { id: "kelly", icon: "🧮", label: "Kelly" },
-      { id: "patrones", icon: "🤖", label: "Patrones" },
-      { id: "capital", icon: "💼", label: "Capital" },
-      { id: "apuestas", icon: "📋", label: "Bets" },
-      { id: "gestion", icon: "⚙️", label: "Gestión" },
+    // Navegación primaria: 4 grupos alcanzables con el pulgar. Cada grupo agrupa una o
+    // más de las secciones existentes (no se elimina ninguna); los análisis avanzados
+    // viven en una sub-vista "Más" con BackButton nativo de Telegram.
+    const NAV_GROUPS = [
+      { id: "resumen",   icon: "🏠", label: "Resumen",   sections: ["resumen", "semana"], more: true },
+      { id: "graficas",  icon: "📈", label: "Gráficas",  sections: ["deportes", "tipos", "rolling", "temporal"] },
+      { id: "historial", icon: "📋", label: "Historial", sections: ["apuestas", "mes"] },
+      { id: "gestion",   icon: "⚙️", label: "Gestión",   sections: ["gestion"] },
     ];
+    const ADVANCED = ["kelly", "capital", "patrones"];
+    const SECTION_LABELS = {
+      resumen: "General", semana: "7 días",
+      deportes: "Deportes", tipos: "Tipos", rolling: "Tendencia", temporal: "Timing",
+      apuestas: "Bets", mes: "Mes", gestion: "Gestión",
+      kelly: "Kelly", capital: "Capital", patrones: "Patrones IA",
+    };
+    let currentGroup = "resumen", _inAdvanced = false, _backReady = false;
+    function groupOf(sectionId) { return NAV_GROUPS.find(g => g.sections.includes(sectionId)) || null; }
+    function haptic(kind) {
+      try {
+        const h = tg?.HapticFeedback; if (!h) return;
+        if (kind === "select") h.selectionChanged();
+        else if (kind === "success" || kind === "error" || kind === "warning") h.notificationOccurred(kind);
+        else h.impactOccurred(kind || "light");
+      } catch (_) {}
+    }
 
     function esc(s) { return s == null ? "" : String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;") }
     const fmt = n => n == null ? "—" : `$${Number(n).toLocaleString("es-MX", { maximumFractionDigits: 0 })}`;
@@ -1997,15 +2284,55 @@
 
     /* ── Fetch ── */
     let _ctrl = null;
+    // Caché de /api/stats en sessionStorage (INV-MINI-04: localStorage prohibido,
+    // sessionStorage permitido). Permite pintado instantáneo al reabrir sin re-consultar
+    // en frío; siempre se refresca en segundo plano.
+    const _STATS_CACHE_KEY = "betstats_stats_cache";
+    function _loadStatsCache() {
+      try { const raw = sessionStorage.getItem(_STATS_CACHE_KEY); return raw ? JSON.parse(raw) : null; } catch (_) { return null; }
+    }
+    function _saveStatsCache(json) {
+      try { sessionStorage.setItem(_STATS_CACHE_KEY, JSON.stringify(json)); } catch (_) {}
+    }
+    function _applyStats(json) {
+      DATA = json;
+      mesesDisponibles = DATA.grafica_meses.map(m => m.mes);
+      if (!mesActual || !mesesDisponibles.includes(mesActual)) mesActual = mesesDisponibles[mesesDisponibles.length - 1] || null;
+      renderApp();
+    }
+    function _renderSkeleton() {
+      const c = `<div class="skeleton" style="height:86px"></div>`;
+      document.getElementById("app").innerHTML = `
+    <div class="header"><div class="header-inner"><div class="logo"><div class="logo-icon">📈</div><div class="logo-text">Bet<span>Stats</span></div></div><div class="header-right"><div class="status-dot"></div></div></div></div>
+    <div class="content">
+      <div class="hero-grid">${c}${c}${c}${c}</div>
+      <div class="skeleton" style="height:120px"></div>
+      <div class="skeleton" style="height:200px"></div>
+    </div>`;
+    }
+    function _showStaleBanner() {
+      const cont = document.querySelector(".content");
+      if (!cont || document.getElementById("staleBanner")) return;
+      const b = document.createElement("div");
+      b.id = "staleBanner";
+      b.className = "stale-banner";
+      b.innerHTML = `<span>⚠️ Mostrando datos guardados (sin conexión).</span><button data-action="recargar">Reintentar</button>`;
+      cont.insertBefore(b, cont.firstChild);
+    }
     async function cargarDatos() {
       if (!tg?.initData) {
         renderApp();
         setTimeout(() => {
-          const btn = document.querySelector('[data-tab="gestion"]');
-          showTab("gestion", btn);
+          showTab("gestion");
         }, 0);
         return;
       }
+      // 1) Pintado instantáneo desde caché de sesión (o skeleton si es carga en frío).
+      const cached = _loadStatsCache();
+      const paintedFromCache = !!(cached && cached.resumen && Array.isArray(cached.apuestas));
+      if (paintedFromCache) _applyStats(cached);
+      else _renderSkeleton();
+      // 2) Refresco fresco desde la API en segundo plano.
       if (_ctrl) _ctrl.abort();
       _ctrl = new AbortController();
       const timeout = setTimeout(() => _ctrl.abort(), 12000);
@@ -2014,15 +2341,18 @@
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json = await res.json();
         if (!json.resumen || !Array.isArray(json.apuestas)) throw new Error("Datos inesperados");
-        DATA = json;
-        mesesDisponibles = DATA.grafica_meses.map(m => m.mes);
-        mesActual = mesesDisponibles[mesesDisponibles.length - 1] || null;
-        renderApp();
+        _saveStatsCache(json);
+        // Evita re-render (parpadeo/reset de scroll) si nada cambió respecto a la caché.
+        if (!paintedFromCache || JSON.stringify(json) !== JSON.stringify(cached)) _applyStats(json);
       } catch (e) {
         const msg = e.name === "AbortError"
           ? "Tiempo de espera agotado (12s). Verifica tu conexión o que el backend esté disponible."
           : e.message;
-        document.getElementById("app").innerHTML = `<div style="padding:20px"><div class="error-box"><p>Sin conexión</p><br><small>${esc(msg)}</small><br><button class="retry-btn" data-action="recargar">↻ Reintentar</button></div></div>`;
+        if (paintedFromCache) {
+          _showStaleBanner();   // ya hay datos en pantalla: avisar sin romper la vista
+        } else {
+          document.getElementById("app").innerHTML = `<div style="padding:20px"><div class="error-box"><p>Sin conexión</p><br><small>${esc(msg)}</small><br><button class="retry-btn" data-action="recargar">↻ Reintentar</button></div></div>`;
+        }
       } finally { clearTimeout(timeout); }
     }
 
@@ -2200,6 +2530,7 @@
       </div>
     </div>
     <div class="content">
+      <div id="subNav" class="sub-nav" style="display:none"></div>
       <div id="resumen"  class="section"></div>
       <div id="semana"   class="section"></div>
       <div id="mes"      class="section"></div>
@@ -2217,9 +2548,11 @@
       nav.style.display = "flex";
       // Sidebar logo — visible solo en desktop (≥768px) vía CSS
       const _sidebarLogo = `<div class="sidebar-logo"><div class="sidebar-logo-icon">📈</div><div class="sidebar-logo-text">Bet<span>Stats</span></div></div>`;
-      nav.innerHTML = _sidebarLogo + NAV_ITEMS.map(n => `<button class="nav-item" data-tab="${n.id}"><span class="nav-icon">${n.icon}</span><span class="nav-label">${n.label}</span></button>`).join("");
+      nav.innerHTML = _sidebarLogo + NAV_GROUPS.map(n => `<button class="nav-item" data-group="${n.id}"><span class="nav-icon">${n.icon}</span><span class="nav-label">${n.label}</span></button>`).join("");
+      // BackButton nativo: vuelve de la sub-vista "Más análisis" a Resumen.
+      if (tg?.BackButton && !_backReady) { tg.BackButton.onClick(() => closeAdvanced()); _backReady = true; }
       const saved = tabActual;
-      setTimeout(() => { const btn = nav.querySelector(`[data-tab="${saved}"]`); showTab(saved, btn); }, 0);
+      setTimeout(() => showTab(saved), 0);
     }
 
     /* ── Tab: Resumen ── */
@@ -2227,17 +2560,22 @@
       const r = DATA.resumen;
       const wr = ((r.winrate ?? 0)).toFixed(1);
       const rachaHtml = r.racha >= 2 ? `<div class="racha-badge ${r.tipo_racha === "win" ? "racha-win" : "racha-loss"}"><span class="racha-icon">${r.tipo_racha === "win" ? "🔥" : "🧊"}</span>Racha de ${r.racha} ${r.tipo_racha === "win" ? "victorias" : "derrotas"} seguidas</div>` : "";
-      return `<div class="section-header">General <span>·</span> Historial</div>
+      // Resumen ejecutivo: 4 métricas clave visibles al abrir, antes del detalle.
+      const s = DATA.stats_semana || null;
+      const sNeto = s ? s.neto : null;
+      const hero = `<div class="hero-grid">
+      <div class="hero-card"><div class="hero-label">Neto total</div><div class="hero-value ${signColor(r.neto)}">${fmts(r.neto)}</div></div>
+      <div class="hero-card"><div class="hero-label">ROI</div><div class="hero-value ${signColor(r.roi)}">${(r.roi ?? 0) >= 0 ? "+" : ""}${fmtp(r.roi)}</div></div>
+      <div class="hero-card"><div class="hero-label">Win rate</div><div class="hero-value">${wr}%</div></div>
+      <div class="hero-card"><div class="hero-label">Últimos 7 días</div><div class="hero-value ${sNeto == null ? "" : signColor(sNeto)}">${sNeto == null ? "—" : fmts(sNeto)}</div></div>
+    </div>`;
+      return `${hero}<div class="section-header">Detalle <span>·</span> Historial</div>
     <div class="stats-grid">
       <div class="stat-card win-card"><div class="stat-value green">${r.wins}</div><div class="stat-label">Ganadas</div></div>
       <div class="stat-card loss-card"><div class="stat-value red">${r.losses}</div><div class="stat-label">Perdidas</div></div>
       <div class="stat-card pend-card"><div class="stat-value yellow">${r.pending}</div><div class="stat-label">Pendientes</div></div>
     </div>
     ${(r.voids ?? 0) > 0 ? `<div class="kpi-row"><div class="kpi"><div class="kpi-label">Nulas (void)</div><div class="kpi-value accent">${r.voids ?? 0}</div></div></div>` : ""}
-    <div class="kpi-row">
-      <div class="kpi"><div class="kpi-label">Neto total</div><div class="kpi-value ${signColor(r.neto)}">${fmts(r.neto)}</div></div>
-      <div class="kpi"><div class="kpi-label">ROI</div><div class="kpi-value ${signColor(r.roi)}">${(r.roi ?? 0) >= 0 ? "+" : ""}${fmtp(r.roi)}</div></div>
-    </div>
     <div class="kpi-row">
       <div class="kpi"><div class="kpi-label">Total apostado</div><div class="kpi-value accent">${fmt(r.apostado)}</div></div>
       <div class="kpi"><div class="kpi-label">Total cobrado</div><div class="kpi-value">${fmt(r.ganado)}</div></div>
@@ -2421,6 +2759,7 @@
     }
 
     /* ── Tab: Rolling ROI ── */
+    let rollingShow = 30; // puntos rodantes visibles por defecto (selector de rango)
     function renderRolling() {
       const VENTANA = 20;
       const points = calcRolling(VENTANA);
@@ -2447,7 +2786,13 @@
       <div style="font-size:13px;font-weight:700;margin-bottom:6px">Tendencia reciente</div>
       <div style="font-size:24px">${tendencia.split(" ")[0]} <span style="font-size:14px;color:var(--text-2)">${tendencia.split(" ").slice(1).join(" ")}</span></div>
     </div>
-    <div class="card"><div class="card-title">ROI rodante (ventana ${VENTANA})</div>${chartPlaceholder("chartRolling", "rolling", true)}</div>
+    <div class="card"><div class="card-title">ROI rodante (ventana ${VENTANA})</div>
+      <div class="range-sel">
+        <button class="range-chip ${rollingShow === 30 ? "active" : ""}" data-rolling-show="30">Últimas 30</button>
+        <button class="range-chip ${rollingShow === 60 ? "active" : ""}" data-rolling-show="60">60</button>
+        <button class="range-chip ${rollingShow >= 9999 ? "active" : ""}" data-rolling-show="9999">Todas</button>
+      </div>
+      ${chartPlaceholder("chartRolling", "rolling", true)}</div>
     <div class="explainer"><strong>ROI rodante:</strong> Calcula el rendimiento de las últimas ${VENTANA} apuestas cerradas. Si la línea sube, el tipster está mejorando. Si baja, hay una racha negativa real — no solo mala suerte en 1-2 apuestas.</div>`;
     }
 
@@ -2902,10 +3247,12 @@
       const icon = a.status === "win" ? "win" : a.status === "loss" ? "loss" : a.status === "void" ? "pend" : "pend";
       const res = a.status === "win" ? `+${fmt(a.ganancia)}` : a.status === "loss" ? `-${fmt(a.monto)}` : a.status === "void" ? `🔄 Nula` : ` ⏳ ${fmt(a.potencial)}`;
       const rc = a.status === "win" ? "green" : a.status === "loss" ? "red" : a.status === "void" ? "accent" : "yellow";
+      const _stMap = { win: ["Ganada", "win"], loss: ["Perdida", "loss"], void: ["Nula", "void"] };
+      const [statusLabel, badgeKey] = _stMap[a.status] || ["Pendiente", "pend"];
       const esParlay = (a.equipo2 || "").startsWith("PARLAY");
       const teamsLabel = esParlay ? `🎯 Parlay · ${esc(a.equipo2 || "")}` : `${esc(a.equipo1 || "?")} vs ${esc(a.equipo2 || "?")}`;
       const metaLabel = esParlay ? `${esc(a.deporte)} · Acumulador @ ${esc(a.cuota)} · ${(a.fecha_partido || a.fecha)?.slice(0, 10) || ""}` : `${esc(a.deporte)} · ${esc(formatTipoApuesta(a))} @ ${esc(a.cuota)} · ${(a.fecha_partido || a.fecha)?.slice(0, 10) || ""}`;
-      return `<div class="bet-item"><div class="bet-dot ${icon}"></div><div class="bet-info"><div class="bet-teams">${teamsLabel}</div><div class="bet-meta">${metaLabel}</div></div><div class="bet-right"><div class="bet-monto">${fmt(a.monto)}</div><div class="bet-result ${rc}">${res}</div></div></div>`;
+      return `<div class="bet-item"><div class="bet-dot ${icon}"></div><div class="bet-info"><div class="bet-teams">${teamsLabel}</div><div class="bet-meta">${metaLabel}</div></div><div class="bet-right"><div class="bet-badge bet-badge-${badgeKey}">${statusLabel}</div><div class="bet-monto">${fmt(a.monto)}</div><div class="bet-result ${rc}">${res}</div></div></div>`;
     }
 
     /* ── Charts ── */
@@ -2917,14 +3264,14 @@
       if (!c || !DATA.grafica_meses.length) return;
       destroyChart("neto");
       let acum = 0;
-      charts.neto = new Chart(c, { type: "bar", data: { labels: DATA.grafica_meses.map(m => mesLabel(m.mes)), datasets: [{ label: "Neto acumulado", data: DATA.grafica_meses.map(m => { acum += m.neto; return acum; }), backgroundColor: DATA.grafica_meses.map((_, i, arr) => { let s = 0; arr.slice(0, i + 1).forEach(x => s += x.neto); return s >= 0 ? "rgba(0,205,150,0.75)" : "rgba(255,61,90,0.75)" }), borderRadius: 5, borderSkipped: false }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { color: "rgba(255,255,255,0.04)" }, ticks: { font: { size: 10, family: "Space Mono" }, color: "#4A5568" } }, y: { grid: { color: "rgba(255,255,255,0.04)" }, ticks: { callback: axisM, font: { size: 10, family: "Space Mono" }, color: "#4A5568" } } } } });
+      charts.neto = new Chart(c, { type: "bar", data: { labels: DATA.grafica_meses.map(m => mesLabel(m.mes)), datasets: [{ label: "Neto acumulado", data: DATA.grafica_meses.map(m => { acum += m.neto; return acum; }), backgroundColor: DATA.grafica_meses.map((_, i, arr) => { let s = 0; arr.slice(0, i + 1).forEach(x => s += x.neto); return s >= 0 ? "rgba(0,205,150,0.75)" : "rgba(255,61,90,0.75)" }), borderRadius: 5, borderSkipped: false }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { color: cssVar("--chart-grid") }, ticks: { font: { size: 10, family: "Space Mono" }, color: cssVar("--chart-tick") } }, y: { grid: { color: cssVar("--chart-grid") }, ticks: { callback: axisM, font: { size: 10, family: "Space Mono" }, color: cssVar("--chart-tick") } } } } });
     }
 
     function makeChartMeses() {
       const c = document.getElementById("chartMeses");
       if (!c || !DATA.grafica_meses.length) return;
       destroyChart("meses");
-      charts.meses = new Chart(c, { type: "bar", data: { labels: DATA.grafica_meses.map(m => mesLabel(m.mes)), datasets: [{ label: "Apostado", data: DATA.grafica_meses.map(m => m.apostado), backgroundColor: "rgba(108,99,255,0.6)", borderRadius: 4, borderSkipped: false }, { label: "Ganado", data: DATA.grafica_meses.map(m => m.ganado), backgroundColor: "rgba(0,205,150,0.6)", borderRadius: 4, borderSkipped: false }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true, labels: { font: { size: 11, family: "DM Sans" }, boxWidth: 10, padding: 10, color: "#8896A8" } } }, scales: { x: { grid: { color: "rgba(255,255,255,0.04)" }, ticks: { font: { size: 10, family: "Space Mono" }, color: "#4A5568" } }, y: { grid: { color: "rgba(255,255,255,0.04)" }, ticks: { callback: axisM, font: { size: 10, family: "Space Mono" }, color: "#4A5568" } } } } });
+      charts.meses = new Chart(c, { type: "bar", data: { labels: DATA.grafica_meses.map(m => mesLabel(m.mes)), datasets: [{ label: "Apostado", data: DATA.grafica_meses.map(m => m.apostado), backgroundColor: "rgba(108,99,255,0.6)", borderRadius: 4, borderSkipped: false }, { label: "Ganado", data: DATA.grafica_meses.map(m => m.ganado), backgroundColor: "rgba(0,205,150,0.6)", borderRadius: 4, borderSkipped: false }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true, labels: { font: { size: 11, family: "DM Sans" }, boxWidth: 10, padding: 10, color: cssVar("--text-2") } } }, scales: { x: { grid: { color: cssVar("--chart-grid") }, ticks: { font: { size: 10, family: "Space Mono" }, color: cssVar("--chart-tick") } }, y: { grid: { color: cssVar("--chart-grid") }, ticks: { callback: axisM, font: { size: 10, family: "Space Mono" }, color: cssVar("--chart-tick") } } } } });
     }
 
     function makeChartDep() {
@@ -2932,7 +3279,7 @@
       if (!c || !DATA.deportes.length) return;
       destroyChart("dep");
       const deps = [...DATA.deportes].sort((a, b) => b.roi - a.roi);
-      charts.dep = new Chart(c, { type: "bar", data: { labels: deps.map(d => d.nombre), datasets: [{ label: "ROI %", data: deps.map(d => parseFloat(d.roi.toFixed(1))), backgroundColor: deps.map(d => d.roi >= 0 ? "rgba(0,205,150,0.75)" : "rgba(255,61,90,0.75)"), borderRadius: 5, borderSkipped: false }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { color: "rgba(255,255,255,0.04)" }, ticks: { font: { size: 10, family: "Space Mono" }, color: "#4A5568" } }, y: { grid: { color: "rgba(255,255,255,0.04)" }, ticks: { callback: v => `${v}%`, font: { size: 10, family: "Space Mono" }, color: "#4A5568" } } } } });
+      charts.dep = new Chart(c, { type: "bar", data: { labels: deps.map(d => d.nombre), datasets: [{ label: "ROI %", data: deps.map(d => parseFloat(d.roi.toFixed(1))), backgroundColor: deps.map(d => d.roi >= 0 ? "rgba(0,205,150,0.75)" : "rgba(255,61,90,0.75)"), borderRadius: 5, borderSkipped: false }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { color: cssVar("--chart-grid") }, ticks: { font: { size: 10, family: "Space Mono" }, color: cssVar("--chart-tick") } }, y: { grid: { color: cssVar("--chart-grid") }, ticks: { callback: v => `${v}%`, font: { size: 10, family: "Space Mono" }, color: cssVar("--chart-tick") } } } } });
     }
 
     function makeChartTipo() {
@@ -2941,23 +3288,32 @@
       destroyChart("tipo");
       const tipos = calcRoiPorTipo();
       if (!tipos.length) return;
-      charts.tipo = new Chart(c, { type: "bar", data: { labels: tipos.map(t => t.tipo), datasets: [{ label: "ROI %", data: tipos.map(t => parseFloat(t.roi.toFixed(1))), backgroundColor: tipos.map(t => t.roi >= 0 ? "rgba(0,205,150,0.75)" : "rgba(255,61,90,0.75)"), borderRadius: 5, borderSkipped: false }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { color: "rgba(255,255,255,0.04)" }, ticks: { font: { size: 10, family: "Space Mono" }, color: "#4A5568" } }, y: { grid: { color: "rgba(255,255,255,0.04)" }, ticks: { callback: v => `${v}%`, font: { size: 10, family: "Space Mono" }, color: "#4A5568" } } } } });
+      charts.tipo = new Chart(c, { type: "bar", data: { labels: tipos.map(t => t.tipo), datasets: [{ label: "ROI %", data: tipos.map(t => parseFloat(t.roi.toFixed(1))), backgroundColor: tipos.map(t => t.roi >= 0 ? "rgba(0,205,150,0.75)" : "rgba(255,61,90,0.75)"), borderRadius: 5, borderSkipped: false }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { color: cssVar("--chart-grid") }, ticks: { font: { size: 10, family: "Space Mono" }, color: cssVar("--chart-tick") } }, y: { grid: { color: cssVar("--chart-grid") }, ticks: { callback: v => `${v}%`, font: { size: 10, family: "Space Mono" }, color: cssVar("--chart-tick") } } } } });
     }
 
     function makeChartRolling() {
       const c = document.getElementById("chartRolling");
       if (!c) return;
       destroyChart("rolling");
-      const points = calcRolling(20);
-      if (!points.length) return;
-      charts.rolling = new Chart(c, { type: "line", data: { labels: points.map(p => `#${p.i + 1}`), datasets: [{ label: "ROI rodante", data: points.map(p => parseFloat(p.roi.toFixed(2))), borderColor: "#00CD96", backgroundColor: "rgba(0,205,150,0.08)", borderWidth: 2, pointRadius: 0, fill: true, tension: 0.3 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `${ctx.parsed.y >= 0 ? "+" : ""}${ctx.parsed.y.toFixed(1)}%` } } }, scales: { x: { grid: { color: "rgba(255,255,255,0.04)" }, ticks: { display: false } }, y: { grid: { color: "rgba(255,255,255,0.04)" }, ticks: { callback: v => `${v >= 0 ? "+" : ""}${v}%`, font: { size: 10, family: "Space Mono" }, color: "#4A5568" }, afterDataLimits: scale => { const pad = Math.abs(scale.max - scale.min) * 0.15; scale.max += pad; scale.min -= pad; } } } } });
+      const all = calcRolling(20);
+      if (!all.length) return;
+      const points = rollingShow >= 9999 ? all : all.slice(-rollingShow);
+      charts.rolling = new Chart(c, { type: "line", data: { labels: points.map(p => `#${p.i + 1}`), datasets: [{ label: "ROI rodante", data: points.map(p => parseFloat(p.roi.toFixed(2))), borderColor: "#00CD96", backgroundColor: "rgba(0,205,150,0.08)", borderWidth: 2, pointRadius: 0, fill: true, tension: 0.3 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `${ctx.parsed.y >= 0 ? "+" : ""}${ctx.parsed.y.toFixed(1)}%` } } }, scales: { x: { grid: { color: cssVar("--chart-grid") }, ticks: { display: false } }, y: { grid: { color: cssVar("--chart-grid") }, ticks: { callback: v => `${v >= 0 ? "+" : ""}${v}%`, font: { size: 10, family: "Space Mono" }, color: cssVar("--chart-tick") }, afterDataLimits: scale => { const pad = Math.abs(scale.max - scale.min) * 0.15; scale.max += pad; scale.min -= pad; } } } } });
     }
 
     function initCharts() {
       if (!DATA || typeof Chart === "undefined") return;
       if (_noBlur && window.innerWidth < 768) return; // en Linux/tdesktop los charts son lazy (botón manual) en móvil
-      Chart.defaults.color = "#8896A8";
-      Chart.defaults.borderColor = "rgba(255,255,255,0.04)";
+      Chart.defaults.color = cssVar("--chart-tick");
+      Chart.defaults.borderColor = cssVar("--chart-grid");
+      // Tooltips táctiles temáticos (se activan al tocar la gráfica en móvil).
+      Chart.defaults.plugins.tooltip.backgroundColor = cssVar("--card2");
+      Chart.defaults.plugins.tooltip.titleColor = cssVar("--text");
+      Chart.defaults.plugins.tooltip.bodyColor = cssVar("--text");
+      Chart.defaults.plugins.tooltip.borderColor = cssVar("--border");
+      Chart.defaults.plugins.tooltip.borderWidth = 1;
+      Chart.defaults.plugins.tooltip.padding = 10;
+      Chart.defaults.interaction = { mode: "index", intersect: false };
       if (tabActual === "resumen") { makeChartNeto(); makeChartMeses(); }
       if (tabActual === "deportes") { makeChartDep(); }
       if (tabActual === "tipos") { makeChartTipo(); }
@@ -2968,8 +3324,16 @@
     document.addEventListener("click", e => {
       const chip = e.target.closest("[data-filtro-deporte]");
       if (chip) { filtroDeporte = chip.dataset.filtroDeporte; document.querySelectorAll("[data-filtro-deporte]").forEach(c => c.classList.toggle("active", c.dataset.filtroDeporte === filtroDeporte)); const l = document.getElementById("apuestasLista"); if (l) l.innerHTML = renderApuestasList(); return; }
-      const tab = e.target.closest("[data-tab]");
-      if (tab) { showTab(tab.dataset.tab, tab); return; }
+      const rs = e.target.closest("[data-rolling-show]");
+      if (rs) { rollingShow = parseInt(rs.dataset.rollingShow, 10); haptic("select"); document.querySelectorAll("[data-rolling-show]").forEach(b => b.classList.toggle("active", b === rs)); destroyChart("rolling"); makeChartRolling(); return; }
+      const grp = e.target.closest("[data-group]");
+      if (grp) { showGroup(grp.dataset.group); return; }
+      const sub = e.target.closest("[data-section]");
+      if (sub) { haptic("select"); showTab(sub.dataset.section); return; }
+      const advOpen = e.target.closest("[data-advanced]");
+      if (advOpen) { openAdvanced(advOpen.dataset.advanced || null); return; }
+      const advClose = e.target.closest("[data-advanced-close]");
+      if (advClose) { closeAdvanced(); return; }
       const mes = e.target.closest("[data-mes-dir]");
       if (mes) { cambiarMes(parseInt(mes.dataset.mesDir, 10)); return; }
       
@@ -3037,14 +3401,52 @@
 
     const _ALWAYS_RERENDER = new Set(["apuestas", "mes", "gestion", "patrones"]);
 
-    function showTab(id, btn) {
+    /* ── Sub-navegación (segmented control) del grupo activo o de la vista "Más" ── */
+    function renderSubNav() {
+      const el = document.getElementById("subNav");
+      if (!el) return;
+      let chips;
+      if (_inAdvanced) {
+        chips = `<button class="sub-chip sub-back" data-advanced-close>‹ Volver</button>`
+          + ADVANCED.map(s => `<button class="sub-chip" data-section="${s}">${SECTION_LABELS[s]}</button>`).join("");
+      } else {
+        const g = NAV_GROUPS.find(x => x.id === currentGroup) || NAV_GROUPS[0];
+        chips = g.sections.map(s => `<button class="sub-chip" data-section="${s}">${SECTION_LABELS[s]}</button>`).join("");
+        if (g.more) chips += `<button class="sub-chip sub-more" data-advanced>Más análisis ▾</button>`;
+      }
+      el.innerHTML = chips;
+      el.style.display = el.querySelectorAll(".sub-chip").length > 1 ? "flex" : "none";
+      el.querySelectorAll(".sub-chip[data-section]").forEach(c =>
+        c.classList.toggle("active", c.dataset.section === tabActual));
+    }
+    function showGroup(groupId) {
+      const g = NAV_GROUPS.find(x => x.id === groupId);
+      if (!g) return;
+      haptic("light");
+      showTab(g.sections[0]);
+    }
+    function openAdvanced(section) { haptic("light"); showTab(section || ADVANCED[0]); }
+    function closeAdvanced() {
+      haptic("light");
+      const g = NAV_GROUPS.find(x => x.id === currentGroup) || NAV_GROUPS[0];
+      showTab(g.sections[0]);
+    }
+
+    function showTab(id) {
       // Liberar canvases del tab anterior antes de cambiar
       if (tabActual === "resumen") { destroyChart("neto"); destroyChart("meses"); }
       if (tabActual === "deportes") { destroyChart("dep"); }
       if (tabActual === "tipos") { destroyChart("tipo"); }
       if (tabActual === "rolling") { destroyChart("rolling"); }
+      // Sincronizar grupo / sub-vista avanzada según la sección destino
+      if (ADVANCED.includes(id)) {
+        if (!_inAdvanced) { _inAdvanced = true; try { tg?.BackButton?.show(); } catch (_) {} }
+      } else {
+        const g = groupOf(id);
+        if (g) currentGroup = g.id;
+        if (_inAdvanced) { _inAdvanced = false; try { tg?.BackButton?.hide(); } catch (_) {} }
+      }
       document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
-      document.querySelectorAll(".nav-item").forEach(t => t.classList.remove("active"));
       const sec = document.getElementById(id);
       if (sec) {
         if (_RENDER_FNS[id] && (!_renderedSections.has(id) || _ALWAYS_RERENDER.has(id))) {
@@ -3053,9 +3455,11 @@
         }
         sec.classList.add("active");
       }
-      if (btn) btn.classList.add("active");
-      else { const nb = document.querySelector(`.nav-item[data-tab="${id}"]`); if (nb) nb.classList.add("active"); }
       tabActual = id;
+      // Estado activo de la nav inferior (ningún grupo activo dentro de "Más")
+      document.querySelectorAll(".nav-item").forEach(t =>
+        t.classList.toggle("active", !_inAdvanced && t.dataset.group === currentGroup));
+      renderSubNav();
       setTimeout(initCharts, 80);
     }
 
@@ -3137,6 +3541,29 @@
       sheet.style.maxHeight = Math.floor((vh - navH) * 0.94) + "px";
     }
 
+    // ── MainButton nativo de Telegram para la acción primaria del modal ──
+    // Si está disponible, sustituye al botón propio (que queda como fallback fuera
+    // de Telegram). Ambos disparan submitBet().
+    let _mainBtnHandler = null;
+    function _setupMainButton(text) {
+      const mb = tg?.MainButton;
+      if (!mb) return; // sin MainButton: se conserva el botón del formulario
+      const inForm = document.getElementById("mSubmitBtn");
+      if (inForm) inForm.style.display = "none";
+      mb.setText(text);
+      if (_mainBtnHandler) { try { mb.offClick(_mainBtnHandler); } catch (_) {} }
+      _mainBtnHandler = () => submitBet();
+      mb.onClick(_mainBtnHandler);
+      try { mb.enable(); mb.hideProgress(); } catch (_) {}
+      mb.show();
+    }
+    function _teardownMainButton() {
+      const mb = tg?.MainButton;
+      if (!mb) return;
+      try { mb.hideProgress(); } catch (_) {}
+      if (_mainBtnHandler) { try { mb.offClick(_mainBtnHandler); } catch (_) {} _mainBtnHandler = null; }
+      mb.hide();
+    }
     function openModal(rowId, idx) {
       _editRowId = rowId;
       const a = (rowId !== null && DATA?.apuestas) ? [...DATA.apuestas].reverse()[idx] : {};
@@ -3268,6 +3695,7 @@
         window.visualViewport.addEventListener("scroll", syncModalToViewport);
       }
       syncModalToViewport();
+      _setupMainButton(rowId === null ? "✅ Registrar apuesta" : "💾 Guardar cambios");
     }
 
     // archivo: index.html
@@ -3276,6 +3704,7 @@
         window.visualViewport.removeEventListener("resize", syncModalToViewport);
         window.visualViewport.removeEventListener("scroll", syncModalToViewport);
       }
+      _teardownMainButton();
       document.getElementById("gModal").innerHTML = "";
       _editRowId = null;
       _parlayPicks = [];  // ← limpiar picks al cerrar
@@ -3532,6 +3961,8 @@
       const btn = document.getElementById("mSubmitBtn");
       const originalTxt = btn?.textContent || "";
       if (btn) { btn.disabled = true; btn.textContent = "⏳ Guardando…"; }
+      const mb = tg?.MainButton;
+      if (mb) { try { mb.showProgress(); mb.disable(); } catch (_) {} }
 
       try {
         let resp;
@@ -3556,12 +3987,15 @@
         const j = await safeJson(resp);
         if (!j.ok) throw new Error(j.error || `Error ${resp.status}`);
         _parlayPicks = [];
+        haptic("success");
         closeModal();
         await recargar();
-        showTab("gestion", document.querySelector('[data-tab="gestion"]'));
+        showTab("gestion");
       } catch (err) {
+        haptic("error");
         showErr("❌ " + err.message);
         if (btn) { btn.disabled = false; btn.textContent = originalTxt; }
+        if (mb) { try { mb.hideProgress(); mb.enable(); } catch (_) {} }
       }
     }
 
@@ -3577,7 +4011,7 @@
         const j = await safeJson(resp);
         if (!j.ok) throw new Error(j.error);
         await recargar();
-        showTab("gestion", document.querySelector('[data-tab="gestion"]'));
+        showTab("gestion");
       } catch (err) { alert("❌ " + err.message); }
     }
 
