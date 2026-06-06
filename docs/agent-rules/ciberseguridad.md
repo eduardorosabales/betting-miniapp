@@ -3,9 +3,6 @@
 > Extracto **verbatim** del master `CIBERSEGURIDAD.md` (raíz del workspace, fuente canónica).
 > Reglas comunes + la sección específica de este repo. Roadmap, hallazgos (§7/§8) y recursos (§10) viven solo en el master.
 
-## Filosofía (§0)
----
-
 ## 0. Filosofía: cómo pensamos la seguridad
 
 No buscamos "blindaje perfecto" de un día para otro. Buscamos **subir el costo del ataque**
@@ -19,8 +16,10 @@ error humano no se convierta en un desastre. Tres principios rectores:
 3. **Asumir la brecha (zero trust).** Toda entrada es hostil hasta validarla. Todo secreto puede
    filtrarse, así que debe poder rotarse. Toda sesión puede robarse, así que debe expirar.
 
-## Gestión de secretos (§2)
+> Regla de oro del workspace: **un secreto nunca toca el repositorio, los logs, ni el cliente.**
+
 ---
+
 
 ## 2. Gestión de secretos (la regla #1)
 
@@ -47,9 +46,10 @@ el mayor esfuerzo.
   - **Gitleaks** (`gitleaks detect`) o **TruffleHog** — gratis, corren en local y en CI.
   - GitHub **Secret Scanning** (gratis en repos): actívalo en `eduardorosabales/starlinkapp`.
 - Si un secreto **ya llegó a GitHub**, no basta con borrarlo en un commit nuevo: queda en el historial.
+  Hay que **rotar la clave** y, si es necesario, reescribir historial (`git filter-repo`).
 
-## Dependencias y cadena de suministro (§5)
 ---
+
 
 ## 5. Dependencias y cadena de suministro
 
@@ -59,9 +59,11 @@ Una librería vulnerable es una puerta abierta aunque tu código sea perfecto.
   Activa **Dependabot** en GitHub para alertas y PRs automáticos de actualización.
 - **Python (bots):** usa `pip-audit` para escanear `requirements.txt`. Mantén versiones fijadas (ya lo haces).
 - **No instales paquetes random.** Verifica nombre exacto (cuidado con *typosquatting*), popularidad y
+  mantenimiento antes de añadir una dependencia.
+- Mantén Next.js, Prisma y NextAuth **actualizados** — los parches de seguridad llegan por ahí.
 
-## Despliegue y operación (§6)
 ---
+
 
 ## 6. Despliegue y operación (Railway, GitHub)
 
@@ -73,9 +75,11 @@ Una librería vulnerable es una puerta abierta aunque tu código sea perfecto.
 - **HTTPS siempre** (Railway lo da). Nunca tráfico de pago/login en HTTP.
 - **Principio de mínimo privilegio en tokens de plataforma:** el PAT de GitHub
   (ver [[starlinkapp-git-github]]) debería tener solo el scope necesario y caducidad, no acceso total
+  permanente.
+- Monitoreo: revisa logs de Railway buscando picos de errores de auth, accesos raros o uso anómalo.
 
-## Checklist antes de cada despliegue / push (§9)
 ---
+
 
 ## 9. Checklist antes de cada despliegue / push
 
@@ -89,10 +93,14 @@ Copia y pega esto antes de subir cambios:
 [ ] ¿Los webhooks de pago verifican firma y son idempotentes?
 [ ] ¿npm audit / pip-audit sin vulnerabilidades críticas?
 [ ] ¿Los secretos de prod están en Railway, no en archivos?
+[ ] ¿2FA activo en las cuentas implicadas?
+```
+
+---
+
 
 ## betting-miniapp — específico (cliente estático público)
-- Riesgo principal (§1): **XSS** y **datos expuestos en el cliente**. El repo es **público**:
-  cero secretos/credenciales en el HTML/JS (coherente con `INV-MINI-10/11`).
+- Riesgo principal (§1): **XSS** y **datos expuestos en el cliente**. El repo es **público**: cero secretos/credenciales en el HTML/JS (coherente con `INV-MINI-10/11`).
 - **XSS:** escapar todo dato renderizado; sin `eval`; CSP enumerando orígenes externos (`INV-MINI-09`).
-- Almacenamiento en `sessionStorage` por defecto; `localStorage` prohibido salvo la excepción acotada (`INV-MINI-04`).
+- Almacenamiento en `sessionStorage` por defecto; `localStorage` prohibido salvo la excepción acotada del caché IA (`INV-MINI-04`).
 - La lógica/validación de negocio vive en el bot (`/api/*`); el frontend valida por UX, el servidor por seguridad.
