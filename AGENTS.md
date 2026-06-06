@@ -21,6 +21,7 @@ Texto íntegro (verbatim del antiguo `instrucciones.txt`) en:
 
 - @docs/agent-rules/miniapp.md — stack (§2.2), arquitectura (§3.2), `INV-MINI-01..18`, config (§6.3), resiliencia (§7.2)
 - @docs/agent-rules/cross-repo.md — `INV-XCUT-01, 02, 07, 09` (contrato `/api/*`, regex `Total O/U`, resolución de selección, campo `neto_mensual`)
+- @docs/agent-rules/ciberseguridad.md — extracto de seguridad (fuente canónica: `CIBERSEGURIDAD.md` en la raíz); repo **público** → cero secretos, foco XSS
 
 ## Restricciones explícitas
 - ❌ No introducir un **build step** (Webpack/Vite/esbuild) ni un framework SPA (`INV-MINI-01`).
