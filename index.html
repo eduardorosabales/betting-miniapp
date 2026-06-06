@@ -172,25 +172,35 @@
     }
 
     .logo-icon {
-      width: 32px;
-      height: 32px;
-      background: linear-gradient(135deg, var(--accent), #00A880);
-      border-radius: 9px;
+      width: 34px;
+      height: 34px;
+      background: linear-gradient(140deg, #2BE9B0 0%, var(--accent) 45%, #009E74 100%);
+      border-radius: 11px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 16px;
-      flex-shrink: 0
+      flex-shrink: 0;
+      box-shadow: 0 4px 14px -3px rgba(0, 205, 150, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.25)
+    }
+
+    .logo-icon svg {
+      width: 20px;
+      height: 20px;
+      display: block
     }
 
     .logo-text {
       font-family: var(--font-head);
-      font-size: 17px;
+      font-size: 18px;
       font-weight: 800;
-      letter-spacing: -0.3px
+      letter-spacing: -0.4px
     }
 
     .logo-text span {
+      background: linear-gradient(120deg, var(--accent) 0%, #5BE8C0 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
       color: var(--accent)
     }
 
@@ -1063,6 +1073,10 @@
     }
 
     .loader-logo span {
+      background: linear-gradient(120deg, var(--accent) 0%, #5BE8C0 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
       color: var(--accent)
     }
 
@@ -2036,15 +2050,21 @@
       }
 
       .sidebar-logo-icon {
-        width: 30px;
-        height: 30px;
-        background: linear-gradient(135deg, var(--accent), #00A880);
-        border-radius: 8px;
+        width: 32px;
+        height: 32px;
+        background: linear-gradient(140deg, #2BE9B0 0%, var(--accent) 45%, #009E74 100%);
+        border-radius: 9px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 14px;
         flex-shrink: 0;
+        box-shadow: 0 4px 14px -3px rgba(0, 205, 150, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+      }
+
+      .sidebar-logo-icon svg {
+        width: 19px;
+        height: 19px;
+        display: block;
       }
 
       .sidebar-logo-text {
@@ -2056,7 +2076,11 @@
       }
 
       .sidebar-logo-text span {
-        color: var(--accent)
+        background: linear-gradient(120deg, var(--accent) 0%, #5BE8C0 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        color: var(--accent);
       }
 
 
@@ -2303,7 +2327,7 @@
     function _renderSkeleton() {
       const c = `<div class="skeleton" style="height:86px"></div>`;
       document.getElementById("app").innerHTML = `
-    <div class="header"><div class="header-inner"><div class="logo"><div class="logo-icon">📈</div><div class="logo-text">Bet<span>Stats</span></div></div><div class="header-right"><div class="status-dot"></div></div></div></div>
+    <div class="header"><div class="header-inner"><div class="logo"><div class="logo-icon"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="2.5" y="14" width="4" height="7" rx="1.4" fill="#fff" fill-opacity=".55"/><rect x="10" y="10.5" width="4" height="10.5" rx="1.4" fill="#fff" fill-opacity=".78"/><rect x="17.5" y="6.5" width="4" height="14.5" rx="1.4" fill="#fff"/><path d="M3 10.2L9.2 6.4 13 8.3 20.5 3.4" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M16.8 3.4H20.7V7.1" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="logo-text">Bet<span>Stats</span></div></div><div class="header-right"><div class="status-dot"></div></div></div></div>
     <div class="content">
       <div class="hero-grid">${c}${c}${c}${c}</div>
       <div class="skeleton" style="height:120px"></div>
@@ -2525,7 +2549,7 @@
       document.getElementById("app").innerHTML = `
     <div class="header">
       <div class="header-inner">
-        <div class="logo"><div class="logo-icon">📈</div><div class="logo-text">Bet<span>Stats</span></div></div>
+        <div class="logo"><div class="logo-icon"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="2.5" y="14" width="4" height="7" rx="1.4" fill="#fff" fill-opacity=".55"/><rect x="10" y="10.5" width="4" height="10.5" rx="1.4" fill="#fff" fill-opacity=".78"/><rect x="17.5" y="6.5" width="4" height="14.5" rx="1.4" fill="#fff"/><path d="M3 10.2L9.2 6.4 13 8.3 20.5 3.4" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M16.8 3.4H20.7V7.1" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="logo-text">Bet<span>Stats</span></div></div>
         <div class="header-right"><div class="status-dot"></div><button class="refresh-btn" data-action="recargar">↻</button></div>
       </div>
     </div>
@@ -2547,7 +2571,7 @@
       const nav = document.getElementById("bottomNav");
       nav.style.display = "flex";
       // Sidebar logo — visible solo en desktop (≥768px) vía CSS
-      const _sidebarLogo = `<div class="sidebar-logo"><div class="sidebar-logo-icon">📈</div><div class="sidebar-logo-text">Bet<span>Stats</span></div></div>`;
+      const _sidebarLogo = `<div class="sidebar-logo"><div class="sidebar-logo-icon"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="2.5" y="14" width="4" height="7" rx="1.4" fill="#fff" fill-opacity=".55"/><rect x="10" y="10.5" width="4" height="10.5" rx="1.4" fill="#fff" fill-opacity=".78"/><rect x="17.5" y="6.5" width="4" height="14.5" rx="1.4" fill="#fff"/><path d="M3 10.2L9.2 6.4 13 8.3 20.5 3.4" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M16.8 3.4H20.7V7.1" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="sidebar-logo-text">Bet<span>Stats</span></div></div>`;
       nav.innerHTML = _sidebarLogo + NAV_GROUPS.map(n => `<button class="nav-item" data-group="${n.id}"><span class="nav-icon">${n.icon}</span><span class="nav-label">${n.label}</span></button>`).join("");
       // BackButton nativo: vuelve de la sub-vista "Más análisis" a Resumen.
       if (tg?.BackButton && !_backReady) { tg.BackButton.onClick(() => closeAdvanced()); _backReady = true; }
