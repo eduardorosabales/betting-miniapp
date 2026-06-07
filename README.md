@@ -13,7 +13,7 @@ embebida en Telegram que consume la API HTTP del bot (`betting-stats-bot`).
 
 ## Estructura
 
-```
+```text
 betting-miniapp/
 ├── index.html   ← toda la app (markup + estilos + lógica)
 ├── assets/      ← favicon-32.png, apple-touch-icon-180.png

@@ -3,6 +3,7 @@
 > Extraído **verbatim** de `instrucciones.txt` (v4.5, ahora `.bak`). Referencias `§N` aluden a ese respaldo.
 
 ## Stack técnico (§2.2)
+
 | Capa | Tecnología | Notas |
 |---|---|---|
 | Marcado | HTML5 | Sin framework SPA |
@@ -16,7 +17,8 @@
 **Deuda silenciosa:** introducir un build step (Webpack/Vite/esbuild), un framework SPA, o `localStorage` requiere análisis explícito — el costo de operación crece y rompe el modelo "edita HTML, push, deploy".
 
 ## Arquitectura del repo (§3.2)
-```
+
+```text
 betting-miniapp/
 ├── index.html            ← (~3260 líneas) Chart.js + Telegram WebApp SDK + lógica UI
 ├── .gitignore            ← cubre .env, *.session (repo PÚBLICO — INV-MINI-10/11)
@@ -33,6 +35,7 @@ betting-miniapp/
 3. **Toda lógica de cálculo de negocio vive en el bot, no en la miniapp.** La miniapp es presentación + interacción, no cálculo. Excepción documentada: la regex de normalización `Total O/U` que sí está duplicada (ver `INV-XCUT-02`).
 
 ## Invariantes de la Mini-App (§4.6, `INV-MINI`)
+
 - **INV-MINI-01:** Sin build step. El `index.html` que se commitea es el que se sirve. Cualquier transformación intermedia (Webpack/Vite/Babel) debe justificarse como cambio estructural.
 - **INV-MINI-02:** Toda lógica de cálculo de negocio vive en `betting-stats-bot` y se consume vía `/api/*`. La miniapp solo presenta y formatea. Excepción documentada: la regex `Total O/U` (ver `INV-XCUT-02`).
 - **INV-MINI-03:** Auth desde la miniapp: **únicamente** header `X-Telegram-Init-Data` con `window.Telegram.WebApp.initData`. El header legacy `X-Api-Key` fue retirado (TODO-2): se eliminaron `getSecret`/`saveSecret`/`handleSecretPaste`, el input de clave y el banner ahora dice "Abre esta app desde Telegram". `apiHeaders()` solo envía `X-Telegram-Init-Data`.
@@ -55,6 +58,7 @@ betting-miniapp/
 - **INV-MINI-19:** **Subresource Integrity (SRI) en el script de Chart.js cargado por CDN.** El `<script src="…cdnjs…/Chart.js/4.4.1/chart.umd.min.js">` lleva `integrity="sha512-CQBWl4fJHWbryGE+Pc7UAxWMUMNMWzWxF4SQo9CgkJIN1kx6djDQZjh3Y8SZ1d+6I+1zze6Z7kHXO7q3UyZAWw=="` + `crossorigin="anonymous"` + `referrerpolicy="no-referrer"`. Motivo (auditoría de ciberseguridad): el repo es estático/público y depende de un CDN de terceros (cadena de suministro, CIBERSEGURIDAD §5); el hash garantiza que el navegador **rechace** el script si cdnjs lo sirviera alterado. El hash se verificó contra el SRI oficial de cdnjs **y** contra el archivo realmente servido (sha512 idénticos). **Atado a la versión:** si se sube/baja la versión de Chart.js (hoy 4.4.1, INV-MINI-05), **hay que recalcular el `integrity`** o la carga romperá; calcularlo con `curl -s <url> | openssl dgst -sha512 -binary | openssl base64 -A`. El SDK `telegram-web-app.js` de telegram.org **no** lleva SRI a propósito (Telegram lo actualiza sin versionar; un hash fijo lo rompería) — la CSP `script-src` restringida a `telegram.org` (INV-MINI-09) es su control. No quitar el `integrity` de Chart.js ni dejarlo desactualizado tras un cambio de versión.
 
 ## Variables / configuración (§6.3)
+
 Como es estática (HTML/JS sin build), **no tiene variables de entorno propias**. La configuración viaja por dos vías:
 
 1. **Hardcoded en el HTML:** la URL del backend del bot (ej. `https://betting-stats-bot.up.railway.app`). Cualquier cambio de URL requiere PR + redeploy de la miniapp.
@@ -65,6 +69,7 @@ Como es estática (HTML/JS sin build), **no tiene variables de entorno propias**
 Si se introduce una variable nueva en cualquier servicio, **debe documentarse aquí en la misma propuesta**.
 
 ## Resiliencia y manejo de errores (§7.2)
+
 - **Errores HTTP de la API:** mostrar mensaje user-friendly vía `safeJson()` (mensajes por status, sin exponer parseos crudos del proxy). Reintento automático **solo en 503/504** vía `fetchRetry503()` en las lecturas (`/api/stats`, `/api/patterns`); las mutaciones no se reintentan (no idempotentes).
 - **`window.Telegram.WebApp` no disponible:** la app degrada a la pantalla de gestión con banner "Abre esta app desde Telegram" (estado UI visible, no fallo silencioso). Tras retirar `X-Api-Key` (TODO-2), el CRUD requiere `initData` — la app solo es funcional abierta desde Telegram.
 - **`fetch` con timeout:** envuelto en `AbortController`, **12s** por default; `AbortError` se renderiza como timeout con botón de reintento (INV-MINI-08).

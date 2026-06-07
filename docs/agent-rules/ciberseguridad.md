@@ -20,7 +20,6 @@ error humano no se convierta en un desastre. Tres principios rectores:
 
 ---
 
-
 ## 2. Gestión de secretos (la regla #1)
 
 La causa más común de incidentes reales es un **secreto filtrado en git** o en logs. Aquí concentramos
@@ -50,7 +49,6 @@ el mayor esfuerzo.
 
 ---
 
-
 ## 5. Dependencias y cadena de suministro
 
 Una librería vulnerable es una puerta abierta aunque tu código sea perfecto.
@@ -63,7 +61,6 @@ Una librería vulnerable es una puerta abierta aunque tu código sea perfecto.
 - Mantén Next.js, Prisma y NextAuth **actualizados** — los parches de seguridad llegan por ahí.
 
 ---
-
 
 ## 6. Despliegue y operación (Railway, GitHub)
 
@@ -80,12 +77,11 @@ Una librería vulnerable es una puerta abierta aunque tu código sea perfecto.
 
 ---
 
-
 ## 9. Checklist antes de cada despliegue / push
 
 Copia y pega esto antes de subir cambios:
 
-```
+```text
 [ ] ¿Ningún secreto en el código ni en los commits? (gitleaks / revisión)
 [ ] ¿.env y archivos sensibles están en .gitignore?
 [ ] ¿Todos los endpoints nuevos verifican auth Y rol Y ownership?
@@ -98,8 +94,8 @@ Copia y pega esto antes de subir cambios:
 
 ---
 
-
 ## betting-miniapp — específico (cliente estático público)
+
 - Riesgo principal (§1): **XSS** y **datos expuestos en el cliente**. El repo es **público**: cero secretos/credenciales en el HTML/JS (coherente con `INV-MINI-10/11`).
 - **XSS:** escapar todo dato renderizado; sin `eval`; CSP enumerando orígenes externos (`INV-MINI-09`).
 - Almacenamiento en `sessionStorage` por defecto; `localStorage` prohibido salvo la excepción acotada del caché IA (`INV-MINI-04`).

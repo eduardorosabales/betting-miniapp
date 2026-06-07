@@ -5,6 +5,7 @@ Mini-App web (Telegram WebApp) del ecosistema **Betting Stats**. Las **reglas gl
 (`CIBERSEGURIDAD.md`) en la raíz del workspace.
 
 ## Identidad
+
 - **Qué es:** superficie visual embebida en Telegram WebApp. **Solo presenta y formatea**; toda la
   lógica de negocio vive en `betting-stats-bot` y se consume vía `/api/*`.
 - **Stack:** HTML5 + CSS embebido + **JavaScript vanilla** (sin framework SPA) + Chart.js (CDN) +
@@ -16,6 +17,7 @@ Mini-App web (Telegram WebApp) del ecosistema **Betting Stats**. Las **reglas gl
   acotada del caché IA (`INV-MINI-04`).
 
 ## Reglas del proyecto (índice de invariantes)
+
 Decisiones cerradas; si una propuesta contradice un invariante, **avisar y pedir confirmación**.
 Texto íntegro (verbatim del antiguo `instrucciones.txt`) en:
 
@@ -24,6 +26,7 @@ Texto íntegro (verbatim del antiguo `instrucciones.txt`) en:
 - @docs/agent-rules/ciberseguridad.md — extracto de seguridad (fuente canónica: `CIBERSEGURIDAD.md` en la raíz); repo **público** → cero secretos, foco XSS
 
 ## Restricciones explícitas
+
 - ❌ No introducir un **build step** (Webpack/Vite/esbuild) ni un framework SPA (`INV-MINI-01`).
 - ❌ No usar `localStorage` (vector XSS persistente) salvo la única excepción documentada del caché IA (`INV-MINI-04`).
 - ❌ No introducir **credenciales hardcodeadas** ni archivos `.env`/sesiones en el repo (es **público**) (`INV-MINI-10/11`).
@@ -32,5 +35,6 @@ Texto íntegro (verbatim del antiguo `instrucciones.txt`) en:
 - ❌ No mover la media query de escritorio (`@media(min-width:768px)`) fuera del final del `<style>` (`INV-MINI-12`).
 
 ## Mantenimiento
+
 Al cerrar una decisión en producción, **registra proactivamente** el `INV-MINI-NN` (o el `INV-XCUT-NN`
 correspondiente) en `docs/agent-rules/`, sin pedir confirmación para ese registro.
