@@ -274,6 +274,8 @@
       if (!t) return "Otro";
       // Parlay — primero: puede contener "winner", "over", etc. en sus picks
       if (/parlay|combo|acumulad|multi.?bet|\bsgp\b|same.?game/.test(t)) return "Parlay";
+      // Combinada mismo partido
+      if (/\bcombinad/.test(t)) return "Combinada";
       // Futuro / Outright
       if (/\boutright\b|futures?|to win the|championship|tournament winner|season (wins?|points?|goals?)|award|mvp|heisman|ballon/.test(t)) return "Futuro";
       // Moneyline / Ganador — DNB, to qualify, W1/W2, fight/race winner, MMA
@@ -1760,7 +1762,8 @@
         const j = await safeJson(resp);
         if (!j.ok) throw new Error(j.error || "No se detectó ticket");
         const d = j.datos;
-        const esParlay = d.es_parlay && Array.isArray(d.picks) && d.picks.length > 1;
+        const esParlay    = d.es_parlay && Array.isArray(d.picks) && d.picks.length > 1;
+        const esCombinada = d.es_combinada && Array.isArray(d.picks) && d.picks.length > 1;
 
         if (d.equipo1) document.getElementById("mEq1").value = d.equipo1;
         if (d.equipo2) document.getElementById("mEq2").value = d.equipo2;
@@ -1788,6 +1791,15 @@
           Parlay · ${d.picks.length} picks · Cuota total: ${esc(String(d.cuota || ""))}
         </div>
         <div style="width:100%;margin-top:8px;text-align:left">${picksHtml}</div>
+        <div class="u-sub" style="margin-top:6px">Revisa el monto y guarda ↓</div>`;
+        } else if (esCombinada) {
+          const sels = d.picks.map(p => esc(p.tipo_apuesta || "?")).join(" + ");
+          uz.innerHTML = `
+        <div class="u-icon">🔗</div>
+        <div class="u-text" style="color:var(--accent);font-weight:700">
+          Combinada · ${d.picks.length} selecciones · Cuota: ${esc(String(d.cuota || ""))}
+        </div>
+        <div style="width:100%;margin-top:8px;text-align:left;font-size:11px;padding:4px 0">${sels}</div>
         <div class="u-sub" style="margin-top:6px">Revisa el monto y guarda ↓</div>`;
         } else {
           uz.innerHTML = `<div class="u-icon">✅</div><div class="u-text" style="color:var(--win)">Ticket detectado — revisa los campos</div>`;
