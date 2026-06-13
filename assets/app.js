@@ -60,6 +60,82 @@
       Chart.defaults.animations = {};
     }
 
+    // ── Sesión web (Telegram Login Widget) ───────────────────────────────────────
+    // Guarda { token, user } en localStorage después de autenticarse con el Widget.
+    // Permite usar la app desde cualquier navegador sin Telegram abierto.
+    const _SESSION_KEY = "bsw_session";
+    function _loadSession() {
+      try { return JSON.parse(localStorage.getItem(_SESSION_KEY) || "null"); } catch (_) { return null; }
+    }
+    function _saveSession(d) {
+      try { localStorage.setItem(_SESSION_KEY, JSON.stringify(d)); } catch (_) {}
+    }
+    function _clearSession() {
+      try { localStorage.removeItem(_SESSION_KEY); } catch (_) {}
+    }
+    let _webSession = _loadSession(); // { token, user } | null
+    function _isAuthed() { return !!(tg?.initData) || !!_webSession?.token; }
+
+    // Callback global que invoca el widget de Telegram al completar el login.
+    window.onTelegramAuth = async function(data) {
+      const errEl = document.getElementById("web-login-err");
+      if (errEl) errEl.textContent = "";
+      try {
+        const resp = await fetch(API_URL + "/api/session/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        });
+        const j = await resp.json();
+        if (!resp.ok) throw new Error(j.error || "Autenticación fallida");
+        _webSession = { token: j.token, user: j.user };
+        _saveSession(_webSession);
+        document.getElementById("web-login").style.display = "none";
+        await cargarDatos();
+      } catch (err) {
+        if (errEl) errEl.textContent = "⚠️ " + err.message;
+      }
+    };
+
+    function showLoginScreen() {
+      const el = document.getElementById("web-login");
+      if (!el) return;
+      el.style.display = "flex";
+      document.getElementById("bottomNav").style.display = "none";
+      document.getElementById("app").innerHTML = "";
+      // Inyecta el widget de Telegram solo la primera vez.
+      const container = document.getElementById("tg-widget-container");
+      if (container && !container.querySelector("script")) {
+        const botUsername = document.querySelector('meta[name="tg-bot-username"]')?.content || "";
+        if (botUsername) {
+          const s = document.createElement("script");
+          s.src = "https://telegram.org/js/telegram-widget.js?22";
+          s.setAttribute("data-telegram-login", botUsername);
+          s.setAttribute("data-size", "large");
+          s.setAttribute("data-onauth", "onTelegramAuth(user)");
+          s.setAttribute("data-request-access", "write");
+          s.async = true;
+          container.appendChild(s);
+        } else {
+          container.innerHTML = `<p style="color:var(--text-2);font-size:12px">⚠️ Configura el meta <code>tg-bot-username</code> en index.html.</p>`;
+        }
+      }
+    }
+
+    async function logout() {
+      try {
+        if (_webSession?.token) {
+          await fetch(API_URL + "/api/session/logout", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Authorization": "Bearer " + _webSession.token },
+          });
+        }
+      } catch (_) {}
+      _webSession = null;
+      _clearSession();
+      showLoginScreen();
+    }
+
     // ── Auth para endpoints CRUD ──────────────────────────────────────────────────
     // §7.2: parseo de respuesta con mensaje user-friendly por status. Evita exponer
     // errores crípticos de parseo ("Unexpected token <") cuando el proxy de Railway
@@ -94,11 +170,11 @@
       return res;
     }
     function apiHeaders(extra = {}) {
-      // Auth: X-Telegram-Init-Data es el ÚNICO mecanismo (X-Api-Key retirado, TODO-2).
-      // La app solo funciona abierta desde Telegram.
       const headers = { "Content-Type": "application/json", ...extra };
       if (tg?.initData) {
         headers["X-Telegram-Init-Data"] = tg.initData;
+      } else if (_webSession?.token) {
+        headers["Authorization"] = "Bearer " + _webSession.token;
       }
       return headers;
     }
@@ -201,16 +277,19 @@
       if (!mesActual || !mesesDisponibles.includes(mesActual)) mesActual = mesesDisponibles[mesesDisponibles.length - 1] || null;
       renderApp();
     }
-    // Header con avatar + saludo (P2). Nombre desde Telegram, escapado (XSS, INV-MINI-13).
+    // Header con avatar + saludo. Soporta Telegram WebApp y sesión web (Login Widget).
     function _headerHTML(opts) {
-      const u = tg && tg.initDataUnsafe ? tg.initDataUnsafe.user : null;
+      const u = (tg && tg.initDataUnsafe ? tg.initDataUnsafe.user : null) || _webSession?.user || null;
       const name = u && u.first_name ? String(u.first_name).trim() : "";
       const initial = name ? name[0].toUpperCase() : "B";
       const hi = name ? `Hola, ${esc(name)}` : "Hola 👋";
       const refresh = opts && opts.refresh
         ? `<button class="refresh-btn refresh-round" data-action="recargar" aria-label="Recargar">↻</button>`
         : "";
-      return `<div class="header"><div class="header-inner"><div class="user-block"><div class="avatar">${esc(initial)}</div><div class="greet"><span class="hi">${hi}</span><span class="nm">Bet<span>Stats</span></span></div></div>${refresh}</div></div>`;
+      const logoutBtn = (!tg && _webSession)
+        ? `<button data-action="logout" style="background:transparent;border:none;color:var(--text-2);font-size:12px;cursor:pointer;padding:6px 10px;min-height:44px;border-radius:var(--radius-sm)">✕ Salir</button>`
+        : "";
+      return `<div class="header"><div class="header-inner"><div class="user-block"><div class="avatar">${esc(initial)}</div><div class="greet"><span class="hi">${hi}</span><span class="nm">Bet<span>Stats</span></span></div></div>${refresh}${logoutBtn}</div></div>`;
     }
     function _renderSkeleton() {
       const c = `<div class="skeleton" style="height:86px"></div>`;
@@ -232,11 +311,8 @@
       cont.insertBefore(b, cont.firstChild);
     }
     async function cargarDatos() {
-      if (!tg?.initData) {
-        renderApp();
-        setTimeout(() => {
-          showTab("gestion");
-        }, 0);
+      if (!_isAuthed()) {
+        showLoginScreen();
         return;
       }
       // 1) Pintado instantáneo desde caché de sesión (o skeleton si es carga en frío).
@@ -250,6 +326,13 @@
       const timeout = setTimeout(() => _ctrl.abort(), 12000);
       try {
         const res = await fetchRetry503(`${API_URL}/api/stats`, { headers: apiHeaders(), signal: _ctrl.signal });
+        if (res.status === 401 && !tg?.initData) {
+          // Sesión web expirada o invalidada (p.ej. redeploy del servidor).
+          _webSession = null;
+          _clearSession();
+          showLoginScreen();
+          return;
+        }
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json = await res.json();
         if (!json.resumen || !Array.isArray(json.apuestas)) throw new Error("Datos inesperados");
@@ -1252,6 +1335,7 @@
       if (e.target.id === "mOverlay") { closeModal(); return; }
       
       if (act) {
+        if (act === "logout") { logout(); return; }
         if (act === "recargar") { recargar(); return; }
         if (act === "new-bet") { openModal(null, null); return; }
         if (act === "edit-bet") { openModal(parseInt(actEl.dataset.rowid, 10), parseInt(actEl.dataset.idx, 10)); return; }
@@ -1392,15 +1476,8 @@
     let _editRowId = null;
 
     function renderGestion() {
-      const ok = !!tg?.initData;
       return `
   <div class="section-header">Gestión de <span>apuestas</span></div>
-
-  ${!ok ? `<div class="secret-banner">
-    <strong>🔑 Abre esta app desde Telegram</strong><br>
-    El CRUD requiere autenticación de Telegram (initData). Abre la Mini-App desde el
-    bot para registrar, editar o borrar apuestas.
-  </div>` : ""}
 
   <div class="g-toolbar">
     <button class="btn-add" data-action="new-bet">➕ Nueva apuesta</button>
@@ -1746,7 +1823,7 @@
 
     async function analyzeTicket(file) {
       if (!file) return;
-      if (!tg?.initData) { showErr("Abre la app desde Telegram para usar esta función."); return; }
+      if (!_isAuthed()) { showErr("Inicia sesión para usar esta función."); return; }
       const an = document.getElementById("uAn"); const uz = document.getElementById("uZone");
       an.style.display = "flex"; uz.style.opacity = "0.5";
       try {
@@ -1810,7 +1887,7 @@
 
     // archivo: index.html
     async function submitBet() {
-      if (!tg?.initData) { showErr("🔑 Abre la app desde Telegram para usar esta función."); return; }
+      if (!_isAuthed()) { showErr("🔑 Inicia sesión para usar esta función."); return; }
       const esParlay = document.getElementById("mEsParlay")?.checked || false;
       const monto = document.getElementById("mMonto")?.value.trim();
       const dep = document.getElementById("mDep")?.value.trim();
@@ -1924,7 +2001,7 @@
     }
 
     async function deleteBet(rowId) {
-      if (!tg?.initData) { alert("Abre la app desde Telegram para usar esta función."); return; }
+      if (!_isAuthed()) { alert("Inicia sesión para usar esta función."); return; }
       try {
         const resp = await fetch(`${API_URL}/api/bets/${rowId}`, { method: "DELETE", headers: apiHeaders() });
         const j = await safeJson(resp);
