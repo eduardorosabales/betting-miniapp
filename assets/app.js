@@ -103,23 +103,6 @@
       el.style.display = "flex";
       document.getElementById("bottomNav").style.display = "none";
       document.getElementById("app").innerHTML = "";
-      // Inyecta el widget de Telegram solo la primera vez.
-      const container = document.getElementById("tg-widget-container");
-      if (container && !container.querySelector("script")) {
-        const botUsername = document.querySelector('meta[name="tg-bot-username"]')?.content || "";
-        if (botUsername) {
-          const s = document.createElement("script");
-          s.src = "https://telegram.org/js/telegram-widget.js?22";
-          s.setAttribute("data-telegram-login", botUsername);
-          s.setAttribute("data-size", "large");
-          s.setAttribute("data-onauth", "onTelegramAuth(user)");
-          s.setAttribute("data-request-access", "write");
-          s.async = true;
-          container.appendChild(s);
-        } else {
-          container.innerHTML = `<p style="color:var(--text-2);font-size:12px">⚠️ Configura el meta <code>tg-bot-username</code> en index.html.</p>`;
-        }
-      }
     }
 
     async function logout() {

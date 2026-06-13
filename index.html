@@ -2644,7 +2644,14 @@
       <div class="wl-logo">Bet<span>Stats</span></div>
       <p class="wl-sub">Inicia sesión con tu cuenta de Telegram para continuar.</p>
       <div class="wl-widget">
-        <div id="tg-widget-container"></div>
+        <div id="tg-widget-container">
+          <script async src="https://telegram.org/js/telegram-widget.js?22"
+            data-telegram-login="tubettingstatsbot"
+            data-size="large"
+            data-onauth="onTelegramAuth(user)"
+            data-request-access="write">
+          </script>
+        </div>
       </div>
       <p class="wl-hint">Solo los usuarios autorizados pueden acceder.</p>
       <div id="web-login-err" class="wl-err"></div>
