@@ -1146,7 +1146,14 @@
       // ── Recomendación robusta (drawdown p95 Monte Carlo + liquidez) — aditivo ──
       let robustoHtml = "";
       if (c.capital_minimo_robusto != null) {
-        robustoHtml = `
+        // Aviso de muestra baja (n<30): los prospectivos no son fiables aún (aditivo, tolera ausencia).
+        const avisoMuestra = (c.muestra_suficiente === false)
+          ? `
+    <div class="card" style="border:1px solid var(--pend);background:rgba(245,166,35,.12);margin-bottom:10px">
+      <div style="font-size:12px;color:var(--pend);line-height:1.5">⚠️ <strong>Muestra baja</strong> (${c.n_resueltas ?? 0} resueltas &lt; 30): los valores prospectivos (p95/p99, racha esperada) son orientativos, todavía no fiables. Ganan precisión al acumular historial.</div>
+    </div>`
+          : "";
+        robustoHtml = avisoMuestra + `
     <div class="card" style="margin-bottom:10px">
       <div class="card-title">🛡️ Recomendación robusta (p95)</div>
       <div class="capital-hero" style="padding:10px 0 6px">
