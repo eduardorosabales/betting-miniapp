@@ -1122,6 +1122,59 @@
       const c = DATA.capital, cm = DATA.capital_mes;
       if (!c) return '<div class="empty">Faltan datos</div>';
 
+      // ── Semáforo de ventaja (EV/Kelly) — campos aditivos, tolera ausencia (INV-BIZ-12) ──
+      let ventajaHtml = "";
+      if (c.tiene_ventaja != null) {
+        const ok  = c.tiene_ventaja;
+        const col = ok ? "--win" : "--loss";
+        const bg  = ok ? "--win-bg" : "--loss-bg";
+        const titulo = ok ? "🟢 Tienes ventaja" : "🔴 Sin ventaja — el sistema pierde";
+        const cuotaM = ((c.cuota_media_b ?? 0) + 1).toFixed(2);
+        const detalle = ok
+          ? `Winrate ${fmtp((c.winrate_p ?? 0) * 100)} &gt; break-even ${fmtp((c.break_even_wr ?? 0) * 100)} (cuota media ${cuotaM}). Kelly/4 sugerido: <strong>${fmtp((c.kelly_cuarto ?? 0) * 100)}</strong> del capital por apuesta.`
+          : `Winrate ${fmtp((c.winrate_p ?? 0) * 100)} &lt; break-even ${fmtp((c.break_even_wr ?? 0) * 100)} (cuota media ${cuotaM}). Kelly óptimo ≤ 0: ningún capital arregla un edge negativo, solo cambia la velocidad de la ruina. Prioriza subir el winrate o bajar la cuota de entrada.`;
+        ventajaHtml = `
+    <div class="card" style="border:1px solid var(${col});background:var(${bg});margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+        <div style="font-weight:800;font-size:14px;color:var(${col})">${titulo}</div>
+        <div style="font-family:var(--font-num);font-size:13px;color:var(${col})">edge ${fmtp((c.edge_por_stake ?? 0) * 100)}/stake</div>
+      </div>
+      <div style="font-size:12px;color:var(--text-2);margin-top:6px;line-height:1.5">${detalle}</div>
+    </div>`;
+      }
+
+      // ── Recomendación robusta (drawdown p95 Monte Carlo + liquidez) — aditivo ──
+      let robustoHtml = "";
+      if (c.capital_minimo_robusto != null) {
+        robustoHtml = `
+    <div class="card" style="margin-bottom:10px">
+      <div class="card-title">🛡️ Recomendación robusta (p95)</div>
+      <div class="capital-hero" style="padding:10px 0 6px">
+        <div class="capital-label">Capital cómodo robusto</div>
+        <div class="capital-amount">${fmt(c.capital_comodo_robusto)}</div>
+        <div class="capital-sub">Sobrevive el drawdown al percentil 99</div>
+      </div>
+      <div style="margin-top:8px;padding:10px 12px;background:var(--card2);border-radius:var(--radius-md);border:1px solid var(--border)">
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
+          <span style="color:var(--text-2)">Capital mínimo robusto</span>
+          <span style="font-family:var(--font-num);color:var(--pend)">${fmt(c.capital_minimo_robusto)}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
+          <span style="color:var(--text-2)">↳ Drawdown p95 (Monte Carlo)</span>
+          <span style="font-family:var(--font-num);color:var(--loss)">${fmt(c.drawdown_p95)}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:12px">
+          <span style="color:var(--text-2)">↳ + Exposición simultánea viva</span>
+          <span style="font-family:var(--font-num);color:var(--text)">${fmt(c.exp_maxima)}</span>
+        </div>
+      </div>
+      <div class="cap-grid" style="margin-top:10px">
+        <div class="cap-stat"><div class="cap-stat-val red">${c.peor_racha_esperada ?? "—"}</div><div class="cap-stat-lbl">Peor racha esperada (p95)</div></div>
+        <div class="cap-stat"><div class="cap-stat-val accent">${c.simultaneas_max_capital ?? "—"}</div><div class="cap-stat-lbl">Simultáneas que soporta</div></div>
+      </div>
+    </div>`;
+      }
+
       // ── Card desglose capital mínimo ──────────────────────────────────────
       const desglose = (c.exp_maxima != null && c.drawdown_racha != null) ? `
     <div style="margin-top:10px;padding:10px 12px;background:var(--card2);border-radius:var(--radius-md);border:1px solid var(--border)">
@@ -1155,10 +1208,16 @@
       </div>
     </div>` : "";
 
+      const heroLabel = c.capital_minimo_robusto != null
+        ? "Capital cómodo — modelo simple (×1.5)"
+        : "Capital cómodo recomendado";
+
       return `<div class="section-header">Gestión de <span>capital</span></div>
+    ${ventajaHtml}
+    ${robustoHtml}
     <div class="card">
       <div class="capital-hero">
-        <div class="capital-label">Capital cómodo recomendado</div>
+        <div class="capital-label">${heroLabel}</div>
         <div class="capital-amount">${fmt(c.capital_comodo)}</div>
         <div class="capital-sub">Para seguir al tipster sin riesgo de ruina</div>
       </div>
@@ -1174,8 +1233,7 @@
     </div>
     ${capMesHtml}
     <div class="explainer">
-      El <strong>capital mínimo</strong> es el mayor entre: la exposición simultánea máxima histórica, el drawdown estimado de la peor racha perdedora y el drawdown histórico real (curva de balance).
-      El <strong>capital cómodo</strong> añade un 50% de colchón de seguridad sobre ese mínimo.
+      ${c.tiene_ventaja != null ? `El <strong>semáforo de ventaja</strong> compara tu winrate con el break-even de tu cuota media: sin ventaja (Kelly ≤ 0), ningún capital evita la ruina a largo plazo. ` : ""}${c.capital_minimo_robusto != null ? `La <strong>recomendación robusta</strong> dimensiona el capital con el drawdown al percentil 95/99 (simulación Monte Carlo sobre tus resultados reales) más la exposición simultánea viva — más realista que el modelo simple. ` : ""}El <strong>capital mínimo (simple)</strong> es el mayor entre: la exposición simultánea máxima histórica, el drawdown de la peor racha perdedora y el drawdown histórico real; el <strong>cómodo (simple)</strong> le añade un 50% de colchón.
     </div>`;
     }
 
