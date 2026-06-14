@@ -544,7 +544,8 @@
       <div class="hero-card"><div class="hero-label">Win rate</div><div class="hero-value">${wr}%</div></div>
       <div class="hero-card"><div class="hero-label">Últimos 7 días</div><div class="hero-value ${sNeto == null ? "" : signColor(sNeto)}">${sNeto == null ? "—" : fmts(sNeto)}</div></div>
     </div>`;
-      return `${hero}<div class="section-header">Detalle <span>·</span> Historial</div>
+      const shareBtn = `<button class="share-card-btn" data-action="share-card" style="width:100%;margin:2px 0 10px;padding:13px;min-height:48px;display:flex;align-items:center;justify-content:center;gap:8px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius-md);font-size:14px;font-weight:700;cursor:pointer">📸 Compartir imagen</button>`;
+      return `${hero}${shareBtn}<div class="section-header">Detalle <span>·</span> Historial</div>
     <div class="stats-grid">
       <div class="stat-card win-card"><div class="stat-value green">${r.wins}</div><div class="stat-label">Ganadas</div></div>
       <div class="stat-card loss-card"><div class="stat-value red">${r.losses}</div><div class="stat-label">Perdidas</div></div>
@@ -1425,6 +1426,7 @@
         if (act === "load-lazy-chart") { loadLazyChart(actEl.dataset.canvasId, actEl.dataset.makeKey); return; }
         if (act === "retry-patrones") { fetchPatrones(false); return; }
         if (act === "force-patrones") { fetchPatrones(true); return; }
+        if (act === "share-card") { shareCard(); return; }
       }
     });
     document.addEventListener("input", e => {
@@ -1543,6 +1545,55 @@
       _patronesData = null;
       _patronesPeekDone = false;   // un refresh completo vuelve a reconciliar con el bot
       try { await cargarDatos(); } finally { cargando = false; }
+    }
+
+    /* ── Compartir imagen: descarga la tarjeta PNG del bot (/api/share-card,
+       misma imagen que el botón 📸 de Telegram) y la comparte con Web Share API
+       (fallback a descarga). El render vive 100% en el bot (INV-MINI-02). ── */
+    let _sharing = false;
+    async function shareCard() {
+      if (_sharing) return;
+      _sharing = true;
+      const btn = document.querySelector("[data-action='share-card']");
+      const txt = btn ? btn.textContent : "";
+      if (btn) { btn.disabled = true; btn.style.opacity = "0.6"; btn.textContent = "⏳ Generando imagen…"; }
+      haptic("select");
+      try {
+        const res = await fetch(`${API_URL}/api/share-card`, { headers: apiHeaders() });
+        if (!res.ok) {
+          const msg = res.status === 404 ? "Aún no hay datos para compartir." : "No se pudo generar la imagen.";
+          (tg?.showAlert ? tg.showAlert(msg) : alert(msg));
+          return;
+        }
+        const blob = await res.blob();
+        const file = new File([blob], "resumen-apuestas.png", { type: "image/png" });
+        // 1) Web Share API con archivo (móvil/clientes compatibles).
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share({ files: [file], title: "Mis estadísticas", text: "Mi resumen de apuestas 📊" });
+            haptic("success");
+            return;
+          } catch (err) {
+            if (err && err.name === "AbortError") return;  // el usuario canceló
+            // si share falla por otra razón, caemos a la descarga
+          }
+        }
+        // 2) Fallback: descargar el PNG.
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "resumen-apuestas.png";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 4000);
+        haptic("success");
+      } catch (e) {
+        (tg?.showAlert ? tg.showAlert("Error de conexión al generar la imagen.") : alert("Error de conexión."));
+      } finally {
+        if (btn) { btn.disabled = false; btn.style.opacity = ""; btn.textContent = txt; }
+        _sharing = false;
+      }
     }
 
     /* ════════════════════════════════════════════════════════════════
