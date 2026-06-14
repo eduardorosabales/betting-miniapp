@@ -194,7 +194,7 @@
     // la mini-app en Telegram). sessionStorage NO servía porque Telegram lo borra
     // al cerrar el webview, forzando un análisis nuevo en cada sesión.
     const _PATRONES_LS_KEY = "betstats_patrones_cache";
-    let _patronesData = null, _patronesCargando = false;
+    let _patronesData = null, _patronesCargando = false, _patronesPeekDone = false;
 
     function _cargarPatronesGuardados() {
       try {
@@ -1015,6 +1015,25 @@
     }
 
     /* ── Tab: Patrones IA ── */
+    // Reconciliación con el bot al abrir el tab: trae el último análisis persistido
+    // vía ?peek=true (el bot NO genera, no consume presupuesto Anthropic), de modo
+    // que la web refleje el análisis hecho desde Telegram y viceversa. Fire-and-forget:
+    // pinta primero lo de localStorage y repinta solo si el servidor trae uno más nuevo.
+    async function peekPatrones() {
+      try {
+        const res = await fetchRetry503(`${API_URL}/api/patterns?peek=true`, { headers: apiHeaders() });
+        if (!res.ok) return;                         // silencioso: conservamos lo local
+        const server = await res.json();
+        if (server.error || !server.analisis) return; // nada persistido aún → conservar local
+        const localTs = (_patronesData && _patronesData.timestamp) || 0;
+        if (!_patronesData || (server.timestamp || 0) > localTs) {
+          _patronesData = server;
+          _guardarPatrones(server);
+          if (tabActual === "patrones" && !_patronesCargando) renderPatrones();
+        }
+      } catch (_) { /* offline → conservar lo local */ }
+    }
+
     async function fetchPatrones(force = false) {
       if (_patronesCargando) return;
       _patronesCargando = true;
@@ -1044,6 +1063,14 @@
     function renderPatrones() {
       const el = document.getElementById("patrones");
       if (!el) return "";
+
+      // Al abrir el tab, reconciliar UNA vez con el bot (peek, sin generar) para
+      // reflejar el último análisis hecho desde Telegram. Repinta solo si trae algo
+      // más nuevo que lo guardado en localStorage. No interfiere con una generación.
+      if (!_patronesPeekDone && !_patronesCargando) {
+        _patronesPeekDone = true;
+        peekPatrones();
+      }
 
       // Si no hay datos en memoria, intentar recuperar del último análisis
       // guardado (localStorage) antes de lanzar una llamada a Claude.
@@ -1514,6 +1541,7 @@
       // El usuario pide uno nuevo con "⚡ Nuevo análisis" cuando lo necesite; la
       // fecha de "Generado:" deja claro a qué historial corresponde.
       _patronesData = null;
+      _patronesPeekDone = false;   // un refresh completo vuelve a reconciliar con el bot
       try { await cargarDatos(); } finally { cargando = false; }
     }
 
