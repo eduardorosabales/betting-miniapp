@@ -217,12 +217,12 @@
       { id: "historial", icon: "📋", label: "Historial", sections: ["apuestas", "mes"] },
       { id: "gestion",   icon: "⚙️", label: "Gestión",   sections: ["gestion"] },
     ];
-    const ADVANCED = ["kelly", "capital", "patrones"];
+    const ADVANCED = ["kelly", "capital", "patrones", "backtest"];
     const SECTION_LABELS = {
       resumen: "General", semana: "7 días",
       deportes: "Deportes", tipos: "Tipos", rolling: "Tendencia", temporal: "Timing",
       apuestas: "Bets", mes: "Mes", gestion: "Gestión",
-      kelly: "Kelly", capital: "Capital", patrones: "Patrones IA",
+      kelly: "Kelly", capital: "Capital", patrones: "Patrones IA", backtest: "Simulador",
     };
     let currentGroup = "resumen", _inAdvanced = false, _backReady = false;
     function groupOf(sectionId) { return NAV_GROUPS.find(g => g.sections.includes(sectionId)) || null; }
@@ -495,6 +495,7 @@
       kelly: () => renderKelly(),
       patrones: () => renderPatrones(),
       capital: () => renderCapital(),
+      backtest: () => renderBacktest(),
       apuestas: () => renderApuestas(),
       gestion: () => renderGestion(),
     };
@@ -516,6 +517,7 @@
       <div id="kelly"    class="section"></div>
       <div id="patrones" class="section"></div>
       <div id="capital"  class="section"></div>
+      <div id="backtest" class="section"></div>
       <div id="apuestas" class="section"></div>
       <div id="gestion"  class="section"></div>
     </div>`;
@@ -1272,6 +1274,225 @@
     </div>`;
     }
 
+    /* ── Tab: Simulador "what-if" (backtesting) — INV-MINI-26 ──────────────────
+       Presentación pura (INV-MINI-02): arma los filtros, llama POST /api/backtest
+       (el cálculo vive en analytics.simular_backtest, INV-BIZ-14) y pinta KPIs +
+       curva del bank. Sin eventos inline (INV-MINI-13); todo por delegación. ── */
+    const _BT_DIAS = [["Lun", 0], ["Mar", 1], ["Mié", 2], ["Jue", 3], ["Vie", 4], ["Sáb", 5], ["Dom", 6]];
+    let _bt = {
+      bank_inicial: "1000", modo: "fijo", stake_valor: "50",
+      cuota_min: "", cuota_max: "", date_from: "", date_to: "",
+      sel: { deportes: new Set(), tipos: new Set(), dias: new Set() },
+      res: null, base: null, loading: false,
+    };
+
+    function btSetModo(m) {
+      _bt.modo = (m === "porcentaje") ? "porcentaje" : "fijo";
+      haptic("select");
+      document.querySelectorAll("[data-bt-modo]").forEach(b =>
+        b.classList.toggle("active", b.dataset.btModo === _bt.modo));
+      const lbl = document.getElementById("btStakeLabel");
+      const suf = document.getElementById("btStakeSuffix");
+      if (lbl) lbl.textContent = _bt.modo === "porcentaje" ? "% del bank por apuesta" : "Monto fijo por apuesta";
+      if (suf) suf.textContent = _bt.modo === "porcentaje" ? "%" : "$";
+    }
+    function btToggle(group, value) {
+      const set = _bt.sel[group];
+      if (!set) return;
+      const key = (group === "dias") ? parseInt(value, 10) : value;
+      if (set.has(key)) set.delete(key); else set.add(key);
+      haptic("select");
+      const chip = document.querySelector(`[data-bt-toggle="${group}"][data-bt-value="${CSS.escape(value)}"]`);
+      if (chip) chip.classList.toggle("active", set.has(key));
+    }
+    function btReset() {
+      _bt.sel = { deportes: new Set(), tipos: new Set(), dias: new Set() };
+      _bt.cuota_min = ""; _bt.cuota_max = ""; _bt.date_from = ""; _bt.date_to = "";
+      _bt.res = null; _bt.base = null;
+      haptic("light");
+      destroyChart("bt");
+      const sec = document.getElementById("backtest");
+      if (sec) sec.innerHTML = renderBacktest();
+    }
+
+    function renderBacktest() {
+      if (!DATA?.apuestas?.length) return '<div class="section-header">Simulador <span>what-if</span></div><div class="empty">Sin apuestas registradas todavía.</div>';
+      const deportes = [...new Set(DATA.apuestas.map(a => (a.deporte || "").trim()).filter(Boolean))].sort();
+      const tipos = [...new Set(DATA.apuestas.map(a => (a.tipo || "").trim()).filter(Boolean))].sort();
+      const chip = (group, label, value, active) =>
+        `<button class="bt-chip${active ? " active" : ""}" data-bt-toggle="${group}" data-bt-value="${esc(value)}">${esc(label)}</button>`;
+      const depChips = deportes.map(d => chip("deportes", d, d, _bt.sel.deportes.has(d))).join("");
+      const tipoChips = tipos.map(t => chip("tipos", t, t, _bt.sel.tipos.has(t))).join("");
+      const diaChips = _BT_DIAS.map(([lbl, n]) => chip("dias", lbl, String(n), _bt.sel.dias.has(n))).join("");
+      const sufijo = _bt.modo === "porcentaje" ? "%" : "$";
+      const stakeLbl = _bt.modo === "porcentaje" ? "% del bank por apuesta" : "Monto fijo por apuesta";
+
+      return `<div class="section-header">Simulador <span>what-if</span></div>
+    <div class="explainer" style="margin-bottom:14px">
+      🧪 Reproduce tu historial real apostando <strong>solo</strong> lo que elijas, con un bank y un staking a tu medida. Recalcula cuánto habrías ganado o perdido (las pendientes no entran).
+    </div>
+
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-title">⚙️ Parámetros</div>
+      <div class="bt-form">
+        <label class="bt-field"><span>Bank inicial</span>
+          <div class="bt-input-wrap"><span class="bt-prefix">$</span><input class="bt-input" type="number" inputmode="decimal" min="1" step="any" data-bt-input="bank_inicial" value="${esc(_bt.bank_inicial)}"></div>
+        </label>
+        <label class="bt-field"><span id="btStakeLabel">${stakeLbl}</span>
+          <div class="bt-input-wrap"><span class="bt-prefix" id="btStakeSuffix">${sufijo}</span><input class="bt-input" type="number" inputmode="decimal" min="0" step="any" data-bt-input="stake_valor" value="${esc(_bt.stake_valor)}"></div>
+        </label>
+      </div>
+      <div class="bt-modo-row">
+        <button class="bt-chip${_bt.modo === "fijo" ? " active" : ""}" data-bt-modo="fijo">Monto fijo</button>
+        <button class="bt-chip${_bt.modo === "porcentaje" ? " active" : ""}" data-bt-modo="porcentaje">% del bank</button>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-title">🎚️ Filtros <span style="font-weight:500;color:var(--text-3);font-size:11px">(vacío = todo)</span></div>
+      ${deportes.length ? `<div class="bt-flbl">Deporte</div><div class="bt-chips">${depChips}</div>` : ""}
+      ${tipos.length ? `<div class="bt-flbl">Tipo de apuesta</div><div class="bt-chips">${tipoChips}</div>` : ""}
+      <div class="bt-flbl">Día de la semana</div><div class="bt-chips">${diaChips}</div>
+      <div class="bt-form" style="margin-top:12px">
+        <label class="bt-field"><span>Cuota mínima</span><input class="bt-input" type="number" inputmode="decimal" min="1" step="any" placeholder="ej. 1.50" data-bt-input="cuota_min" value="${esc(_bt.cuota_min)}"></label>
+        <label class="bt-field"><span>Cuota máxima</span><input class="bt-input" type="number" inputmode="decimal" min="1" step="any" placeholder="ej. 2.50" data-bt-input="cuota_max" value="${esc(_bt.cuota_max)}"></label>
+        <label class="bt-field"><span>Desde</span><input class="bt-input" type="date" data-bt-input="date_from" value="${esc(_bt.date_from)}"></label>
+        <label class="bt-field"><span>Hasta</span><input class="bt-input" type="date" data-bt-input="date_to" value="${esc(_bt.date_to)}"></label>
+      </div>
+    </div>
+
+    <div class="bt-actions">
+      <button class="bt-run" data-action="bt-run">▶ Simular</button>
+      <button class="bt-reset" data-action="bt-reset">Limpiar</button>
+    </div>
+
+    <div id="btResults">${_bt.res ? btRenderResults() : ""}</div>`;
+    }
+
+    function btRenderResults() {
+      const r = _bt.res, b = _bt.base;
+      if (!r) return "";
+      const wrPct = (r.winrate * 100), wlow = (r.wilson_low * 100), whigh = (r.wilson_high * 100);
+      const netoCls = r.neto >= 0 ? "var(--win)" : "var(--loss)";
+
+      let avisos = "";
+      if (r.quiebra) {
+        avisos += `<div class="bt-alert bt-alert-red">💥 <strong>Quiebra:</strong> el bank llegó a $0 antes de terminar — la simulación se detuvo. Baja el stake o sube el bank inicial.</div>`;
+      }
+      if (!r.muestra_suficiente) {
+        avisos += `<div class="bt-alert bt-alert-amber">⚠️ <strong>Muestra baja</strong> (${r.n_resueltas} apuestas resueltas &lt; 30). El ROI y el winrate de este subconjunto son <strong>orientativos</strong>: filtrar el pasado buscando lo que "habría funcionado" es <em>data-mining</em> y no garantiza resultados futuros.</div>`;
+      }
+      if (r.excluidas_sin_cuota > 0) {
+        avisos += `<div class="bt-alert bt-alert-muted">ℹ️ ${r.excluidas_sin_cuota} apuesta(s) sin cuota válida quedaron fuera (no se puede recalcular su ganancia).</div>`;
+      }
+
+      const cmp = b ? `
+    <div class="bt-cmp">
+      <div class="bt-cmp-row"><span>Con tu filtro</span><strong style="color:${r.neto >= 0 ? "var(--win)" : "var(--loss)"}">${fmts(r.neto)} · ${fmtp(r.roi)} ROI</strong></div>
+      <div class="bt-cmp-row"><span>Apostando todo</span><strong style="color:${b.neto >= 0 ? "var(--win)" : "var(--loss)"}">${fmts(b.neto)} · ${fmtp(b.roi)} ROI</strong></div>
+    </div>` : "";
+
+      return `
+    <div class="card" style="margin-bottom:12px">
+      <div class="capital-hero" style="padding:6px 0 10px">
+        <div class="capital-label">Bank final (desde ${fmt(r.bank_inicial)})</div>
+        <div class="capital-amount" style="color:${netoCls}">${fmt(r.bank_final)}</div>
+        <div class="capital-sub" style="color:${netoCls}">${fmts(r.neto)} neto · ${fmtp(r.roi)} ROI</div>
+      </div>
+      ${avisos}
+      <div class="cap-grid" style="margin-top:6px">
+        <div class="cap-stat"><div class="cap-stat-val">${r.n_apuestas}</div><div class="cap-stat-lbl">Apuestas simuladas</div></div>
+        <div class="cap-stat"><div class="cap-stat-val">${fmtp(wrPct)}</div><div class="cap-stat-lbl">Winrate (${r.wins}-${r.losses})</div></div>
+        <div class="cap-stat"><div class="cap-stat-val red">${fmt(r.drawdown_max)}</div><div class="cap-stat-lbl">Drawdown máx (${fmtp(r.drawdown_pct)})</div></div>
+        <div class="cap-stat"><div class="cap-stat-val red">${r.racha_max_perdedora}</div><div class="cap-stat-lbl">Peor racha perdedora</div></div>
+      </div>
+      <div style="font-size:11px;color:var(--text-3);margin-top:8px;text-align:center">Winrate real entre ${fmtp(wlow)} y ${fmtp(whigh)} (IC 95% de Wilson)</div>
+    </div>
+
+    ${cmp}
+
+    <div class="card">
+      <div class="card-title">📈 Evolución del bank</div>
+      <div class="chart-wrap-tall"><canvas id="chartBt"></canvas></div>
+    </div>`;
+    }
+
+    function makeChartBacktest() {
+      const c = document.getElementById("chartBt");
+      if (!c || !_bt.res || typeof Chart === "undefined") return;
+      destroyChart("bt");
+      const r = _bt.res.curva || [], b = _bt.base ? (_bt.base.curva || []) : [];
+      const n = Math.max(r.length, b.length);
+      const labels = Array.from({ length: n }, (_, i) => i === 0 ? "Inicio" : `#${i}`);
+      const datasets = [{
+        label: "Con filtro", data: r.map(p => p.bank),
+        borderColor: "#00CD96", backgroundColor: "rgba(0,205,150,0.08)",
+        borderWidth: 2, pointRadius: 0, fill: true, tension: 0.25,
+      }];
+      if (b.length) datasets.push({
+        label: "Todo el historial", data: b.map(p => p.bank),
+        borderColor: cssVar("--text-3"), borderWidth: 1.5, borderDash: [5, 4],
+        pointRadius: 0, fill: false, tension: 0.25,
+      });
+      charts.bt = new Chart(c, {
+        type: "line", data: { labels, datasets },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            legend: { display: true, labels: { font: { size: 11, family: "DM Sans" }, boxWidth: 10, padding: 10, color: cssVar("--text-2") } },
+            tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${fmt(ctx.parsed.y)}` } },
+          },
+          scales: {
+            x: { grid: { color: cssVar("--chart-grid") }, ticks: { display: false } },
+            y: { grid: { color: cssVar("--chart-grid") }, ticks: { callback: axisM, font: { size: 10, family: "Space Mono" }, color: cssVar("--chart-tick") } },
+          },
+        },
+      });
+    }
+
+    async function runBacktest() {
+      if (_bt.loading) return;
+      const bank = parseFloat(_bt.bank_inicial), stake = parseFloat(_bt.stake_valor);
+      const errEl = msg => (tg?.showAlert ? tg.showAlert(msg) : alert(msg));
+      if (!(bank > 0)) { errEl("El bank inicial debe ser mayor que 0."); return; }
+      if (!(stake > 0)) { errEl("El stake debe ser mayor que 0."); return; }
+      if (_bt.modo === "porcentaje" && stake > 100) { errEl("En modo %, el stake no puede superar 100%."); return; }
+
+      const filtros = {};
+      if (_bt.date_from) filtros.date_from = _bt.date_from;
+      if (_bt.date_to) filtros.date_to = _bt.date_to;
+      if (_bt.sel.dias.size) filtros.dias_semana = [..._bt.sel.dias];
+      if (_bt.sel.deportes.size) filtros.deportes = [..._bt.sel.deportes];
+      if (_bt.sel.tipos.size) filtros.tipos = [..._bt.sel.tipos];
+      const cmin = parseFloat(_bt.cuota_min), cmax = parseFloat(_bt.cuota_max);
+      if (!isNaN(cmin)) filtros.cuota_min = cmin;
+      if (!isNaN(cmax)) filtros.cuota_max = cmax;
+
+      const payload = { bank_inicial: bank, modo_stake: _bt.modo, stake_valor: stake, filtros };
+      const btn = document.querySelector("[data-action='bt-run']");
+      const orig = btn ? btn.textContent : "";
+      _bt.loading = true;
+      if (btn) { btn.disabled = true; btn.textContent = "⏳ Simulando…"; }
+      haptic("light");
+      try {
+        const resp = await fetch(`${API_URL}/api/backtest`, { method: "POST", headers: apiHeaders(), body: JSON.stringify(payload) });
+        const j = await safeJson(resp);
+        if (!resp.ok || j.error) throw new Error(j.error || `Error ${resp.status}`);
+        _bt.res = j.resultado; _bt.base = j.baseline;
+        const box = document.getElementById("btResults");
+        if (box) box.innerHTML = btRenderResults();
+        haptic("success");
+        if (!_bt.res.n_apuestas) errEl("Ningún resultado coincide con esos filtros.");
+        setTimeout(makeChartBacktest, 60);
+      } catch (err) {
+        haptic("error");
+        errEl("❌ " + err.message);
+      } finally {
+        _bt.loading = false;
+        if (btn) { btn.disabled = false; btn.textContent = orig || "▶ Simular"; }
+      }
+    }
+
     /* ── Tab: Apuestas ── */
     function renderApuestas() {
       const deportesUnicos = ["Todos", ...new Set(DATA.apuestas.map(a => a.deporte).filter(Boolean))];
@@ -1386,6 +1607,7 @@
       if (tabActual === "deportes") { makeChartDep(); }
       if (tabActual === "tipos") { makeChartTipo(); }
       if (tabActual === "rolling") { makeChartRolling(); }
+      if (tabActual === "backtest" && _bt.res) { makeChartBacktest(); }
     }
 
     /* ── Events ── */
@@ -1394,6 +1616,12 @@
       if (chip) { filtroDeporte = chip.dataset.filtroDeporte; document.querySelectorAll("[data-filtro-deporte]").forEach(c => c.classList.toggle("active", c.dataset.filtroDeporte === filtroDeporte)); const l = document.getElementById("apuestasLista"); if (l) l.innerHTML = renderApuestasList(); return; }
       const rs = e.target.closest("[data-rolling-show]");
       if (rs) { rollingShow = parseInt(rs.dataset.rollingShow, 10); haptic("select"); document.querySelectorAll("[data-rolling-show]").forEach(b => b.classList.toggle("active", b === rs)); destroyChart("rolling"); makeChartRolling(); return; }
+      // Simulador (backtest): chips de modo de staking y de filtros.
+      const btModo = e.target.closest("[data-bt-modo]");
+      if (btModo) { btSetModo(btModo.dataset.btModo); return; }
+      const btChip = e.target.closest("[data-bt-toggle]");
+      if (btChip) { btToggle(btChip.dataset.btToggle, btChip.dataset.btValue); return; }
+
       const grp = e.target.closest("[data-group]");
       if (grp) { showGroup(grp.dataset.group); return; }
       const sub = e.target.closest("[data-section]");
@@ -1427,6 +1655,8 @@
         if (act === "retry-patrones") { fetchPatrones(false); return; }
         if (act === "force-patrones") { fetchPatrones(true); return; }
         if (act === "share-card") { shareCard(); return; }
+        if (act === "bt-run") { runBacktest(); return; }
+        if (act === "bt-reset") { btReset(); return; }
       }
     });
     document.addEventListener("input", e => {
@@ -1447,6 +1677,9 @@
         const msg = document.getElementById("cuotaAutoMsg");
         if (msg) msg.style.display = "none";
       }
+
+      const btIn = e.target.closest("[data-bt-input]");
+      if (btIn) { _bt[btIn.dataset.btInput] = btIn.value; return; }
     });
     document.addEventListener("change", e => {
       const el = e.target.closest("#mEsParlay");
@@ -1469,7 +1702,7 @@
       if (z) { handleDrop(e); }
     });
 
-    const _ALWAYS_RERENDER = new Set(["apuestas", "mes", "gestion", "patrones"]);
+    const _ALWAYS_RERENDER = new Set(["apuestas", "mes", "gestion", "patrones", "backtest"]);
 
     /* ── Sub-navegación (segmented control) del grupo activo o de la vista "Más" ── */
     function renderSubNav() {
@@ -1508,6 +1741,7 @@
       if (tabActual === "deportes") { destroyChart("dep"); }
       if (tabActual === "tipos") { destroyChart("tipo"); }
       if (tabActual === "rolling") { destroyChart("rolling"); }
+      if (tabActual === "backtest") { destroyChart("bt"); }
       // Sincronizar grupo / sub-vista avanzada según la sección destino
       if (ADVANCED.includes(id)) {
         if (!_inAdvanced) { _inAdvanced = true; try { tg?.BackButton?.show(); } catch (_) {} }
