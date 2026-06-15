@@ -1283,7 +1283,7 @@
       bank_inicial: "1000", modo: "fijo", stake_valor: "50",
       cuota_min: "", cuota_max: "", date_from: "", date_to: "",
       sel: { deportes: new Set(), tipos: new Set(), dias: new Set() },
-      res: null, base: null, loading: false,
+      res: null, base: null, search: null, loading: false, searching: false,
     };
 
     function btSetModo(m) {
@@ -1308,7 +1308,7 @@
     function btReset() {
       _bt.sel = { deportes: new Set(), tipos: new Set(), dias: new Set() };
       _bt.cuota_min = ""; _bt.cuota_max = ""; _bt.date_from = ""; _bt.date_to = "";
-      _bt.res = null; _bt.base = null;
+      _bt.res = null; _bt.base = null; _bt.search = null;
       haptic("light");
       destroyChart("bt");
       const sec = document.getElementById("backtest");
@@ -1318,7 +1318,10 @@
     function renderBacktest() {
       if (!DATA?.apuestas?.length) return '<div class="section-header">Simulador <span>what-if</span></div><div class="empty">Sin apuestas registradas todavía.</div>';
       const deportes = [...new Set(DATA.apuestas.map(a => (a.deporte || "").trim()).filter(Boolean))].sort();
-      const tipos = [...new Set(DATA.apuestas.map(a => (a.tipo || "").trim()).filter(Boolean))].sort();
+      // Tipos = CATEGORÍAS canónicas (Moneyline, Handicap, Total O/U…), no la variante
+      // cruda con equipo/línea: reusa normalizaTipo (gemelo JS de _normalizar_tipo,
+      // INV-XCUT-02/07). El backend filtra por la misma categoría normalizada.
+      const tipos = [...new Set(DATA.apuestas.map(a => normalizaTipo(a.tipo)).filter(Boolean))].sort();
       const chip = (group, label, value, active) =>
         `<button class="bt-chip${active ? " active" : ""}" data-bt-toggle="${group}" data-bt-value="${esc(value)}">${esc(label)}</button>`;
       const depChips = deportes.map(d => chip("deportes", d, d, _bt.sel.deportes.has(d))).join("");
@@ -1366,7 +1369,10 @@
       <button class="bt-reset" data-action="bt-reset">Limpiar</button>
     </div>
 
-    <div id="btResults">${_bt.res ? btRenderResults() : ""}</div>`;
+    <div id="btResults">${_bt.res ? btRenderResults() : ""}</div>
+
+    <button class="bt-search-btn" data-action="bt-search">🔎 Buscar el mejor filtro automáticamente</button>
+    <div id="btSearch">${_bt.search ? btRenderSearch() : ""}</div>`;
     }
 
     function btRenderResults() {
@@ -1491,6 +1497,105 @@
         _bt.loading = false;
         if (btn) { btn.disabled = false; btn.textContent = orig || "▶ Simular"; }
       }
+    }
+
+    /* ── Buscador de mejor filtro (barrido server-side, INV-BIZ-15) ── */
+    async function runSearch() {
+      if (_bt.searching) return;
+      const bank = parseFloat(_bt.bank_inicial), stake = parseFloat(_bt.stake_valor);
+      const errEl = msg => (tg?.showAlert ? tg.showAlert(msg) : alert(msg));
+      if (!(bank > 0)) { errEl("El bank inicial debe ser mayor que 0."); return; }
+      if (!(stake > 0)) { errEl("El stake debe ser mayor que 0."); return; }
+      if (_bt.modo === "porcentaje" && stake > 100) { errEl("En modo %, el stake no puede superar 100%."); return; }
+
+      const payload = { bank_inicial: bank, modo_stake: _bt.modo, stake_valor: stake };
+      const btn = document.querySelector("[data-action='bt-search']");
+      const orig = btn ? btn.textContent : "";
+      _bt.searching = true;
+      if (btn) { btn.disabled = true; btn.textContent = "⏳ Analizando combinaciones…"; }
+      haptic("light");
+      try {
+        const resp = await fetch(`${API_URL}/api/backtest/search`, { method: "POST", headers: apiHeaders(), body: JSON.stringify(payload) });
+        const j = await safeJson(resp);
+        if (j.error === "historial_insuficiente") {
+          _bt.search = j;
+        } else if (j.error) {
+          throw new Error(j.error);
+        } else {
+          _bt.search = j;
+        }
+        const box = document.getElementById("btSearch");
+        if (box) box.innerHTML = btRenderSearch();
+        haptic("success");
+      } catch (err) {
+        haptic("error");
+        errEl("❌ " + err.message);
+      } finally {
+        _bt.searching = false;
+        if (btn) { btn.disabled = false; btn.textContent = orig || "🔎 Buscar el mejor filtro automáticamente"; }
+      }
+    }
+
+    function btRenderSearch() {
+      const d = _bt.search;
+      if (!d) return "";
+      if (d.error === "historial_insuficiente") {
+        return `<div class="bt-alert bt-alert-amber" style="margin-top:12px">⚠️ <strong>Historial insuficiente</strong> para el buscador (${d.n_total || 0} apuestas resueltas). Necesitas más datos para partir en train/test y medir significancia. Sigue registrando y vuelve más adelante.</div>`;
+      }
+      const sp = d.split || {};
+      const cands = d.candidatos || [];
+      const resumen = `
+    <div class="bt-alert bt-alert-muted" style="margin-top:12px">
+      🔬 Evalué <strong>${d.evaluados}</strong> combinaciones (descarté ${d.descartados_muestra} por muestra &lt; ${d.min_muestra}).
+      <strong>${d.robustos}</strong> superan significancia (FDR α=${d.alpha}); <strong>${d.sobreviven_oos}</strong> se mantienen fuera de muestra.
+      Descubierto en el ${Math.round((sp.train_frac || 0.7) * 100)}% antiguo (${sp.train_n} bets, hasta ${esc(sp.fecha_corte || "—")}); probado en el ${sp.test_n} más recientes.
+      <br><em>Filtrar el pasado es exploración estadística: el rendimiento histórico no garantiza el futuro.</em>
+    </div>`;
+
+      if (!cands.length) {
+        return resumen + `<div class="empty" style="margin-top:8px">Ningún subconjunto alcanzó la muestra mínima.</div>`;
+      }
+
+      const rows = cands.map((c, i) => {
+        const badge = c.robusto
+          ? `<span class="bt-badge bt-badge-ok">robusto</span>`
+          : (c.pasa_fdr ? `<span class="bt-badge bt-badge-warn">FDR sí · IC no</span>` : `<span class="bt-badge bt-badge-muted">no signif.</span>`);
+        const trCol = c.roi_train >= 0 ? "var(--win)" : "var(--loss)";
+        const teTxt = (c.roi_test == null)
+          ? `<span style="color:var(--text-3)">—</span>`
+          : `<span style="color:${c.roi_test >= 0 ? "var(--win)" : "var(--loss)"}">${fmtp(c.roi_test)}<small style="color:var(--text-3)"> (${c.n_test})</small></span>`;
+        return `
+    <div class="bt-cand">
+      <div class="bt-cand-top">
+        <span class="bt-cand-lbl">${esc(c.label)}</span>${badge}
+      </div>
+      <div class="bt-cand-metrics">
+        <span>n=${c.n}</span>
+        <span>WR ${fmtp(c.winrate * 100)}</span>
+        <span title="break-even de la cuota media">BE ${fmtp(c.break_even * 100)}</span>
+        <span>ROI train <strong style="color:${trCol}">${fmtp(c.roi_train)}</strong></span>
+        <span>ROI test ${teTxt}</span>
+      </div>
+      <button class="bt-cand-apply" data-action="bt-apply" data-bt-idx="${i}">Aplicar este filtro</button>
+    </div>`;
+      }).join("");
+
+      return resumen + `<div class="bt-cands">${rows}</div>`;
+    }
+
+    function btApply(idx) {
+      const d = _bt.search;
+      if (!d || !d.candidatos || !d.candidatos[idx]) return;
+      const f = d.candidatos[idx].filtro || {};
+      _bt.sel = { deportes: new Set(f.deportes || []), tipos: new Set(f.tipos || []), dias: new Set(f.dias_semana || []) };
+      _bt.cuota_min = f.cuota_min != null ? String(f.cuota_min) : "";
+      _bt.cuota_max = f.cuota_max != null ? String(f.cuota_max) : "";
+      haptic("select");
+      const sec = document.getElementById("backtest");
+      if (sec) { sec.innerHTML = renderBacktest(); sec.classList.add("active"); }
+      runBacktest();
+      const r = document.getElementById("btResults");
+      if (r) r.scrollIntoView({ behavior: "smooth", block: "start" });
     }
 
     /* ── Tab: Apuestas ── */
@@ -1657,6 +1762,8 @@
         if (act === "share-card") { shareCard(); return; }
         if (act === "bt-run") { runBacktest(); return; }
         if (act === "bt-reset") { btReset(); return; }
+        if (act === "bt-search") { runSearch(); return; }
+        if (act === "bt-apply") { btApply(parseInt(actEl.dataset.btIdx, 10)); return; }
       }
     });
     document.addEventListener("input", e => {
