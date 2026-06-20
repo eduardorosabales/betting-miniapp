@@ -1965,27 +1965,12 @@
       const txt = btn ? btn.textContent : "";
       if (btn) { btn.disabled = true; btn.style.opacity = "0.6"; btn.textContent = "⏳ Generando imagen…"; }
       haptic("select");
-      try {
-        const res = await fetch(`${API_URL}/api/share-card`, { headers: apiHeaders() });
-        if (!res.ok) {
-          const msg = res.status === 404 ? "Aún no hay datos para compartir." : "No se pudo generar la imagen.";
-          (tg?.showAlert ? tg.showAlert(msg) : alert(msg));
-          return;
-        }
-        const blob = await res.blob();
-        const file = new File([blob], "resumen-apuestas.png", { type: "image/png" });
-        // 1) Web Share API con archivo (móvil/clientes compatibles).
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          try {
-            await navigator.share({ files: [file], title: "Mis estadísticas", text: "Mi resumen de apuestas 📊" });
-            haptic("success");
-            return;
-          } catch (err) {
-            if (err && err.name === "AbortError") return;  // el usuario canceló
-            // si share falla por otra razón, caemos a la descarga
-          }
-        }
-        // 2) Fallback: descargar el PNG.
+      // Aviso visible dentro Y fuera de Telegram: tg.showAlert es un NO-OP cuando la app
+      // no corre dentro del cliente Telegram (el SDK del CDN crea window.Telegram.WebApp
+      // igual, pero sin cliente que reciba el postMessage) → usar alert() real ahí.
+      const notify = (m) => (tg?.initData && tg.showAlert) ? tg.showAlert(m) : alert(m);
+      // Descarga directa del PNG (camino fiable en escritorio y fallback universal).
+      const descargar = (blob) => {
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
@@ -1995,8 +1980,37 @@
         a.remove();
         setTimeout(() => URL.revokeObjectURL(url), 4000);
         haptic("success");
+      };
+      try {
+        const res = await fetch(`${API_URL}/api/share-card`, { headers: apiHeaders() });
+        if (!res.ok) {
+          notify(res.status === 404 ? "Aún no hay datos para compartir."
+               : res.status === 401 ? "Sesión expirada. Vuelve a iniciar sesión para compartir."
+               : "No se pudo generar la imagen.");
+          return;
+        }
+        const blob = await res.blob();
+        const file = new File([blob], "resumen-apuestas.png", { type: "image/png" });
+        // 1) Web Share API con archivo SOLO si el cliente puede compartir archivos
+        //    Y estamos en un contexto táctil/Telegram. En escritorio el share se intenta
+        //    tras el await del fetch, lo que suele invalidar el user-gesture (NotAllowedError);
+        //    por eso ahí vamos directo a la descarga, que es lo que el usuario espera.
+        const puedeCompartirArchivo = !!(navigator.canShare && navigator.canShare({ files: [file] }));
+        const esTactil = !!(tg?.initData) || (navigator.maxTouchPoints > 0);
+        if (puedeCompartirArchivo && esTactil) {
+          try {
+            await navigator.share({ files: [file], title: "Mis estadísticas", text: "Mi resumen de apuestas 📊" });
+            haptic("success");
+            return;
+          } catch (err) {
+            if (err && err.name === "AbortError") return;  // el usuario canceló
+            // si share falla por otra razón (gesto expirado, no permitido) → descargamos
+          }
+        }
+        // 2) Fallback / escritorio: descargar el PNG.
+        descargar(blob);
       } catch (e) {
-        (tg?.showAlert ? tg.showAlert("Error de conexión al generar la imagen.") : alert("Error de conexión."));
+        notify("Error de conexión al generar la imagen.");
       } finally {
         if (btn) { btn.disabled = false; btn.style.opacity = ""; btn.textContent = txt; }
         _sharing = false;
