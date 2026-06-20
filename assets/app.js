@@ -1280,7 +1280,7 @@
        curva del bank. Sin eventos inline (INV-MINI-13); todo por delegación. ── */
     const _BT_DIAS = [["Lun", 0], ["Mar", 1], ["Mié", 2], ["Jue", 3], ["Vie", 4], ["Sáb", 5], ["Dom", 6]];
     let _bt = {
-      bank_inicial: "1000", modo: "fijo", stake_valor: "50",
+      bank_inicial: "1000", modo: "fijo", stake_valor: "20",
       cuota_min: "", cuota_max: "", date_from: "", date_to: "",
       sel: { deportes: new Set(), tipos: new Set(), dias: new Set() },
       res: null, base: null, search: null, loading: false, searching: false,
@@ -1383,7 +1383,11 @@
 
       let avisos = "";
       if (r.quiebra) {
-        avisos += `<div class="bt-alert bt-alert-red">💥 <strong>Quiebra:</strong> el bank llegó a $0 antes de terminar — la simulación se detuvo. Baja el stake o sube el bank inicial.</div>`;
+        const fq = r.fecha_quiebra ? ` el ${esc(r.fecha_quiebra)}` : "";
+        const om = r.apuestas_omitidas
+          ? ` <strong>${r.apuestas_omitidas} apuesta(s) posteriores —incluidas las nuevas— no se simularon.</strong>`
+          : "";
+        avisos += `<div class="bt-alert bt-alert-red">💥 <strong>Quiebra${fq}:</strong> el bank llegó a $0 y la simulación se detuvo ahí.${om} Sube el bank inicial o baja el stake para recorrer el historial completo.</div>`;
       }
       if (!r.muestra_suficiente) {
         avisos += `<div class="bt-alert bt-alert-amber">⚠️ <strong>Muestra baja</strong> (${r.n_resueltas} apuestas resueltas &lt; 30). El ROI y el winrate de este subconjunto son <strong>orientativos</strong>: filtrar el pasado buscando lo que "habría funcionado" es <em>data-mining</em> y no garantiza resultados futuros.</div>`;
@@ -1417,9 +1421,71 @@
 
     ${cmp}
 
+    ${btRenderMensual()}
+
     <div class="card">
       <div class="card-title">📈 Evolución del bank</div>
       <div class="chart-wrap-tall"><canvas id="chartBt"></canvas></div>
+    </div>`;
+    }
+
+    /* ── Neto por mes + pico neto (high-water) de la simulación — consume los
+       campos aditivos pico_neto/desglose_mensual/mejor_mes/peor_mes de
+       /api/backtest (INV-BIZ-14). Presentación pura: reusa las clases nm- y
+       capital- existentes (sin CSS nuevo), todo por esc(), sin eventos inline.
+       Tolera la ausencia de los campos (bot sin desplegar) → "". ── */
+    const _BT_MES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+    function btMesLbl(m) {
+      if (!m || m === "—") return "Sin fecha";
+      const [y, mo] = String(m).split("-");
+      const i = parseInt(mo, 10) - 1;
+      return (_BT_MES[i] || mo) + " " + y;
+    }
+    function btRenderMensual() {
+      const r = _bt.res;
+      if (!r || !Array.isArray(r.desglose_mensual) || !r.desglose_mensual.length) return "";
+      const col = n => (Number(n) >= 0 ? "var(--win)" : "var(--loss)");
+      const mm = r.mejor_mes, pm = r.peor_mes;
+
+      const cards = r.desglose_mensual.map(d => `
+      <div class="nm-card">
+        <div class="nm-card-head">
+          <span class="nm-mes">${esc(btMesLbl(d.mes))}</span>
+          <span class="nm-neto ${d.pico_neto_mes >= 0 ? "pos" : "neg"}">${fmts(d.pico_neto_mes)}<small class="nm-neto-tag">pico</small></span>
+        </div>
+        <div class="nm-dims">
+          <span class="nm-dim">P/L mes <b style="color:${col(d.pl)}">${fmts(d.pl)}</b></span>
+          <span class="nm-dim">Cierre <b style="color:${col(d.neto_fin)}">${fmts(d.neto_fin)}</b></span>
+          <span class="nm-dim">${d.n} bet${d.n !== 1 ? "s" : ""}</span>
+        </div>
+      </div>`).join("");
+
+      const hero = `
+      <div class="capital-hero" style="padding:6px 0 10px">
+        <div class="capital-label">📈 Máximo neto alcanzado${r.pico_neto_fecha ? ` (${esc(r.pico_neto_fecha)})` : ""}</div>
+        <div class="capital-amount" style="color:${col(r.pico_neto)}">${fmts(r.pico_neto)}</div>
+        <div class="capital-sub">el punto más alto que tocó el bank en toda la simulación${r.pico_neto_i ? ` · apuesta #${r.pico_neto_i}` : ""}</div>
+      </div>`;
+
+      const resumen = `
+      <div class="nm-resumen">
+        <div class="nm-stat">
+          <span class="nm-stat-k">Mejor mes (por pico)</span>
+          <span class="nm-stat-v ${mm && mm.pico_neto_mes >= 0 ? "pos" : ""}">${mm ? esc(btMesLbl(mm.mes)) + " · " + fmts(mm.pico_neto_mes) : "—"}</span>
+        </div>
+        <div class="nm-stat">
+          <span class="nm-stat-k">Peor mes (por P/L)</span>
+          <span class="nm-stat-v ${pm && pm.pl >= 0 ? "pos" : "neg"}">${pm ? esc(btMesLbl(pm.mes)) + " · " + fmts(pm.pl) : "—"}</span>
+        </div>
+      </div>`;
+
+      return `
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-title">🗓️ Neto por mes <span style="font-weight:500;color:var(--text-3);font-size:11px">(de esta simulación)</span></div>
+      ${hero}
+      ${resumen}
+      <div class="nm-grid" style="margin-top:10px">${cards}</div>
+      <div style="font-size:11px;color:var(--text-3);margin-top:8px;text-align:center"><strong>Pico</strong> = mayor neto acumulado que tocó el bank dentro del mes · <strong>P/L mes</strong> = ganancia/pérdida del propio mes · <strong>Cierre</strong> = neto acumulado al terminar el mes.</div>
     </div>`;
     }
 
