@@ -214,14 +214,14 @@
     const NAV_GROUPS = [
       { id: "resumen",   icon: "🏠", label: "Resumen",   sections: ["resumen", "semana"], more: true },
       { id: "graficas",  icon: "📈", label: "Gráficas",  sections: ["deportes", "tipos", "rolling", "temporal"] },
-      { id: "historial", icon: "📋", label: "Historial", sections: ["apuestas", "mes"] },
+      { id: "historial", icon: "📋", label: "Historial", sections: ["apuestas", "mes", "calendario"] },
       { id: "gestion",   icon: "⚙️", label: "Gestión",   sections: ["gestion"] },
     ];
     const ADVANCED = ["kelly", "capital", "patrones", "backtest"];
     const SECTION_LABELS = {
       resumen: "General", semana: "7 días",
       deportes: "Deportes", tipos: "Tipos", rolling: "Tendencia", temporal: "Timing",
-      apuestas: "Bets", mes: "Mes", gestion: "Gestión",
+      apuestas: "Bets", mes: "Mes", calendario: "Calendario", gestion: "Gestión",
       kelly: "Kelly", capital: "Capital", patrones: "Patrones IA", backtest: "Simulador",
     };
     let currentGroup = "resumen", _inAdvanced = false, _backReady = false;
@@ -239,6 +239,12 @@
     const fmt = n => n == null ? "—" : `$${Number(n).toLocaleString("es-MX", { maximumFractionDigits: 0 })}`;
     const fmtp = n => n == null ? "—" : `${Number(n).toFixed(1)}%`;
     const fmts = n => n == null ? "—" : Number(n) >= 0 ? `+${fmt(n)}` : fmt(n);
+    // Neto compacto para celdas del calendario (espacio mínimo): ±N o ±N.Xk.
+    const fmtsCompact = n => {
+      if (n == null) return "";
+      const v = Number(n), s = v >= 0 ? "+" : "−", a = Math.abs(v);
+      return a >= 1000 ? `${s}${(a / 1000).toFixed(a >= 10000 ? 0 : 1)}k` : `${s}${Math.round(a)}`;
+    };
     const signColor = n => Number(n) >= 0 ? "green" : "red";
     function mesLabel(m) { if (!m) return "—"; const [y, mo] = m.split("-"); return ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"][parseInt(mo, 10) - 1] + " " + y }
 
@@ -497,6 +503,7 @@
       capital: () => renderCapital(),
       backtest: () => renderBacktest(),
       apuestas: () => renderApuestas(),
+      calendario: () => renderCalendario(),
       gestion: () => renderGestion(),
     };
 
@@ -519,6 +526,7 @@
       <div id="capital"  class="section"></div>
       <div id="backtest" class="section"></div>
       <div id="apuestas" class="section"></div>
+      <div id="calendario" class="section"></div>
       <div id="gestion"  class="section"></div>
     </div>`;
       const nav = document.getElementById("bottomNav");
@@ -646,6 +654,89 @@
       document.getElementById("mesContent").innerHTML = renderMesContent();
       const ni = mesesDisponibles.indexOf(mesActual);
       document.querySelectorAll("[data-mes-dir]").forEach(btn => { const d = parseInt(btn.dataset.mesDir, 10), dis = (d === -1 && ni <= 0) || (d === 1 && ni >= mesesDisponibles.length - 1); btn.disabled = dis; btn.style.opacity = dis ? "0.3" : ""; btn.style.cursor = dis ? "default" : ""; });
+    }
+
+    /* ── Tab: Calendario ──
+       Rejilla mensual con la GANANCIA REAL (neto) ganada por día. Consume el campo
+       aditivo DATA.grafica_dias de /api/stats (INV-XCUT-15; el cálculo vive 100% en
+       el bot, INV-MINI-02). Estado de mes/día propio (mesCalActual/calDiaSel) para no
+       interferir con el tab "Mes" (mesActual). Presentación pura: todo dato por esc(). */
+    let mesCalActual = null, calDiaSel = null;
+    // Mapa "YYYY-MM-DD" → {neto, wins, losses, n, apostado, ganado} (lectura O(1) por celda).
+    function _calMap() {
+      const m = {};
+      (DATA.grafica_dias || []).forEach(d => { if (d && d.fecha) m[d.fecha] = d; });
+      return m;
+    }
+    function renderCalendario() {
+      if (!DATA || !mesesDisponibles.length) return '<div class="empty">No hay datos</div>';
+      if (!mesCalActual || !mesesDisponibles.includes(mesCalActual)) mesCalActual = mesActual || mesesDisponibles[mesesDisponibles.length - 1];
+      calDiaSel = null;
+      const idx = mesesDisponibles.indexOf(mesCalActual);
+      return `<div class="mes-selector">
+    <button class="mes-nav" data-mescal-dir="-1" ${idx <= 0 ? "disabled style='opacity:0.3;cursor:default'" : ""}>‹</button>
+    <span class="mes-label" id="calLabel">${mesLabel(mesCalActual)}</span>
+    <button class="mes-nav" data-mescal-dir="1" ${idx >= mesesDisponibles.length - 1 ? "disabled style='opacity:0.3;cursor:default'" : ""}>›</button>
+  </div>
+  <div id="calBody">${renderCalContent()}</div>`;
+    }
+    function renderCalContent() {
+      if (!mesCalActual) return '<div class="empty">No hay datos este mes</div>';
+      const [y, mo] = mesCalActual.split("-").map(n => parseInt(n, 10));
+      const mapa = _calMap();
+      // Resumen del mes (suma de netos diarios del mes en curso).
+      let netoMes = 0, diasGanados = 0, diasPerdidos = 0;
+      Object.keys(mapa).forEach(f => {
+        if (!f.startsWith(mesCalActual)) return;
+        const nt = mapa[f].neto || 0;
+        netoMes += nt;
+        if (nt > 0) diasGanados++; else if (nt < 0) diasPerdidos++;
+      });
+      // getUTCDay: 0=Dom..6=Sáb → reindex a 0=Lun..6=Dom.
+      const firstDow = (new Date(Date.UTC(y, mo - 1, 1)).getUTCDay() + 6) % 7;
+      const diasEnMes = new Date(Date.UTC(y, mo, 0)).getUTCDate();
+      const dows = ["L", "M", "X", "J", "V", "S", "D"];
+      let celdas = dows.map(d => `<div class="cal-dow">${d}</div>`).join("");
+      for (let i = 0; i < firstDow; i++) celdas += `<div class="cal-cell cal-empty"></div>`;
+      for (let d = 1; d <= diasEnMes; d++) {
+        const fecha = `${mesCalActual}-${String(d).padStart(2, "0")}`;
+        const info = mapa[fecha];
+        const nt = info ? info.neto : null;
+        const cls = nt == null || nt === 0 ? "cal-neutral" : nt > 0 ? "cal-win" : "cal-loss";
+        const monto = nt == null ? "" : `<span class="cal-net">${fmtsCompact(nt)}</span>`;
+        celdas += `<button class="cal-cell ${cls}" data-cal-day="${fecha}"><span class="cal-num">${d}</span>${monto}</button>`;
+      }
+      return `<div class="kpi-row">
+      <div class="kpi"><div class="kpi-label">Neto del mes</div><div class="kpi-value ${signColor(netoMes)}">${fmts(netoMes)}</div></div>
+      <div class="kpi"><div class="kpi-label">Días +/−</div><div class="kpi-value"><span class="green">${diasGanados}</span> / <span class="red">${diasPerdidos}</span></div></div>
+    </div>
+    <div class="cal-grid">${celdas}</div>
+    <div class="cal-legend"><span><i class="cal-dot cal-win"></i>Ganancia</span><span><i class="cal-dot cal-loss"></i>Pérdida</span><span><i class="cal-dot cal-neutral"></i>Sin/0</span></div>
+    <div id="calDetail" class="cal-detail"><div class="empty">Toca un día para ver el detalle</div></div>`;
+    }
+    function cambiarMesCal(dir) {
+      const idx = mesesDisponibles.indexOf(mesCalActual), nuevo = idx + dir;
+      if (nuevo < 0 || nuevo >= mesesDisponibles.length) return;
+      mesCalActual = mesesDisponibles[nuevo];
+      const lbl = document.getElementById("calLabel");
+      if (lbl) lbl.textContent = mesLabel(mesCalActual);
+      const body = document.getElementById("calBody");
+      if (body) body.innerHTML = renderCalContent();
+      const ni = mesesDisponibles.indexOf(mesCalActual);
+      document.querySelectorAll("[data-mescal-dir]").forEach(btn => { const d = parseInt(btn.dataset.mescalDir, 10), dis = (d === -1 && ni <= 0) || (d === 1 && ni >= mesesDisponibles.length - 1); btn.disabled = dis; btn.style.opacity = dis ? "0.3" : ""; btn.style.cursor = dis ? "default" : ""; });
+    }
+    function calSelectDay(fecha) {
+      calDiaSel = fecha;
+      document.querySelectorAll(".cal-cell[data-cal-day]").forEach(c => c.classList.toggle("cal-sel", c.dataset.calDay === fecha));
+      const det = document.getElementById("calDetail");
+      if (!det) return;
+      const info = _calMap()[fecha];
+      const ap = DATA.apuestas.filter(a => (a.fecha_partido || a.fecha)?.slice(0, 10) === fecha);
+      const [yy, mm, dd] = fecha.split("-");
+      const titulo = `${dd}/${mm}/${yy}`;
+      if (!info && ap.length === 0) { det.innerHTML = `<div class="cal-detail-head">${titulo}</div><div class="empty">Sin apuestas resueltas este día</div>`; return; }
+      const head = `<div class="cal-detail-head">${titulo}${info ? ` · <span class="${signColor(info.neto)}">${fmts(info.neto)}</span> · <span class="green">${info.wins}W</span> <span class="red">${info.losses}L</span>` : ""}</div>`;
+      det.innerHTML = head + (ap.length === 0 ? '<div class="empty">Sin apuestas</div>' : [...ap].reverse().map(renderBetItem).join(""));
     }
 
     /* ── Tab: Deportes ── */
@@ -1803,7 +1894,11 @@
       if (advClose) { closeAdvanced(); return; }
       const mes = e.target.closest("[data-mes-dir]");
       if (mes) { cambiarMes(parseInt(mes.dataset.mesDir, 10)); return; }
-      
+      const mesCal = e.target.closest("[data-mescal-dir]");
+      if (mesCal) { haptic("select"); cambiarMesCal(parseInt(mesCal.dataset.mescalDir, 10)); return; }
+      const calDay = e.target.closest("[data-cal-day]");
+      if (calDay) { haptic("select"); calSelectDay(calDay.dataset.calDay); return; }
+
       const actEl = e.target.closest("[data-action]");
       const act = actEl?.dataset.action;
       
@@ -1875,7 +1970,7 @@
       if (z) { handleDrop(e); }
     });
 
-    const _ALWAYS_RERENDER = new Set(["apuestas", "mes", "gestion", "patrones", "backtest"]);
+    const _ALWAYS_RERENDER = new Set(["apuestas", "mes", "calendario", "gestion", "patrones", "backtest"]);
 
     /* ── Sub-navegación (segmented control) del grupo activo o de la vista "Más" ── */
     function renderSubNav() {
