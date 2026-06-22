@@ -1430,10 +1430,10 @@
       <div class="card-title">⚙️ Parámetros</div>
       <div class="bt-form">
         <label class="bt-field"><span>Bank inicial</span>
-          <div class="bt-input-wrap"><span class="bt-prefix">$</span><input class="bt-input" type="number" inputmode="decimal" min="1" step="any" data-bt-input="bank_inicial" value="${esc(_bt.bank_inicial)}"></div>
+          <div class="bt-input-wrap"><span class="bt-prefix">$</span><input class="bt-input" type="text" inputmode="decimal" data-bt-input="bank_inicial" value="${esc(_bt.bank_inicial)}"></div>
         </label>
         <label class="bt-field"><span id="btStakeLabel">${stakeLbl}</span>
-          <div class="bt-input-wrap"><span class="bt-prefix" id="btStakeSuffix">${sufijo}</span><input class="bt-input" type="number" inputmode="decimal" min="0" step="any" data-bt-input="stake_valor" value="${esc(_bt.stake_valor)}"></div>
+          <div class="bt-input-wrap"><span class="bt-prefix" id="btStakeSuffix">${sufijo}</span><input class="bt-input" type="text" inputmode="decimal" data-bt-input="stake_valor" value="${esc(_bt.stake_valor)}"></div>
         </label>
       </div>
       <div class="bt-modo-row">
@@ -1448,8 +1448,8 @@
       ${tipos.length ? `<div class="bt-flbl">Tipo de apuesta</div><div class="bt-chips">${tipoChips}</div>` : ""}
       <div class="bt-flbl">Día de la semana</div><div class="bt-chips">${diaChips}</div>
       <div class="bt-form" style="margin-top:12px">
-        <label class="bt-field"><span>Cuota mínima</span><input class="bt-input" type="number" inputmode="decimal" min="1" step="any" placeholder="ej. 1.50" data-bt-input="cuota_min" value="${esc(_bt.cuota_min)}"></label>
-        <label class="bt-field"><span>Cuota máxima</span><input class="bt-input" type="number" inputmode="decimal" min="1" step="any" placeholder="ej. 2.50" data-bt-input="cuota_max" value="${esc(_bt.cuota_max)}"></label>
+        <label class="bt-field"><span>Cuota mínima</span><input class="bt-input" type="text" inputmode="decimal" placeholder="ej. 1.50" data-bt-input="cuota_min" value="${esc(_bt.cuota_min)}"></label>
+        <label class="bt-field"><span>Cuota máxima</span><input class="bt-input" type="text" inputmode="decimal" placeholder="ej. 2.50" data-bt-input="cuota_max" value="${esc(_bt.cuota_max)}"></label>
         <label class="bt-field"><span>Desde</span><input class="bt-input" type="date" data-bt-input="date_from" value="${esc(_bt.date_from)}"></label>
         <label class="bt-field"><span>Hasta</span><input class="bt-input" type="date" data-bt-input="date_to" value="${esc(_bt.date_to)}"></label>
       </div>
@@ -1947,7 +1947,16 @@
       }
 
       const btIn = e.target.closest("[data-bt-input]");
-      if (btIn) { _bt[btIn.dataset.btInput] = btIn.value; return; }
+      if (btIn) {
+        const k = btIn.dataset.btInput;
+        // Normaliza el separador decimal (coma→punto) en los campos numéricos del
+        // simulador para que el teclado en locale ES (móvil/Telegram) y el de
+        // escritorio manden EXACTAMENTE el mismo payload. Inocuo en date_from/date_to
+        // (formato YYYY-MM-DD, sin comas). Los inputs son type="text" inputmode="decimal"
+        // a propósito: type="number" descartaba "1,50" dejando .value vacío.
+        _bt[k] = btIn.value.replace(/,/g, ".");
+        return;
+      }
     });
     document.addEventListener("change", e => {
       const el = e.target.closest("#mEsParlay");
