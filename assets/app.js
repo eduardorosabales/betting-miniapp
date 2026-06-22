@@ -1506,8 +1506,11 @@
         <div class="cap-stat"><div class="cap-stat-val">${fmtp(wrPct)}</div><div class="cap-stat-lbl">Winrate (${r.wins}-${r.losses})</div></div>
         <div class="cap-stat"><div class="cap-stat-val red">${fmt(r.drawdown_max)}</div><div class="cap-stat-lbl">Drawdown máx (${fmtp(r.drawdown_pct)})</div></div>
         <div class="cap-stat"><div class="cap-stat-val red">${r.racha_max_perdedora}</div><div class="cap-stat-lbl">Peor racha perdedora</div></div>
+        ${r.capital_simultaneo_max != null ? `<div class="cap-stat"><div class="cap-stat-val">${fmt(r.capital_simultaneo_max)}</div><div class="cap-stat-lbl">💰 Capital máx. en simultáneo</div></div>` : ""}
+        ${r.simultaneas_max != null ? `<div class="cap-stat"><div class="cap-stat-val">${r.simultaneas_max}</div><div class="cap-stat-lbl">Apuestas vivas a la vez (máx)</div></div>` : ""}
       </div>
       <div style="font-size:11px;color:var(--text-3);margin-top:8px;text-align:center">Winrate real entre ${fmtp(wlow)} y ${fmtp(whigh)} (IC 95% de Wilson)</div>
+      ${r.capital_simultaneo_max != null ? `<div style="font-size:11px;color:var(--text-3);margin-top:6px;text-align:center">💰 <strong>Capital máx. en simultáneo</strong>: el dinero máximo que necesitaste tener disponible a la vez (apuestas vivas al mismo tiempo, desde que registras hasta que se resuelve el partido) para cubrir esta simulación con ese staking.</div>` : ""}
     </div>
 
     ${cmp}
