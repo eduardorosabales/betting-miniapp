@@ -1620,6 +1620,7 @@
       if (!(bank > 0)) { errEl("El bank inicial debe ser mayor que 0."); return; }
       if (!(stake > 0)) { errEl("El stake debe ser mayor que 0."); return; }
       if (_bt.modo === "porcentaje" && stake > 100) { errEl("En modo %, el stake no puede superar 100%."); return; }
+      if (_bt.modo === "fijo" && stake > bank) { errEl("El monto fijo de apuesta no puede ser mayor que el bank inicial."); return; }
 
       const filtros = {};
       if (_bt.date_from) filtros.date_from = _bt.date_from;
@@ -1664,6 +1665,7 @@
       if (!(bank > 0)) { errEl("El bank inicial debe ser mayor que 0."); return; }
       if (!(stake > 0)) { errEl("El stake debe ser mayor que 0."); return; }
       if (_bt.modo === "porcentaje" && stake > 100) { errEl("En modo %, el stake no puede superar 100%."); return; }
+      if (_bt.modo === "fijo" && stake > bank) { errEl("El monto fijo de apuesta no puede ser mayor que el bank inicial."); return; }
 
       const payload = { bank_inicial: bank, modo_stake: _bt.modo, stake_valor: stake };
       const btn = document.querySelector("[data-action='bt-search']");
