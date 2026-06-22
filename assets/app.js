@@ -1480,6 +1480,13 @@
           : "";
         avisos += `<div class="bt-alert bt-alert-red">💥 <strong>Quiebra${fq}:</strong> el bank llegó a $0 y la simulación se detuvo ahí.${om} Sube el bank inicial o baja el stake para recorrer el historial completo.</div>`;
       }
+      if (r.stake_insostenible) {
+        const fc = r.fecha_corte ? ` el ${esc(r.fecha_corte)}` : "";
+        const om = r.apuestas_omitidas
+          ? ` <strong>${r.apuestas_omitidas} apuesta(s) posteriores no se simularon.</strong>`
+          : "";
+        avisos += `<div class="bt-alert bt-alert-red">🛑 <strong>Monto fijo insostenible${fc}:</strong> el bank cayó a ${fmt(r.bank_final)}, por debajo del monto fijo de ${fmt(parseFloat(_bt.stake_valor) || 0)} por apuesta. No puedes seguir apostando ese monto, así que la simulación se detuvo ahí.${om} Baja el monto fijo o sube el bank inicial.</div>`;
+      }
       if (!r.muestra_suficiente) {
         avisos += `<div class="bt-alert bt-alert-amber">⚠️ <strong>Muestra baja</strong> (${r.n_resueltas} apuestas resueltas &lt; 30). El ROI y el winrate de este subconjunto son <strong>orientativos</strong>: filtrar el pasado buscando lo que "habría funcionado" es <em>data-mining</em> y no garantiza resultados futuros.</div>`;
       }
