@@ -239,6 +239,16 @@
     const fmt = n => n == null ? "—" : `$${Number(n).toLocaleString("es-MX", { maximumFractionDigits: 0 })}`;
     const fmtp = n => n == null ? "—" : `${Number(n).toFixed(1)}%`;
     const fmts = n => n == null ? "—" : Number(n) >= 0 ? `+${fmt(n)}` : fmt(n);
+    // Dinero compacto para el resumen inicial (hero + KPIs): $1.5k, $15k, $100k, $1.3M.
+    // Valores < 1000 se muestran completos. El número exacto se conserva en el title (ver fmt).
+    const fmtC = n => {
+      if (n == null) return "—";
+      const v = Number(n), a = Math.abs(v), s = v < 0 ? "−" : "";
+      if (a < 1000) return `$${s}${Math.round(a)}`;
+      if (a < 999500) { const k = a / 1e3; return `$${s}${k < 10 ? +k.toFixed(1) : Math.round(k)}k`; }
+      const m = a / 1e6; return `$${s}${m < 10 ? +m.toFixed(2) : +m.toFixed(1)}M`;
+    };
+    const fmtsC = n => n == null ? "—" : Number(n) >= 0 ? `+${fmtC(n)}` : fmtC(n);
     // Neto compacto para celdas del calendario (espacio mínimo): ±N o ±N.Xk.
     const fmtsCompact = n => {
       if (n == null) return "";
@@ -549,10 +559,10 @@
       const s = DATA.stats_semana || null;
       const sNeto = s ? s.neto : null;
       const hero = `<div class="hero-grid">
-      <div class="hero-card"><div class="hero-label">Neto total</div><div class="hero-value ${signColor(r.neto)}">${fmts(r.neto)}</div></div>
+      <div class="hero-card"><div class="hero-label">Neto total</div><div class="hero-value ${signColor(r.neto)}" title="${fmts(r.neto)}">${fmtsC(r.neto)}</div></div>
       <div class="hero-card"><div class="hero-label">ROI</div><div class="hero-value ${signColor(r.roi)}">${(r.roi ?? 0) >= 0 ? "+" : ""}${fmtp(r.roi)}</div></div>
       <div class="hero-card"><div class="hero-label">Win rate</div><div class="hero-value">${wr}%</div></div>
-      <div class="hero-card"><div class="hero-label">Últimos 7 días</div><div class="hero-value ${sNeto == null ? "" : signColor(sNeto)}">${sNeto == null ? "—" : fmts(sNeto)}</div></div>
+      <div class="hero-card"><div class="hero-label">Últimos 7 días</div><div class="hero-value ${sNeto == null ? "" : signColor(sNeto)}" title="${sNeto == null ? "" : fmts(sNeto)}">${sNeto == null ? "—" : fmtsC(sNeto)}</div></div>
     </div>`;
       const shareBtn = `<button class="share-card-btn" data-action="share-card" style="width:100%;margin:2px 0 10px;padding:13px;min-height:48px;display:flex;align-items:center;justify-content:center;gap:8px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius-md);font-size:14px;font-weight:700;cursor:pointer">📸 Compartir imagen</button>`;
       return `${hero}${shareBtn}<div class="section-header">Detalle <span>·</span> Historial</div>
@@ -563,12 +573,12 @@
     </div>
     ${(r.voids ?? 0) > 0 ? `<div class="kpi-row"><div class="kpi"><div class="kpi-label">Nulas (void)</div><div class="kpi-value accent">${r.voids ?? 0}</div></div></div>` : ""}
     <div class="kpi-row">
-      <div class="kpi"><div class="kpi-label">Total apostado</div><div class="kpi-value accent">${fmt(r.apostado)}</div></div>
-      <div class="kpi"><div class="kpi-label">Total cobrado</div><div class="kpi-value">${fmt(r.ganado)}</div></div>
+      <div class="kpi"><div class="kpi-label">Total apostado</div><div class="kpi-value accent" title="${fmt(r.apostado)}">${fmtC(r.apostado)}</div></div>
+      <div class="kpi"><div class="kpi-label">Total cobrado</div><div class="kpi-value" title="${fmt(r.ganado)}">${fmtC(r.ganado)}</div></div>
     </div>
     ${r.mejor_mes ? `<div class="kpi-row">
       <div class="kpi"><div class="kpi-label">🏆 Mejor mes</div><div class="kpi-value accent">${mesLabel(r.mejor_mes.mes)}</div></div>
-      <div class="kpi"><div class="kpi-label">Neto del mes</div><div class="kpi-value ${signColor(r.mejor_mes.neto)}">${fmts(r.mejor_mes.neto)}</div></div>
+      <div class="kpi"><div class="kpi-label">Neto del mes</div><div class="kpi-value ${signColor(r.mejor_mes.neto)}" title="${fmts(r.mejor_mes.neto)}">${fmtsC(r.mejor_mes.neto)}</div></div>
     </div>` : ""}
     ${rachaHtml}
     <div class="card"><div class="card-title">Win rate — ${wr}%</div>
