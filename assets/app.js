@@ -2207,7 +2207,10 @@
     let _mainBtnHandler = null;
     function _setupMainButton(text) {
       const mb = tg?.MainButton;
-      if (!mb) return; // sin MainButton: se conserva el botón del formulario
+      // Fuera del cliente de Telegram, telegram-web-app.js igual crea el objeto
+      // MainButton, pero .show() no dibuja nada. Gating por initData (real Telegram)
+      // para no ocultar el botón del formulario en navegador/web-session.
+      if (!mb || !tg?.initData) return; // sin Telegram real: se conserva el botón del formulario
       const inForm = document.getElementById("mSubmitBtn");
       if (inForm) inForm.style.display = "none";
       mb.setText(text);
