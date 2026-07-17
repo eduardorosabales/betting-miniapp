@@ -7,7 +7,7 @@
   <meta name="api-url" content="https://betting-stats-bot-production.up.railway.app">
   <meta name="tg-bot-username" content="tubettingstatsbot">
   <meta http-equiv="Content-Security-Policy"
-    content="default-src 'self'; script-src 'self' 'unsafe-eval' https://cdnjs.cloudflare.com https://telegram.org; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://betting-stats-bot-production.up.railway.app; img-src 'self' data: blob: https://t.me; frame-src https://oauth.telegram.org; object-src 'none'; base-uri 'self'; form-action 'self';">
+    content="default-src 'self'; script-src 'self' 'unsafe-eval' https://cdnjs.cloudflare.com https://telegram.org; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://betting-stats-bot-production.up.railway.app https://web-production-aa47e.up.railway.app; img-src 'self' data: blob: https://t.me; frame-src https://oauth.telegram.org; object-src 'none'; base-uri 'self'; form-action 'self';">
   <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon-180.png">
   <title>Betting Stats</title>
@@ -2731,7 +2731,7 @@
       }
     }
   </style>
-  <script src="assets/boot.js?v=20260621d"></script>
+  <script src="assets/boot.js?v=20260716"></script>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 
@@ -2743,12 +2743,9 @@
       <p class="wl-sub">Inicia sesión con tu cuenta de Telegram para continuar.</p>
       <div class="wl-widget">
         <div id="tg-widget-container">
-          <script async src="https://telegram.org/js/telegram-widget.js?22"
-            data-telegram-login="tubettingstatsbot"
-            data-size="large"
-            data-onauth="onTelegramAuth(user)"
-            data-request-access="write">
-          </script>
+          <!-- El widget de Telegram Login se inyecta por JS según el canal activo
+               (assets/app.js → _setupLoginWidget, INV-MINI-29). El bot por defecto
+               sale del meta tg-bot-username; con ?c=2 usa el bot del canal 2. -->
         </div>
       </div>
       <p class="wl-hint">Solo los usuarios autorizados pueden acceder.</p>
@@ -2771,7 +2768,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"
     integrity="sha512-CQBWl4fJHWbryGE+Pc7UAxWMUMNMWzWxF4SQo9CgkJIN1kx6djDQZjh3Y8SZ1d+6I+1zze6Z7kHXO7q3UyZAWw=="
     crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-  <script src="assets/app.js?v=20260621d"></script>
+  <script src="assets/app.js?v=20260716"></script>
 </body>
 
 </html>

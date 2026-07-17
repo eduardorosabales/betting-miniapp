@@ -1,9 +1,35 @@
     // FIX: API_URL configurable vía meta tag, fallback al dominio Railway.
     // En el <head>: <meta name="api-url" content="https://...">
-    const API_URL = (
+    // ── Selector de canal (INV-MINI-29) ───────────────────────────────────────
+    // Un MISMO deploy sirve varios canales TOTALMENTE INDEPENDIENTES: el backend
+    // de cada canal es una instancia propia de betting-stats-bot con su PROPIA
+    // base de datos (stats separadas). Se elige con ?c=<clave> en la URL del
+    // WebApp (configurada en BotFather) o del navegador. Sin ?c → canal por
+    // defecto (el del meta api-url), 100% compatible con el comportamiento actual.
+    // IMPORTANTE: todo host que aparezca aquí DEBE estar en connect-src de la CSP
+    // del index.html (INV-MINI-20, host exacto sin comodín). Al añadir/editar un
+    // canal: (1) pon su URL real aquí, (2) añádela a connect-src, (3) sube el ?v=
+    // de los <script> (INV-MINI-28).
+    const _API_DEFAULT = (
       document.querySelector('meta[name="api-url"]')?.content
       || "https://betting-stats-bot-production.up.railway.app"
     );
+    // `bot` = @username del bot de cada canal (para el login web fuera de Telegram;
+    // dentro de Telegram el initData ya viene firmado por el bot que abre el WebApp).
+    const _BOT_DEFAULT = document.querySelector('meta[name="tg-bot-username"]')?.content || "";
+    const CANALES = {
+      "1": { apiUrl: _API_DEFAULT, label: "Canal 1", bot: _BOT_DEFAULT },
+      "2": { apiUrl: "https://web-production-aa47e.up.railway.app", label: "Canal 2", bot: "tubettingstats2bot" },
+    };
+    const _canalKey = new URLSearchParams(location.search).get("c");
+    const CANAL = CANALES[_canalKey] || CANALES["1"];
+    const API_URL = CANAL.apiUrl;
+    // Indicador visible del canal activo (solo si no es el canal por defecto),
+    // para no confundir stats de canales independientes. Sin eventos ni HTML
+    // crudo: solo document.title (INV-MINI-13).
+    if (CANAL !== CANALES["1"]) {
+      document.title = "Betting Stats · " + CANAL.label;
+    }
     const tg = window.Telegram?.WebApp;
     const _isLowGPU = navigator.userAgent.includes("Linux") && !navigator.userAgent.includes("Android");
     // ── Tema: hereda el modo claro/oscuro del cliente Telegram ────────────────────
@@ -97,9 +123,29 @@
       }
     };
 
+    // Inyecta el widget de Telegram Login del bot del canal ACTIVO (INV-MINI-29).
+    // Método dinámico oficial del widget; el bot por defecto sale del meta
+    // tg-bot-username. Una sola vez por carga.
+    let _loginWidgetDone = false;
+    function _setupLoginWidget() {
+      if (_loginWidgetDone) return;
+      const cont = document.getElementById("tg-widget-container");
+      if (!cont || !CANAL.bot) return;
+      _loginWidgetDone = true;
+      cont.textContent = "";
+      const s = document.createElement("script");
+      s.async = true;
+      s.src = "https://telegram.org/js/telegram-widget.js?22";
+      s.setAttribute("data-telegram-login", CANAL.bot);
+      s.setAttribute("data-size", "large");
+      s.setAttribute("data-onauth", "onTelegramAuth(user)");
+      s.setAttribute("data-request-access", "write");
+      cont.appendChild(s);
+    }
     function showLoginScreen() {
       const el = document.getElementById("web-login");
       if (!el) return;
+      _setupLoginWidget();
       el.style.display = "flex";
       document.getElementById("bottomNav").style.display = "none";
       document.getElementById("app").innerHTML = "";
