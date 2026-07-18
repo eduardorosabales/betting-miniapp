@@ -2447,7 +2447,7 @@
     }
 
     function addParlayPick() {
-      _parlayPicks.push({ equipo1: "", equipo2: "", tipo_apuesta: "", cuota: "" });
+      _parlayPicks.push({ equipo1: "", equipo2: "", tipo_apuesta: "", cuota: "", deporte: "", liga: "", fecha_partido: "", hora_partido: "" });
       renderParlayPicks();
     }
 
@@ -2480,6 +2480,18 @@
                data-parlay-idx="${i}" data-parlay-field="tipo_apuesta" style="flex:2;font-size:12px">
         <input class="m-input" placeholder="Cuota" type="number" step="0.01" value="${esc(String(p.cuota))}"
                data-parlay-idx="${i}" data-parlay-field="cuota" style="flex:1;font-size:12px">
+      </div>
+      <div style="display:flex;gap:6px;margin-top:4px">
+        <input class="m-input" placeholder="Deporte" value="${esc(p.deporte || "")}"
+               data-parlay-idx="${i}" data-parlay-field="deporte" style="flex:1;font-size:12px">
+        <input class="m-input" placeholder="Liga" value="${esc(p.liga || "")}"
+               data-parlay-idx="${i}" data-parlay-field="liga" style="flex:1;font-size:12px">
+      </div>
+      <div style="display:flex;gap:6px;margin-top:4px">
+        <input class="m-input" type="date" title="Fecha del partido" value="${esc(p.fecha_partido || "")}"
+               data-parlay-idx="${i}" data-parlay-field="fecha_partido" style="flex:1;font-size:12px">
+        <input class="m-input" type="time" title="Hora del partido" value="${esc(p.hora_partido || "")}"
+               data-parlay-idx="${i}" data-parlay-field="hora_partido" style="flex:1;font-size:12px">
       </div>
     </div>
   `).join("");
@@ -2658,14 +2670,10 @@
       if (esParlay && _editRowId === null) {
         // ── Validar picks ────────────────────────────────────────────────────────
         // Sync picks desde el DOM (por si el usuario escribió sin disparar oninput)
-        document.querySelectorAll("#picksContainer > div").forEach((el, i) => {
-          const inputs = el.querySelectorAll("input");
-          if (_parlayPicks[i]) {
-            _parlayPicks[i].equipo1 = inputs[0]?.value.trim() || "";
-            _parlayPicks[i].equipo2 = inputs[1]?.value.trim() || "";
-            _parlayPicks[i].tipo_apuesta = inputs[2]?.value.trim() || "";
-            _parlayPicks[i].cuota = inputs[3]?.value.trim() || "";
-          }
+        document.querySelectorAll("#picksContainer [data-parlay-idx]").forEach(inp => {
+          const idx = parseInt(inp.dataset.parlayIdx, 10);
+          const field = inp.dataset.parlayField;
+          if (_parlayPicks[idx] && field) _parlayPicks[idx][field] = (inp.value || "").trim();
         });
 
         const validPicks = _parlayPicks.filter(p => p.equipo1 && p.equipo2 && p.tipo_apuesta && p.cuota);
