@@ -2429,10 +2429,12 @@
       document.getElementById("gModal").innerHTML = "";
       _editRowId = null;
       _parlayPicks = [];  // ← limpiar picks al cerrar
+      _ocrCombinadaPicks = [];
     }
     // archivo: index.html — funciones del modo Parlay
 
     let _parlayPicks = [];  // array de picks del parlay actual
+    let _ocrCombinadaPicks = [];  // selecciones de una combinada detectada por foto (para enviar como legs)
 
     function toggleParlay(on) {
       const slider = document.getElementById("parlaySlider");
@@ -2576,6 +2578,7 @@
         const d = j.datos;
         const esParlay    = d.es_parlay && Array.isArray(d.picks) && d.picks.length > 1;
         const esCombinada = d.es_combinada && Array.isArray(d.picks) && d.picks.length > 1;
+        _ocrCombinadaPicks = [];  // se rellena abajo si el ticket es una combinada
 
         if (d.equipo1) document.getElementById("mEq1").value = d.equipo1;
         if (d.equipo2) document.getElementById("mEq2").value = d.equipo2;
@@ -2591,6 +2594,20 @@
         if (mNotasEl) mNotasEl.value = d.notas || "";
 
         if (esParlay) {
+          // Cargar TODAS las patas en el editor de parlay y activar el modo parlay,
+          // para que al guardar se registre cada pick con todos sus datos (no solo la #1).
+          _parlayPicks = d.picks.map(p => ({
+            equipo1: p.equipo1 || "", equipo2: p.equipo2 || "",
+            tipo_apuesta: p.tipo_apuesta || "", cuota: String(p.cuota || ""),
+            deporte: p.deporte || "", liga: p.liga || "",
+            fecha_partido: p.fecha_partido || "", hora_partido: p.hora_partido || "",
+          }));
+          const chkParlay = document.getElementById("mEsParlay");
+          if (chkParlay) chkParlay.checked = true;
+          toggleParlay(true);          // muestra parlaySection (no añade pick vacío: ya hay picks)
+          renderParlayPicks();
+          const ctEl = document.getElementById("mCuotaTotal");
+          if (ctEl && d.cuota) ctEl.value = String(d.cuota);   // cuota total del ticket
           const picksHtml = d.picks.map((p, i) =>
             `<div style="font-size:11px;padding:3px 0;border-bottom:1px solid var(--border)">
           <b>#${i + 1}</b> ${esc(p.equipo1 || "?")} vs ${esc(p.equipo2 || "?")}
@@ -2605,6 +2622,8 @@
         <div style="width:100%;margin-top:8px;text-align:left">${picksHtml}</div>
         <div class="u-sub" style="margin-top:6px">Revisa el monto y guarda ↓</div>`;
         } else if (esCombinada) {
+          // Guardar las selecciones para enviarlas como legs al confirmar (mismo partido).
+          _ocrCombinadaPicks = d.picks.map(p => ({ tipo_apuesta: p.tipo_apuesta || "" }));
           const sels = d.picks.map(p => esc(p.tipo_apuesta || "?")).join(" + ");
           uz.innerHTML = `
         <div class="u-icon">🔗</div>
@@ -2694,6 +2713,18 @@
 
         const notas = document.getElementById("mNotas")?.value || notasVis;
         payload = { equipo1: eq1, equipo2: eq2, tipo_apuesta: tipo, cuota, monto, deporte: dep || "Otro", liga, fecha_partido: fecha, hora_partido: hora, notas };
+
+        // INV-BIZ-16/17: combinada mismo-partido detectada por foto → registrar sus
+        // selecciones como legs (los equipos van al nivel superior). Guardado condicional
+        // por si el usuario cambió el tipo tras el OCR.
+        if (_ocrCombinadaPicks.length && /combinada/i.test(tipo)) {
+          payload.legs = _ocrCombinadaPicks.map(p => ({
+            equipo1: eq1 || "", equipo2: eq2 || "",
+            tipo_apuesta: p.tipo_apuesta || "", cuota: "",
+            deporte: dep || "", liga: liga || "",
+            fecha_partido: fecha || "", hora_partido: hora || "",
+          }));
+        }
       }
 
       const btn = document.getElementById("mSubmitBtn");
