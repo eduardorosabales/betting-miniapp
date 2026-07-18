@@ -1871,7 +1871,19 @@
       const esParlay = (a.equipo2 || "").startsWith("PARLAY");
       const teamsLabel = esParlay ? `🎯 Parlay · ${esc(a.equipo2 || "")}` : `${esc(a.equipo1 || "?")} vs ${esc(a.equipo2 || "?")}`;
       const metaLabel = esParlay ? `${esc(a.deporte)} · Acumulador @ ${esc(a.cuota)} · ${(a.fecha_partido || a.fecha)?.slice(0, 10) || ""}` : `${esc(a.deporte)} · ${esc(formatTipoApuesta(a))} @ ${esc(a.cuota)} · ${(a.fecha_partido || a.fecha)?.slice(0, 10) || ""}`;
-      return `<div class="bet-item"><div class="bet-dot ${icon}"></div><div class="bet-info"><div class="bet-teams">${teamsLabel}</div><div class="bet-meta">${metaLabel}</div></div><div class="bet-right"><div class="bet-badge bet-badge-${badgeKey}">${statusLabel}</div><div class="bet-monto">${fmt(a.monto)}</div><div class="bet-result ${rc}">${res}</div></div></div>`;
+      // INV-BIZ-16: patas estructuradas del parlay/combinada. Se muestra cada pick
+      // con todos sus datos (antes solo se veía la pata #1 en las columnas planas).
+      const legs = Array.isArray(a.legs) ? a.legs : [];
+      const legsHtml = legs.length ? `<div class="bet-legs" style="margin-top:5px;font-size:11px;color:var(--text-2);line-height:1.55">${legs.map((p, i) => {
+        const teams = (p.equipo1 || p.equipo2) ? `${esc(p.equipo1 || "?")} vs ${esc(p.equipo2 || "?")} · ` : "";
+        const ctx = [p.deporte, p.liga].filter(Boolean).map(esc).join(" · ");
+        const ctxHtml = ctx ? `<span style="opacity:.7">${ctx} · </span>` : "";
+        const cuota = p.cuota ? ` @ ${esc(String(p.cuota))}` : "";
+        const cuando = [String(p.fecha_partido || "").slice(0, 10), p.hora_partido].filter(Boolean).map(esc).join(" ");
+        const cuandoHtml = cuando ? `<span style="opacity:.6"> · ${cuando}</span>` : "";
+        return `<div><b style="opacity:.8">#${i + 1}</b> ${ctxHtml}${teams}${esc(p.tipo_apuesta || "")}${cuota}${cuandoHtml}</div>`;
+      }).join("")}</div>` : "";
+      return `<div class="bet-item"><div class="bet-dot ${icon}"></div><div class="bet-info"><div class="bet-teams">${teamsLabel}</div><div class="bet-meta">${metaLabel}</div>${legsHtml}</div><div class="bet-right"><div class="bet-badge bet-badge-${badgeKey}">${statusLabel}</div><div class="bet-monto">${fmt(a.monto)}</div><div class="bet-result ${rc}">${res}</div></div></div>`;
     }
 
     /* ── Charts ── */
@@ -2663,6 +2675,13 @@
           hora_partido: hora || "",
           notas,
           ganancia_potencial: ganancia,
+          // INV-BIZ-16: registro estructurado de TODAS las patas (no solo la #1).
+          legs: validPicks.map(p => ({
+            equipo1: p.equipo1 || "", equipo2: p.equipo2 || "",
+            tipo_apuesta: p.tipo_apuesta || "", cuota: p.cuota || "",
+            deporte: p.deporte || "", liga: p.liga || "",
+            fecha_partido: p.fecha_partido || "", hora_partido: p.hora_partido || "",
+          })),
         };
 
       } else {
