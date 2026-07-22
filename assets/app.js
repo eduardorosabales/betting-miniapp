@@ -406,6 +406,10 @@
       if (/\bcombinad/.test(t)) return "Combinada";
       // Futuro / Outright
       if (/\boutright\b|futures?|to win the|championship|tournament winner|season (wins?|points?|goals?)|award|mvp|heisman|ballon/.test(t)) return "Futuro";
+      // Córners / Tarjetas — mercados secundarios: categoría propia ANTES de Moneyline/Handicap/Total O/U
+      // (gemelo de analytics.py _RE_CORNERS/_RE_TARJETAS, INV-BIZ-21 / INV-XCUT-02).
+      if (/\bcorners?\b|córner|saques? de esquina|tiros? de esquina/.test(t)) return "Córners";
+      if (/\bcards?\b|tarjeta|booking|amonestac/.test(t)) return "Tarjetas";
       // Moneyline / Ganador — DNB, to qualify, W1/W2, fight/race winner, MMA
       if (/moneyline|\b1x2\b|\bml\b|ganador|team wins?|\bw[12]\b|\bwinner\b|to win\b|match result|draw no bet|\bdnb\b|to qualify|fight winner|race winner|series winner|method of victory|\bko\b|\btko\b|decision win|round betting|will win/.test(t)) return "Moneyline";
       // Handicap — puck line (NHL), run line (MLB), point spread, AH
@@ -2342,7 +2346,7 @@
             <div class="m-group"><label class="m-label">Equipo 1</label><input id="mEq1" class="m-input" value="${esc(v.eq1)}" placeholder="Real Madrid"></div>
             <div class="m-group"><label class="m-label">Equipo 2</label><input id="mEq2" class="m-input" value="${esc(v.eq2)}" placeholder="Barcelona"></div>
           </div>
-          <div class="m-group"><label class="m-label">Tipo de apuesta</label><input id="mTipo" class="m-input" value="${esc(v.tipo)}" placeholder="moneyline, handicap, total over 2.5…"></div>
+          <div class="m-group"><label class="m-label">Tipo de apuesta</label><input id="mTipo" class="m-input" value="${esc(v.tipo)}" placeholder="moneyline, handicap, total over 2.5, corners total over 9.5…"></div>
           <div class="m-row">
             <div class="m-group"><label class="m-label">Cuota</label><input id="mCuota" class="m-input" type="number" step="0.01" value="${esc(String(v.cuota))}" placeholder="1.85"></div>
             <div class="m-group"><label class="m-label">Monto ($)</label><input id="mMonto" class="m-input" type="number" value="${esc(String(v.monto))}" placeholder="100"></div>
@@ -2476,7 +2480,7 @@
                data-parlay-idx="${i}" data-parlay-field="equipo2" style="flex:1;font-size:12px">
       </div>
       <div style="display:flex;gap:6px">
-        <input class="m-input" placeholder="Tipo (moneyline, over 2.5…)" value="${esc(p.tipo_apuesta)}"
+        <input class="m-input" placeholder="Tipo (moneyline, over 2.5, corners over 9.5…)" value="${esc(p.tipo_apuesta)}"
                data-parlay-idx="${i}" data-parlay-field="tipo_apuesta" style="flex:2;font-size:12px">
         <input class="m-input" placeholder="Cuota" type="number" step="0.01" value="${esc(String(p.cuota))}"
                data-parlay-idx="${i}" data-parlay-field="cuota" style="flex:1;font-size:12px">
