@@ -1434,7 +1434,11 @@
       bank_inicial: "1000", modo: "fijo", stake_valor: "20",
       cuota_min: "", cuota_max: "", date_from: "", date_to: "",
       sel: { deportes: new Set(), tipos: new Set(), dias: new Set() },
-      res: null, base: null, search: null, loading: false, searching: false,
+      // Modo "en contra" (fade / anti-tipster, INV-BIZ-25): apostar lo CONTRARIO
+      // de cada análisis. `margen` = vig del mercado con el que se deriva la cuota
+      // del otro lado; `incluir_nb` fuerza también los mercados no binarios.
+      contra: false, margen: "5", incluir_nb: false,
+      res: null, base: null, dir: null, search: null, loading: false, searching: false,
     };
 
     function btSetModo(m) {
@@ -1446,6 +1450,25 @@
       const suf = document.getElementById("btStakeSuffix");
       if (lbl) lbl.textContent = _bt.modo === "porcentaje" ? "% del bank por apuesta" : "Monto fijo por apuesta";
       if (suf) suf.textContent = _bt.modo === "porcentaje" ? "%" : "$";
+    }
+    /* Lado de la apuesta: "favor" (seguir al tipster) o "contra" (fade). Solo
+       muestra/oculta el bloque de opciones — no re-renderiza la pestaña, para no
+       perder los resultados ya pintados. */
+    function btSetLado(l) {
+      _bt.contra = (l === "contra");
+      haptic("select");
+      document.querySelectorAll("[data-bt-lado]").forEach(b =>
+        b.classList.toggle("active", (b.dataset.btLado === "contra") === _bt.contra));
+      const box = document.getElementById("btContraBox");
+      if (box) box.style.display = _bt.contra ? "" : "none";
+      const nota = document.getElementById("btSearchNota");
+      if (nota) nota.style.display = _bt.contra ? "" : "none";
+    }
+    function btToggleNB() {
+      _bt.incluir_nb = !_bt.incluir_nb;
+      haptic("select");
+      const b = document.querySelector("[data-bt-nb]");
+      if (b) b.classList.toggle("active", _bt.incluir_nb);
     }
     function btToggle(group, value) {
       const set = _bt.sel[group];
@@ -1459,7 +1482,7 @@
     function btReset() {
       _bt.sel = { deportes: new Set(), tipos: new Set(), dias: new Set() };
       _bt.cuota_min = ""; _bt.cuota_max = ""; _bt.date_from = ""; _bt.date_to = "";
-      _bt.res = null; _bt.base = null; _bt.search = null;
+      _bt.res = null; _bt.base = null; _bt.dir = null; _bt.search = null;
       haptic("light");
       destroyChart("bt");
       const sec = document.getElementById("backtest");
@@ -1483,7 +1506,7 @@
 
       return `<div class="section-header">Simulador <span>what-if</span></div>
     <div class="explainer" style="margin-bottom:14px">
-      🧪 Reproduce tu historial real apostando <strong>solo</strong> lo que elijas, con un bank y un staking a tu medida. Recalcula cuánto habrías ganado o perdido (las pendientes no entran).
+      🧪 Reproduce tu historial real apostando <strong>solo</strong> lo que elijas, con un bank y un staking a tu medida. Recalcula cuánto habrías ganado o perdido (las pendientes no entran). Con el modo <strong>🔄 En contra</strong> simula lo opuesto: apostar <em>contra</em> cada análisis.
     </div>
 
     <div class="card" style="margin-bottom:12px">
@@ -1499,6 +1522,31 @@
       <div class="bt-modo-row">
         <button class="bt-chip${_bt.modo === "fijo" ? " active" : ""}" data-bt-modo="fijo">Monto fijo</button>
         <button class="bt-chip${_bt.modo === "porcentaje" ? " active" : ""}" data-bt-modo="porcentaje">% del bank</button>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-title">🎭 Lado de la apuesta</div>
+      <div class="bt-modo-row" style="margin-top:0">
+        <button class="bt-chip${!_bt.contra ? " active" : ""}" data-bt-lado="favor">👍 A favor</button>
+        <button class="bt-chip${_bt.contra ? " active" : ""}" data-bt-lado="contra">🔄 En contra</button>
+      </div>
+      <div id="btContraBox" style="${_bt.contra ? "" : "display:none"}">
+        <div class="bt-alert bt-alert-muted">
+          🔄 <strong>Modo fade:</strong> apuesta lo <strong>contrario</strong> de cada análisis (si el pick era <em>Over 1.5</em>, se simula <em>Under 1.5</em>). Gana lo que el análisis perdía y pierde lo que ganaba — pero <strong>a la cuota del otro lado</strong>, que también lleva la comisión de la casa. Por eso ir en contra de un tipster perdedor <strong>no</strong> garantiza ganar.
+        </div>
+        <div class="bt-form" style="margin-top:12px">
+          <label class="bt-field"><span>Margen de la casa (vig)</span>
+            <div class="bt-input-wrap"><span class="bt-prefix">%</span><input class="bt-input" type="text" inputmode="decimal" placeholder="5" data-bt-input="margen" value="${esc(_bt.margen)}"></div>
+          </label>
+        </div>
+        <div class="bt-chips" style="margin-top:10px">
+          <button class="bt-chip${_bt.incluir_nb ? " active" : ""}" data-bt-nb="1">Incluir mercados no binarios (aprox.)</button>
+        </div>
+        <div style="font-size:11px;color:var(--text-3);margin-top:8px;line-height:1.5">
+          La cuota contraria se deriva de la del análisis: <strong>1 / (1 + margen − 1/cuota)</strong>. Con 0% sale el espejo teórico sin comisión (irreal); 4–6% es lo típico en un mercado de dos salidas.
+          Por defecto solo se invierten los mercados <strong>binarios</strong> (over/under, BTTS, hándicap asiático, ganador sin empate…), donde "lo contrario" es una apuesta que existía de verdad. Un 1X2 con empate, un marcador exacto o un parlay no tienen contraria única: quedan fuera salvo que actives la casilla.
+        </div>
       </div>
     </div>
 
@@ -1523,7 +1571,35 @@
     <div id="btResults">${_bt.res ? btRenderResults() : ""}</div>
 
     <button class="bt-search-btn" data-action="bt-search">🔎 Buscar el mejor filtro automáticamente</button>
+    <div id="btSearchNota" class="bt-alert bt-alert-muted" style="${_bt.contra ? "" : "display:none"}">ℹ️ El buscador rankea filtros por su rendimiento <strong>a favor</strong>. Al pulsar "Aplicar" con el modo 🔄 En contra activo, el simulador correrá ese filtro <strong>en contra</strong>.</div>
     <div id="btSearch">${_bt.search ? btRenderSearch() : ""}</div>`;
+    }
+
+    /* ── Cara a cara "a favor vs en contra" (INV-BIZ-25) ──────────────────────
+       El bot devuelve `directo` = la MISMA simulación siguiendo al tipster sobre
+       exactamente el mismo conjunto de apuestas invertibles, así que la
+       comparación es manzana con manzana. Aditivo: sin `directo` no se pinta. ── */
+    function btRenderCaraACara() {
+      const r = _bt.res, d = _bt.dir;
+      if (!r || !d || !r.contrario?.activo) return "";
+      const col = n => (n >= 0 ? "var(--win)" : "var(--loss)");
+      const gana = r.neto > d.neto ? "en contra" : (d.neto > r.neto ? "a favor" : "empate");
+      const veredicto = gana === "empate"
+        ? "Ambos lados acaban igual."
+        : (gana === "en contra"
+          ? `Con este subconjunto, <strong>ir en contra habría rendido más</strong> (${fmts(r.neto - d.neto)} de diferencia).`
+          : `Con este subconjunto, <strong>seguir los análisis habría rendido más</strong> (${fmts(d.neto - r.neto)} de diferencia).`);
+      return `
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-title">⚔️ A favor vs en contra <span style="font-weight:500;color:var(--text-3);font-size:11px">(mismas ${r.n_apuestas} apuestas)</span></div>
+      <div class="bt-cmp" style="margin-bottom:0">
+        <div class="bt-cmp-row"><span>👍 Siguiendo los análisis</span><strong style="color:${col(d.neto)}">${fmts(d.neto)} · ${fmtp(d.roi)} ROI · WR ${fmtp(d.winrate * 100)}</strong></div>
+        <div class="bt-cmp-row"><span>🔄 Apostando en contra</span><strong style="color:${col(r.neto)}">${fmts(r.neto)} · ${fmtp(r.roi)} ROI · WR ${fmtp(r.winrate * 100)}</strong></div>
+      </div>
+      <div style="font-size:11px;color:var(--text-3);margin-top:10px;line-height:1.5">
+        ${veredicto} Los dos netos <strong>no</strong> son opuestos exactos: la casa se queda su margen (${fmtp(r.contrario.margen_pct)}) en cada lado, así que la suma de ambos es negativa. Ese es justo el motivo por el que fadear a un tipster perdedor no es dinero gratis.
+      </div>
+    </div>`;
     }
 
     function btRenderResults() {
@@ -1553,17 +1629,29 @@
       if (r.excluidas_sin_cuota > 0) {
         avisos += `<div class="bt-alert bt-alert-muted">ℹ️ ${r.excluidas_sin_cuota} apuesta(s) sin cuota válida quedaron fuera (no se puede recalcular su ganancia).</div>`;
       }
+      // Modo "en contra" (INV-BIZ-25): qué se invirtió y qué quedó fuera. El bot
+      // manda `contrario` en cada resultado; se tolera ausente (bot sin desplegar).
+      const ct = r.contrario;
+      const fade = !!(ct && ct.activo);
+      if (fade) {
+        const fuera = [];
+        if (ct.descartadas_no_binarias) fuera.push(`${ct.descartadas_no_binarias} de mercado no binario (1X2 con empate, marcador exacto, parlay…)`);
+        if (ct.descartadas_sin_contraria) fuera.push(`${ct.descartadas_sin_contraria} sin contraria apostable (cuota demasiado alta)`);
+        avisos += `<div class="bt-alert bt-alert-muted">🔄 <strong>Apostando en contra</strong> de ${ct.invertidas} análisis, con un margen de casa del ${fmtp(ct.margen_pct)}: cuota media ${(ct.cuota_media_original ?? 0).toFixed(2)} en el pick original → <strong>${(ct.cuota_media_contraria ?? 0).toFixed(2)}</strong> en la contraria.${fuera.length ? ` Quedaron fuera ${fuera.join(" y ")}.` : ""}${ct.no_binarias_incluidas ? ` <strong>${ct.no_binarias_incluidas}</strong> no binaria(s) se invirtieron igualmente (aproximación).` : ""}</div>`;
+      }
 
+      const cmpLbl = fade ? ["En contra (tu filtro)", "En contra (todo el historial)"] : ["Con tu filtro", "Apostando todo"];
       const cmp = b ? `
     <div class="bt-cmp">
-      <div class="bt-cmp-row"><span>Con tu filtro</span><strong style="color:${r.neto >= 0 ? "var(--win)" : "var(--loss)"}">${fmts(r.neto)} · ${fmtp(r.roi)} ROI</strong></div>
-      <div class="bt-cmp-row"><span>Apostando todo</span><strong style="color:${b.neto >= 0 ? "var(--win)" : "var(--loss)"}">${fmts(b.neto)} · ${fmtp(b.roi)} ROI</strong></div>
+      <div class="bt-cmp-row"><span>${cmpLbl[0]}</span><strong style="color:${r.neto >= 0 ? "var(--win)" : "var(--loss)"}">${fmts(r.neto)} · ${fmtp(r.roi)} ROI</strong></div>
+      <div class="bt-cmp-row"><span>${cmpLbl[1]}</span><strong style="color:${b.neto >= 0 ? "var(--win)" : "var(--loss)"}">${fmts(b.neto)} · ${fmtp(b.roi)} ROI</strong></div>
     </div>` : "";
 
       return `
+    ${btRenderCaraACara()}
     <div class="card" style="margin-bottom:12px">
       <div class="capital-hero" style="padding:6px 0 10px">
-        <div class="capital-label">Bank final (desde ${fmt(r.bank_inicial)})</div>
+        <div class="capital-label">${fade ? "Bank final apostando EN CONTRA" : "Bank final"} (desde ${fmt(r.bank_inicial)})</div>
         <div class="capital-amount" style="color:${netoCls}">${fmt(r.bank_final)}</div>
         <div class="capital-sub" style="color:${netoCls}">${fmts(r.neto)} neto · ${fmtp(r.roi)} ROI</div>
       </div>
@@ -1654,16 +1742,23 @@
       const c = document.getElementById("chartBt");
       if (!c || !_bt.res || typeof Chart === "undefined") return;
       destroyChart("bt");
+      const fade = !!_bt.res.contrario?.activo;
       const r = _bt.res.curva || [], b = _bt.base ? (_bt.base.curva || []) : [];
-      const n = Math.max(r.length, b.length);
+      const d = (fade && _bt.dir) ? (_bt.dir.curva || []) : [];
+      const n = Math.max(r.length, b.length, d.length);
       const labels = Array.from({ length: n }, (_, i) => i === 0 ? "Inicio" : `#${i}`);
       const datasets = [{
-        label: "Con filtro", data: r.map(p => p.bank),
+        label: fade ? "En contra (tu filtro)" : "Con filtro", data: r.map(p => p.bank),
         borderColor: "#00CD96", backgroundColor: "rgba(0,205,150,0.08)",
         borderWidth: 2, pointRadius: 0, fill: true, tension: 0.25,
       }];
+      // En modo fade la curva "a favor" sobre el MISMO set es la comparación útil.
+      if (d.length) datasets.push({
+        label: "A favor (mismas apuestas)", data: d.map(p => p.bank),
+        borderColor: "#F5A623", borderWidth: 2, pointRadius: 0, fill: false, tension: 0.25,
+      });
       if (b.length) datasets.push({
-        label: "Todo el historial", data: b.map(p => p.bank),
+        label: fade ? "En contra (todo)" : "Todo el historial", data: b.map(p => p.bank),
         borderColor: cssVar("--text-3"), borderWidth: 1.5, borderDash: [5, 4],
         pointRadius: 0, fill: false, tension: 0.25,
       });
@@ -1703,6 +1798,11 @@
       if (!isNaN(cmax)) filtros.cuota_max = cmax;
 
       const payload = { bank_inicial: bank, modo_stake: _bt.modo, stake_valor: stake, filtros };
+      if (_bt.contra) {
+        const margen = parseFloat(_bt.margen);
+        if (isNaN(margen) || margen < 0 || margen > 20) { errEl("El margen de la casa debe estar entre 0 y 20%."); return; }
+        payload.contrario = { activo: true, margen_pct: margen, incluir_no_binarias: !!_bt.incluir_nb };
+      }
       const btn = document.querySelector("[data-action='bt-run']");
       const orig = btn ? btn.textContent : "";
       _bt.loading = true;
@@ -1712,11 +1812,15 @@
         const resp = await fetch(`${API_URL}/api/backtest`, { method: "POST", headers: apiHeaders(), body: JSON.stringify(payload) });
         const j = await safeJson(resp);
         if (!resp.ok || j.error) throw new Error(j.error || `Error ${resp.status}`);
-        _bt.res = j.resultado; _bt.base = j.baseline;
+        _bt.res = j.resultado; _bt.base = j.baseline; _bt.dir = j.directo || null;
         const box = document.getElementById("btResults");
         if (box) box.innerHTML = btRenderResults();
         haptic("success");
-        if (!_bt.res.n_apuestas) errEl("Ningún resultado coincide con esos filtros.");
+        if (!_bt.res.n_apuestas) {
+          errEl(_bt.contra
+            ? "Ninguna apuesta del filtro admite contraria (mercados no binarios o cuota sin otro lado apostable)."
+            : "Ningún resultado coincide con esos filtros.");
+        }
         setTimeout(makeChartBacktest, 60);
       } catch (err) {
         haptic("error");
@@ -1965,6 +2069,10 @@
       // Simulador (backtest): chips de modo de staking y de filtros.
       const btModo = e.target.closest("[data-bt-modo]");
       if (btModo) { btSetModo(btModo.dataset.btModo); return; }
+      const btLado = e.target.closest("[data-bt-lado]");
+      if (btLado) { btSetLado(btLado.dataset.btLado); return; }
+      const btNB = e.target.closest("[data-bt-nb]");
+      if (btNB) { btToggleNB(); return; }
       const btChip = e.target.closest("[data-bt-toggle]");
       if (btChip) { btToggle(btChip.dataset.btToggle, btChip.dataset.btValue); return; }
 
