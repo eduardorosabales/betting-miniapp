@@ -233,6 +233,7 @@
     }
 
     let DATA = null, filtroDeporte = "Todos", filtroEquipo = "";
+    let filtroEquipoGestion = "", _gListLimit = 40;
     let mesActual = null, mesesDisponibles = [];
     let charts = {}, tabActual = "resumen", cargando = false;
     let _renderedSections = new Set();
@@ -796,7 +797,7 @@
       const titulo = `${dd}/${mm}/${yy}`;
       if (!info && ap.length === 0) { det.innerHTML = `<div class="cal-detail-head">${titulo}</div><div class="empty">Sin apuestas resueltas este día</div>`; return; }
       const head = `<div class="cal-detail-head">${titulo}${info ? ` · <span class="${signColor(info.neto)}">${fmts(info.neto)}</span> · <span class="green">${info.wins}W</span> <span class="red">${info.losses}L</span>` : ""}</div>`;
-      det.innerHTML = head + (ap.length === 0 ? '<div class="empty">Sin apuestas</div>' : [...ap].reverse().map(renderBetItem).join(""));
+      det.innerHTML = head + (ap.length === 0 ? '<div class="empty">Sin apuestas</div>' : [...ap].reverse().map(renderGCard).join(""));
     }
 
     /* ── Tab: Deportes ── */
@@ -2099,8 +2100,8 @@
       if (act) {
         if (act === "logout") { logout(); return; }
         if (act === "recargar") { recargar(); return; }
-        if (act === "new-bet") { openModal(null, null); return; }
-        if (act === "edit-bet") { openModal(parseInt(actEl.dataset.rowid, 10), parseInt(actEl.dataset.idx, 10)); return; }
+        if (act === "new-bet") { openModal(null); return; }
+        if (act === "edit-bet") { openModal(parseInt(actEl.dataset.rowid, 10)); return; }
         if (act === "delete-bet") { confirmDel(parseInt(actEl.dataset.rowid, 10), actEl.dataset.label); return; }
         if (act === "close-modal") { closeModal(); return; }
         if (act === "trigger-upload") { document.getElementById("uInput").click(); return; }
@@ -2117,12 +2118,16 @@
         if (act === "bt-reset") { btReset(); return; }
         if (act === "bt-search") { runSearch(); return; }
         if (act === "bt-apply") { btApply(parseInt(actEl.dataset.btIdx, 10)); return; }
+        if (act === "load-more-bets") { _gListLimit += 40; const l = document.getElementById("gLista"); if (l) l.innerHTML = renderGLista(); return; }
       }
     });
     document.addEventListener("input", e => {
       const el = e.target.closest("[data-search-equipo]");
       if (el) { filtroEquipo = el.value; const l = document.getElementById("apuestasLista"); if (l) l.innerHTML = renderApuestasList(); return; }
-      
+
+      const gEl = e.target.closest("[data-search-equipo-gestion]");
+      if (gEl) { filtroEquipoGestion = gEl.value; _gListLimit = 40; const l = document.getElementById("gLista"); if (l) l.innerHTML = renderGLista(); return; }
+
       const pInput = e.target.closest("[data-parlay-idx]");
       if (pInput) {
         const idx = parseInt(pInput.dataset.parlayIdx, 10);
@@ -2318,6 +2323,17 @@
        ════════════════════════════════════════════════════════════════ */
 
     let _editRowId = null;
+    // Recuerda desde qué pestaña (y, si es el calendario, qué día) se abrió la
+    // edición/borrado, para volver ahí en vez de saltar siempre a Gestión.
+    let _editReturnTab = "gestion", _editReturnDay = null;
+    function _rememberEditOrigin() {
+      _editReturnTab = tabActual;
+      _editReturnDay = tabActual === "calendario" ? calDiaSel : null;
+    }
+    function _returnToEditOrigin() {
+      showTab(_editReturnTab);
+      if (_editReturnTab === "calendario" && _editReturnDay) calSelectDay(_editReturnDay);
+    }
 
     function renderGestion() {
       return `
@@ -2328,29 +2344,55 @@
     <span style="font-size:11px;color:var(--text-3)">${DATA?.apuestas?.length ?? 0} registradas</span>
   </div>
 
+  <div class="search-wrap"><span class="search-icon">🔍</span><input class="search-input" placeholder="Buscar por equipo..." data-search-equipo-gestion value="${esc(filtroEquipoGestion)}"></div>
+
   <div id="gLista">${renderGLista()}</div>`;
     }
 
-    function renderGLista() {
-      if (!DATA?.apuestas?.length) return '<div class="empty">Sin apuestas registradas</div>';
-      const total = DATA.apuestas.length;
-      return [...DATA.apuestas].reverse().slice(0, 40).map((a, idx) => {
-        const rowId = a.row_id ?? (total - idx);
-        const si = a.status === "win" ? "✅" : a.status === "loss" ? "❌" : a.status === "void" ? "🔄" : "⏳";
-        const gStr = a.status === "win" ? ` → +${fmt(a.ganancia)}` : a.status === "loss" ? ` → -${fmt(a.monto)}` : "";
-        return `<div class="g-card">
+    // Todo bet trae `row_id` (id de Postgres); el fallback posicional (i+1) solo
+    // cubre datos legacy sin ese campo. Misma convención usada por openModal().
+    function _rowIdOf(a, i) { return a.row_id ?? (i + 1); }
+    function _findApuestaByRowId(rowId) {
+      if (!DATA?.apuestas) return null;
+      return DATA.apuestas.find((a, i) => _rowIdOf(a, i) === rowId) || null;
+    }
+
+    function _gListaFiltrada() {
+      const term = filtroEquipoGestion.toLowerCase().trim();
+      const filt = !term ? DATA.apuestas : DATA.apuestas.filter(a => (a.equipo1 || "").toLowerCase().includes(term) || (a.equipo2 || "").toLowerCase().includes(term));
+      return [...filt].reverse();
+    }
+
+    // Tarjeta de gestión (editar/eliminar) reutilizada por la pestaña Gestión y
+    // por el detalle de día del Calendario (INV-MINI-31).
+    function renderGCard(a) {
+      const rowId = _rowIdOf(a, DATA.apuestas.indexOf(a));
+      const si = a.status === "win" ? "✅" : a.status === "loss" ? "❌" : a.status === "void" ? "🔄" : "⏳";
+      const gStr = a.status === "win" ? ` → +${fmt(a.ganancia)}` : a.status === "loss" ? ` → -${fmt(a.monto)}` : "";
+      return `<div class="g-card">
       <div class="g-card-head">
         <div>
           <div class="g-teams">${si} ${esc(a.equipo1)} vs ${esc(a.equipo2)}</div>
           <div class="g-meta">${esc(a.deporte || "")}${a.deporte ? " · " : ""}${esc(a.tipo || "")} @ ${esc(String(a.cuota || ""))} · ${fmt(a.monto)}${gStr}${a.fecha_partido ? " · 📅 " + esc(a.fecha_partido) : ""}</div>
         </div>
         <div class="g-actions">
-          <button class="btn-edit" data-action="edit-bet" data-rowid="${rowId}" data-idx="${idx}">✏️</button>
+          <button class="btn-edit" data-action="edit-bet" data-rowid="${rowId}">✏️</button>
           <button class="btn-del"  data-action="delete-bet" data-rowid="${rowId}" data-label="${esc(a.equipo1)} vs ${esc(a.equipo2)}">🗑️</button>
         </div>
       </div>
     </div>`;
-      }).join("");
+    }
+
+    function renderGLista() {
+      if (!DATA?.apuestas?.length) return '<div class="empty">Sin apuestas registradas</div>';
+      const lista = _gListaFiltrada();
+      if (!lista.length) return '<div class="empty">Sin resultados</div>';
+      const visibles = lista.slice(0, _gListLimit);
+      const cards = visibles.map(renderGCard).join("");
+      const more = lista.length > visibles.length
+        ? `<button class="retry-btn" data-action="load-more-bets" style="width:100%;margin-top:8px">Cargar más (${lista.length - visibles.length} restantes)</button>`
+        : "";
+      return cards + more;
     }
 
     /* ── Viewport helper ── */
@@ -2397,9 +2439,10 @@
       if (_mainBtnHandler) { try { mb.offClick(_mainBtnHandler); } catch (_) {} _mainBtnHandler = null; }
       mb.hide();
     }
-    function openModal(rowId, idx) {
+    function openModal(rowId) {
       _editRowId = rowId;
-      const a = (rowId !== null && DATA?.apuestas) ? [...DATA.apuestas].reverse()[idx] : {};
+      _rememberEditOrigin();
+      const a = (rowId !== null) ? (_findApuestaByRowId(rowId) || {}) : {};
       const v = {
         eq1: a.equipo1 || "", eq2: a.equipo2 || "", tipo: a.tipo || "", cuota: a.cuota || "",
         monto: a.monto || "", dep: a.deporte || "", liga: a.liga || "",
@@ -2879,7 +2922,7 @@
         haptic("success");
         closeModal();
         await recargar();
-        showTab("gestion");
+        _returnToEditOrigin();
       } catch (err) {
         haptic("error");
         showErr("❌ " + err.message);
@@ -2889,6 +2932,7 @@
     }
 
     function confirmDel(rowId, label) {
+      _rememberEditOrigin();
       if (!confirm(`¿Borrar?\n\n${label}\n\nAcción irreversible.`)) return;
       deleteBet(rowId);
     }
@@ -2900,7 +2944,7 @@
         const j = await safeJson(resp);
         if (!j.ok) throw new Error(j.error);
         await recargar();
-        showTab("gestion");
+        _returnToEditOrigin();
       } catch (err) { alert("❌ " + err.message); }
     }
 
