@@ -427,6 +427,9 @@
       // (gemelo de analytics.py _RE_CORNERS/_RE_TARJETAS, INV-BIZ-21 / INV-XCUT-02).
       if (/\bcorners?\b|córner|saques? de esquina|tiros? de esquina/.test(t)) return "Córners";
       if (/\bcards?\b|tarjeta|booking|amonestac/.test(t)) return "Tarjetas";
+      // Doble oportunidad — va ANTES de Moneyline: "Double Chance - Home/Draw" no debe
+      // caer en Moneyline por el sufijo home/draw (gemelo de analytics.py _RE_DOBLE_OPORTUNIDAD).
+      if (/double chance|doble oportunidad|home\/draw|draw\/away|home\/away/.test(t)) return "Doble oportunidad";
       // Moneyline / Ganador — DNB, to qualify, W1/W2, fight/race winner, MMA
       if (/moneyline|\b1x2\b|\bml\b|ganador|team wins?|\bw[12]\b|\bwinner\b|to win\b|match result|draw no bet|\bdnb\b|to qualify|fight winner|race winner|series winner|method of victory|\bko\b|\btko\b|decision win|round betting|will win/.test(t)) return "Moneyline";
       // Handicap — puck line (NHL), run line (MLB), point spread, AH
