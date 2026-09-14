@@ -252,7 +252,10 @@
     // Caché del análisis IA: localStorage (persiste entre cierres/reaperturas de
     // la mini-app en Telegram). sessionStorage NO servía porque Telegram lo borra
     // al cerrar el webview, forzando un análisis nuevo en cada sesión.
-    const _PATRONES_LS_KEY = "betstats_patrones_cache";
+    // Namespaced por canal (INV-MINI-29): sin esto, dos bots comparten el mismo
+    // origen (misma miniapp) y por tanto el mismo localStorage, así que el análisis
+    // de un canal se veía también en el otro.
+    const _PATRONES_LS_KEY = "betstats_patrones_cache_c" + (_canalKey || "1");
     let _patronesData = null, _patronesCargando = false, _patronesPeekDone = false;
 
     function _cargarPatronesGuardados() {
