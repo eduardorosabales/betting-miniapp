@@ -3312,12 +3312,20 @@
             const cuotaEdit = parseFloat(document.getElementById("mCuota")?.value || "0");
             const montoEdit = parseFloat(monto || "0");
             if (st === "win") {
-              // Retorno bruto: monto × cuota. Si no hay cuota, al menos devolver el monto.
-              payload.ganancia_real = cuotaEdit > 0
-                ? String((cuotaEdit * montoEdit).toFixed(2))
-                : String(montoEdit.toFixed(2));
+              // FIX-GANANCIA: si cuota o monto no son válidos en este momento, no hay
+              // forma confiable de calcular el retorno bruto — antes esto mandaba
+              // ganancia_real = monto (ganancia $0 silenciosa e incorrecta).
+              if (!(cuotaEdit > 0) || !(montoEdit > 0)) {
+                if (btn) { btn.disabled = false; btn.textContent = originalTxt; }
+                if (mb) { try { mb.hideProgress(); mb.enable(); } catch (_) {} }
+                showErr("⚠️ Completa cuota y monto válidos antes de marcar como ganada.");
+                return;
+              }
+              // Retorno bruto: monto × cuota.
+              payload.ganancia_real = String((cuotaEdit * montoEdit).toFixed(2));
             }
-            if (st === "loss") payload.ganancia_real = "0";   // consistente con bot.py
+            // Convención del sistema (bot.py / postgres.py): loss = -monto, void = 0.
+            if (st === "loss") payload.ganancia_real = String((-Math.abs(montoEdit || 0)).toFixed(2));
             if (st === "void") payload.ganancia_real = "0";
           }
           resp = await fetch(`${API_URL}/api/bets/${_editRowId}`, { method: "PUT", headers: apiHeaders(), body: JSON.stringify(payload) });
