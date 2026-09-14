@@ -2512,6 +2512,32 @@
     .cal-dot.cal-neutral { background: var(--border); }
     .cal-detail { margin-top: 4px; }
     .cal-detail-head { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 8px; font-family: var(--font-num); }
+    .cal-pct { font-size: 9px; font-weight: 600; line-height: 1; margin-top: 1px; font-family: var(--font-num); opacity: 0.8; }
+
+    /* ── Tablas de datos (Bet Type Breakdown, Daily, Wager Log, Compounding) ── */
+    .table-wrap { overflow-x: auto; margin: 4px -2px; }
+    .data-table { width: 100%; border-collapse: collapse; font-size: 12px; white-space: nowrap; }
+    .data-table th, .data-table td { padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--border); }
+    .data-table thead th { position: sticky; top: 0; background: var(--card); color: var(--text-2); font-size: 10px; text-transform: uppercase; letter-spacing: .04em; font-weight: 700; cursor: default; }
+    .data-table th[data-wl-sort] { cursor: pointer; user-select: none; }
+    .data-table th[data-wl-sort]:hover { color: var(--text); }
+    .data-table td.num, .data-table th.num { font-family: var(--font-num); text-align: right; }
+    .data-table tbody tr:hover { background: var(--card2); }
+    .wl-pager { display: flex; align-items: center; justify-content: center; gap: 14px; padding: 12px 0; font-size: 12px; color: var(--text-2); font-family: var(--font-num); }
+    .wl-pager button { background: var(--card2); border: 1px solid var(--border); color: var(--text); border-radius: var(--radius-sm); min-width: 36px; min-height: 36px; font-size: 16px; cursor: pointer; }
+    .wl-pager button:disabled { opacity: 0.3; cursor: default; }
+
+    /* ── Bet Type Mix (donut) ── */
+    .mix-legend { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+    .mix-legend-item { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+    .mix-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+    .mix-name { flex: 1; color: var(--text); font-weight: 600; }
+    .mix-pct { font-family: var(--font-num); color: var(--text); font-weight: 700; }
+    .mix-wr { font-family: var(--font-num); color: var(--text-2); font-size: 11px; }
+
+    /* ── Momentum ── */
+    .momentum-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 12px; color: var(--text-2); margin: 8px 0 10px; }
+    .momentum-controls select { background: var(--card2); border: 1px solid var(--border); color: var(--text); border-radius: var(--radius-sm); padding: 6px 8px; font-size: 12px; min-height: 36px; }
 
     /* ── Desktop layout (≥768px) ── */
     @media(min-width:768px) {
@@ -2768,7 +2794,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"
     integrity="sha512-CQBWl4fJHWbryGE+Pc7UAxWMUMNMWzWxF4SQo9CgkJIN1kx6djDQZjh3Y8SZ1d+6I+1zze6Z7kHXO7q3UyZAWw=="
     crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-  <script src="assets/app.js?v=20260913"></script>
+  <script src="assets/app.js?v=20260913b"></script>
 </body>
 
 </html>

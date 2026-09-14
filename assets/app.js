@@ -230,6 +230,10 @@
       else if (makeKey === "dep") makeChartDep();
       else if (makeKey === "tipo") makeChartTipo();
       else if (makeKey === "rolling") makeChartRolling();
+      else if (makeKey === "cumulative") makeChartCumulative();
+      else if (makeKey === "tipomix") makeChartTipoMix();
+      else if (makeKey === "monthlypl") makeChartMonthlyPL();
+      else if (makeKey === "bt2") makeChartCompounding();
     }
 
     let DATA = null, filtroDeporte = "Todos", filtroEquipo = "";
@@ -237,6 +241,14 @@
     let mesActual = null, mesesDisponibles = [];
     let charts = {}, tabActual = "resumen", cargando = false;
     let _renderedSections = new Set();
+    // Momentum (B4): N y tipo de racha seleccionados + set de row_id para filtrar
+    // el Wager Log ("Filtrar historial a estos picks"). null = sin filtro activo.
+    let momentumN = 1, momentumTipo = "win", filtroMomentumIds = null;
+    // Wager Log (B8): orden y paginación 100% cliente sobre DATA.apuestas.
+    let wlSortCol = "fecha", wlSortDir = "desc", wlPage = 1;
+    const WL_PAGE_SIZE = 50;
+    // Monthly P/L (B6): toggle mensual/semanal del chart de neto por período.
+    let monthlyPLVista = "mensual";
     // Caché del análisis IA: localStorage (persiste entre cierres/reaperturas de
     // la mini-app en Telegram). sessionStorage NO servía porque Telegram lo borra
     // al cerrar el webview, forzando un análisis nuevo en cada sesión.
@@ -264,12 +276,13 @@
       { id: "historial", icon: "📋", label: "Historial", sections: ["apuestas", "mes", "calendario"] },
       { id: "gestion",   icon: "⚙️", label: "Gestión",   sections: ["gestion"] },
     ];
-    const ADVANCED = ["kelly", "capital", "patrones", "backtest"];
+    const ADVANCED = ["kelly", "capital", "patrones", "backtest", "compounding"];
     const SECTION_LABELS = {
       resumen: "General", semana: "7 días",
       deportes: "Deportes", tipos: "Tipos", rolling: "Tendencia", temporal: "Timing",
       apuestas: "Bets", mes: "Mes", calendario: "Calendario", gestion: "Gestión",
       kelly: "Kelly", capital: "Capital", patrones: "Patrones IA", backtest: "Simulador",
+      compounding: "Compounding",
     };
     let currentGroup = "resumen", _inAdvanced = false, _backReady = false;
     function groupOf(sectionId) { return NAV_GROUPS.find(g => g.sections.includes(sectionId)) || null; }
@@ -425,6 +438,108 @@
       if (/\bover\b|\bunder\b|\btotal\b|\bo\/u\b|más de|menos de|alt(ernate)? total|\bgames? o\/?u\b|\bsets? o\/?u\b|\bruns? o\/?u\b|half total|1st half total|q[1-4] total/.test(t)) return "Total O/U"; return "Otro";
     }
 
+    /* Apuestas resueltas (win/loss) en orden cronológico real: mismo criterio que
+       usa el backend para "racha"/gráficas (fecha_partido, con row_id de desempate
+       para picks del mismo día). Base compartida de Recent Form, Cumulative Profit,
+       Momentum y Wager Log — evita recalcular el orden en cada widget. */
+    function apuestasOrdenadas() {
+      return DATA.apuestas
+        .filter(a => a.status === "win" || a.status === "loss")
+        .slice()
+        .sort((a, b) => {
+          const fa = a.fecha_partido || a.fecha || "", fb = b.fecha_partido || b.fecha || "";
+          if (fa !== fb) return fa < fb ? -1 : 1;
+          return (a.row_id || 0) - (b.row_id || 0);
+        });
+    }
+
+    // Agrupa apuestasOrdenadas() por semana ISO (año-Www) sumando neto — vista
+    // "Semanal" del chart Monthly P/L (B6). Usa fecha_partido (fallback fecha).
+    function calcSemanal() {
+      const buckets = {}, orden = [];
+      for (const a of apuestasOrdenadas()) {
+        const f = (a.fecha_partido || a.fecha || "").slice(0, 10);
+        if (f.length !== 10) continue;
+        const d = new Date(f + "T12:00:00Z");
+        if (isNaN(d)) continue;
+        const tmp = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+        const dayNum = (tmp.getUTCDay() + 6) % 7; // 0=Lun
+        tmp.setUTCDate(tmp.getUTCDate() - dayNum + 3); // jueves de esa semana ISO
+        const firstThu = new Date(Date.UTC(tmp.getUTCFullYear(), 0, 4));
+        const week = 1 + Math.round(((tmp - firstThu) / 86400000 - 3 + ((firstThu.getUTCDay() + 6) % 7)) / 7);
+        const key = `${tmp.getUTCFullYear()}-W${String(week).padStart(2, "0")}`;
+        if (!(key in buckets)) { buckets[key] = 0; orden.push(key); }
+        buckets[key] += (a.ganancia || 0);
+      }
+      return orden.sort().map(k => ({ periodo: k, neto: +buckets[k].toFixed(2) }));
+    }
+
+    // Recent Form (L5/L10, paridad con el tracker de referencia): record + neto
+    // de las últimas `n` apuestas resueltas en orden cronológico.
+    function calcRecentForm(n) {
+      const ord = apuestasOrdenadas();
+      const ult = ord.slice(-n);
+      const wins = ult.filter(a => a.status === "win").length;
+      const losses = ult.length - wins;
+      const neto = ult.reduce((s, a) => s + (a.ganancia || 0), 0);
+      return { wins, losses, neto, n: ult.length };
+    }
+
+    // Momentum: qué pasa en el pick SIGUIENTE a exactamente N resultados seguidos
+    // del mismo tipo (streakType: "win"/"loss"). Recorre en orden cronológico
+    // llevando la racha corriente; cada vez que la racha PREVIA al pick actual
+    // coincide con streakLen/streakType, ese pick entra en la muestra.
+    function calcMomentum(streakLen, streakType) {
+      const ord = apuestasOrdenadas();
+      let racha = 0, tipoRacha = "";
+      const picks = [];
+      for (const a of ord) {
+        if (racha === streakLen && tipoRacha === streakType) picks.push(a);
+        if (a.status === tipoRacha) racha++; else { tipoRacha = a.status; racha = 1; }
+      }
+      const wins = picks.filter(p => p.status === "win").length;
+      const losses = picks.length - wins;
+      const neto = picks.reduce((s, p) => s + (p.ganancia || 0), 0);
+      return { wins, losses, neto, n: picks.length, picks };
+    }
+
+    function renderMomentum() {
+      const r = DATA.resumen;
+      const m = calcMomentum(momentumN, momentumTipo);
+      const wr = m.n > 0 ? (m.wins / m.n * 100) : 0;
+      const opcionesN = [1, 2, 3, 4, 5].map(n => `<option value="${n}" ${n === momentumN ? "selected" : ""}>${n}</option>`).join("");
+      return `<div class="card">
+      <div class="card-title">Momentum ${r.racha >= 2 ? `· racha actual: ${r.racha}${r.tipo_racha === "win" ? "W" : "L"}` : ""}</div>
+      <div class="momentum-controls">
+        <span>Después de exactamente</span>
+        <select data-momentum-n>${opcionesN}</select>
+        <select data-momentum-tipo>
+          <option value="win" ${momentumTipo === "win" ? "selected" : ""}>victorias</option>
+          <option value="loss" ${momentumTipo === "loss" ? "selected" : ""}>derrotas</option>
+        </select>
+        <span>seguidas</span>
+      </div>
+      <div id="momentumResult">${renderMomentumResult(m, wr)}</div>
+    </div>`;
+    }
+    function renderMomentumResult(m, wr) {
+      if (!m.n) return `<div class="empty">No hay suficientes datos para esta racha.</div>`;
+      return `<div class="kpi-row">
+      <div class="kpi"><div class="kpi-label">Record</div><div class="kpi-value">${m.wins}-${m.losses}</div></div>
+      <div class="kpi"><div class="kpi-label">Win rate</div><div class="kpi-value">${wr.toFixed(0)}%</div></div>
+      <div class="kpi"><div class="kpi-label">Net P/L</div><div class="kpi-value ${signColor(m.neto)}">${fmts(m.neto)}</div></div>
+    </div>
+    <div style="font-size:11px;color:var(--text-2);margin:6px 0 8px">${m.n} ${m.n === 1 ? "vez" : "veces"} en el historial</div>
+    <button class="filter-chip" data-action="momentum-filtrar">Filtrar historial a estos picks</button>`;
+    }
+    function actualizarMomentum() {
+      const box = document.getElementById("momentumResult");
+      if (!box) return;
+      const m = calcMomentum(momentumN, momentumTipo);
+      const wr = m.n > 0 ? (m.wins / m.n * 100) : 0;
+      box.innerHTML = renderMomentumResult(m, wr);
+    }
+
     function calcRoiPorTipo() {
       const bucket = {};
       DATA.apuestas.filter(a => a.status === "win" || a.status === "loss").forEach(a => {
@@ -563,6 +678,7 @@
       patrones: () => renderPatrones(),
       capital: () => renderCapital(),
       backtest: () => renderBacktest(),
+      compounding: () => renderCompounding(),
       apuestas: () => renderApuestas(),
       calendario: () => renderCalendario(),
       gestion: () => renderGestion(),
@@ -586,6 +702,7 @@
       <div id="patrones" class="section"></div>
       <div id="capital"  class="section"></div>
       <div id="backtest" class="section"></div>
+      <div id="compounding" class="section"></div>
       <div id="apuestas" class="section"></div>
       <div id="calendario" class="section"></div>
       <div id="gestion"  class="section"></div>
@@ -632,11 +749,32 @@
       <div class="kpi"><div class="kpi-label">Neto del mes</div><div class="kpi-value ${signColor(r.mejor_mes.neto)}" title="${fmts(r.mejor_mes.neto)}">${fmtsC(r.mejor_mes.neto)}</div></div>
     </div>` : ""}
     ${rachaHtml}
+    ${renderRecentForm()}
+    ${renderMomentum()}
     <div class="card"><div class="card-title">Win rate — ${wr}%</div>
       <div class="progress-wrap"><div class="progress-labels"><span class="green">${r.wins}W</span><span class="muted">${wr}%</span><span class="red">${r.losses}L</span></div>
       <div class="progress-track"><div class="progress-fill" style="width:${wr}%"></div></div></div></div>
+    <div class="card"><div class="card-title">Ganancia acumulada</div>${chartPlaceholder("chartCumulative", "cumulative", true)}</div>
+    <div class="card"><div class="card-title">Monthly P/L</div>
+      <div class="range-sel">
+        <button class="range-chip ${monthlyPLVista === "mensual" ? "active" : ""}" data-monthlypl-vista="mensual">Mensual</button>
+        <button class="range-chip ${monthlyPLVista === "semanal" ? "active" : ""}" data-monthlypl-vista="semanal">Semanal</button>
+      </div>
+      ${chartPlaceholder("chartMonthlyPL", "monthlypl")}</div>
     <div class="card"><div class="card-title">Neto acumulado</div>${chartPlaceholder("chartNeto", "neto")}</div>
     <div class="card"><div class="card-title">Apostado vs Ganado</div>${chartPlaceholder("chartMeses", "meses")}</div>`;
+    }
+
+    /* ── Recent Form (L5/L10) ── */
+    function renderRecentForm() {
+      const l5 = calcRecentForm(5), l10 = calcRecentForm(10);
+      if (!l5.n) return "";
+      const item = (f, label) => `<div class="kpi">
+        <div class="kpi-label">${label}</div>
+        <div class="kpi-value">${f.wins}-${f.losses}</div>
+        <div class="${signColor(f.neto)}" style="font-family:var(--font-num);font-size:12px;margin-top:4px">${fmts(f.neto)}</div>
+      </div>`;
+      return `<div class="kpi-row">${item(l5, "Últimas 5")}${item(l10, "Últimas 10")}</div>`;
     }
 
     /* ── Tab: Semana ── */
@@ -765,7 +903,8 @@
         const nt = info ? info.neto : null;
         const cls = nt == null || nt === 0 ? "cal-neutral" : nt > 0 ? "cal-win" : "cal-loss";
         const monto = nt == null ? "" : `<span class="cal-net">${fmtsCompact(nt)}</span>`;
-        celdas += `<button class="cal-cell ${cls}" data-cal-day="${fecha}"><span class="cal-num">${d}</span>${monto}</button>`;
+        const pct = (info && info.apostado > 0) ? `<span class="cal-pct">${nt >= 0 ? "+" : ""}${(nt / info.apostado * 100).toFixed(0)}%</span>` : "";
+        celdas += `<button class="cal-cell ${cls}" data-cal-day="${fecha}"><span class="cal-num">${d}</span>${monto}${pct}</button>`;
       }
       return `<div class="kpi-row">
       <div class="kpi"><div class="kpi-label">Neto del mes</div><div class="kpi-value ${signColor(netoMes)}">${fmts(netoMes)}</div></div>
@@ -825,7 +964,9 @@
     </div>`: "";
       return `<div class="section-header">ROI por <span>tipo</span></div>
     ${kpisMejorPeor}
+    <div class="card"><div class="card-title">Bet Type Mix — % del volumen</div>${renderTipoMixLegend(tipos)}${chartPlaceholder("chartTipoMix", "tipomix")}</div>
     <div class="card"><div class="card-title">ROI por tipo</div>${chartPlaceholder("chartTipo", "tipo")}</div>
+    <div class="card"><div class="card-title">Bet Type Breakdown</div>${renderTipoTabla(tipos)}</div>
     <div class="card"><div class="card-title">Detalle completo</div>
       ${tipos.map(t => {
         const barW = Math.min(100, Math.abs(t.roi) / maxAbsRoi * 100);
@@ -846,6 +987,36 @@
       }).join("")}
     </div>
     <div class="explainer"><strong>Tip:</strong> Enfoca tu capital en los tipos de apuesta con ROI positivo consistente. Si un tipo tiene &lt;5 apuestas, el ROI puede ser engañoso.</div>`;
+    }
+
+    // Paleta fija por tipo (mismo verde acento + tonos complementarios del tema,
+    // sin introducir colores ajenos a la identidad visual existente).
+    const TIPO_MIX_COLORS = ["#00CD96", "#6C63FF", "#F5A623", "#FF3D5A", "#3DB5FF", "#B673FF", "#5D6B82"];
+    function tipoMixColor(i) { return TIPO_MIX_COLORS[i % TIPO_MIX_COLORS.length]; }
+
+    function renderTipoMixLegend(tipos) {
+      const totalN = tipos.reduce((s, t) => s + t.wins + t.losses, 0) || 1;
+      return `<div class="mix-legend">${tipos.map((t, i) => {
+        const n = t.wins + t.losses, pctVol = n / totalN * 100;
+        const wr = t.wins + t.losses > 0 ? t.wins / (t.wins + t.losses) * 100 : 0;
+        return `<div class="mix-legend-item"><i class="mix-dot" style="background:${tipoMixColor(i)}"></i><span class="mix-name">${esc(t.tipo)}</span><span class="mix-pct">${pctVol.toFixed(0)}%</span><span class="mix-wr">${wr.toFixed(0)}% W</span></div>`;
+      }).join("")}</div>`;
+    }
+
+    function renderTipoTabla(tipos) {
+      return `<div class="table-wrap"><table class="data-table">
+      <thead><tr><th>Tipo</th><th>Record</th><th>Net</th></tr></thead>
+      <tbody>${tipos.map(t => `<tr><td>${esc(t.tipo)}</td><td>${t.wins}-${t.losses}</td><td class="num ${signColor(t.neto)}">${fmts(t.neto)}</td></tr>`).join("")}</tbody>
+      </table></div>`;
+    }
+
+    function makeChartTipoMix() {
+      const c = document.getElementById("chartTipoMix");
+      if (!c) return;
+      destroyChart("tipomix");
+      const tipos = calcRoiPorTipo();
+      if (!tipos.length) return;
+      charts.tipomix = new Chart(c, { type: "doughnut", data: { labels: tipos.map(t => t.tipo), datasets: [{ data: tipos.map(t => t.wins + t.losses), backgroundColor: tipos.map((_, i) => tipoMixColor(i)), borderColor: cssVar("--card"), borderWidth: 2 }] }, options: { responsive: true, maintainAspectRatio: false, cutout: "65%", plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `${ctx.label}: ${ctx.parsed} apuestas` } } } } });
     }
 
     /* ── Tab: Temporal ── */
@@ -869,6 +1040,13 @@
           <span class="dia-wl">${d.wins}W-${d.losses}L</span>
         </div>`;
       }).join("")}
+    </div>`: ""}
+    ${data.porDia.length ? `
+    <div class="card"><div class="card-title">Daily</div>
+      <div class="table-wrap"><table class="data-table">
+      <thead><tr><th>Día</th><th>Record</th><th>Win%</th><th>Net</th></tr></thead>
+      <tbody>${data.porDia.map(d => `<tr><td>${d.label}</td><td>${d.wins}-${d.losses}</td><td>${d.wr.toFixed(0)}%</td><td class="num ${signColor(d.neto)}">${fmts(d.neto)}</td></tr>`).join("")}</tbody>
+      </table></div>
     </div>`: ""}
     ${data.porHora.length ? `
     <div class="card">
@@ -1431,6 +1609,12 @@
        (el cálculo vive en analytics.simular_backtest, INV-BIZ-14) y pinta KPIs +
        curva del bank. Sin eventos inline (INV-MINI-13); todo por delegación. ── */
     const _BT_DIAS = [["Lun", 0], ["Mar", 1], ["Mié", 2], ["Jue", 3], ["Vie", 4], ["Sáb", 5], ["Dom", 6]];
+    // Compounding Tracker (B9): a diferencia del Simulador (_bt, what-if con
+    // filtros), este SIEMPRE corre sobre TODO el historial sin filtrar — es un
+    // tracker de bankroll real, no un análisis exploratorio. Reusa el mismo motor
+    // (POST /api/backtest, modo_stake="porcentaje") con el stake_cap nuevo (A2).
+    let _ct = { bank_inicial: "1000", pct: "5", cap: 10000, res: null, loading: false };
+
     let _bt = {
       bank_inicial: "1000", modo: "fijo", stake_valor: "20",
       cuota_min: "", cuota_max: "", date_from: "", date_to: "",
@@ -1932,6 +2116,92 @@
       if (r) r.scrollIntoView({ behavior: "smooth", block: "start" });
     }
 
+    /* ── Tab: Compounding Tracker (B9) ── */
+    function renderCompounding() {
+      if (!DATA?.apuestas?.length) return `<div class="section-header">Compounding <span>Tracker</span></div><div class="empty">Sin apuestas registradas todavía.</div>`;
+      const capChip = (val, label) => `<button class="bt-chip${_ct.cap === val ? " active" : ""}" data-ct-cap="${val == null ? "" : val}">${label}</button>`;
+      return `<div class="section-header">Compounding <span>Tracker</span></div>
+    <div class="explainer" style="margin-bottom:14px">📈 Recorre TODO tu historial real (sin filtros) apostando un % fijo de un bankroll que compone mes a mes, con un tope opcional de unidad máxima. A diferencia del Simulador (what-if con filtros), este siempre usa el historial completo.</div>
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-title">⚙️ Parámetros</div>
+      <div class="bt-form">
+        <label class="bt-field"><span>Bankroll inicial</span>
+          <div class="bt-input-wrap"><span class="bt-prefix">$</span><input class="bt-input" type="text" inputmode="decimal" data-ct-input="bank_inicial" value="${esc(_ct.bank_inicial)}"></div>
+        </label>
+        <label class="bt-field"><span>% de unidad por apuesta</span>
+          <div class="bt-input-wrap"><input class="bt-input" type="text" inputmode="decimal" data-ct-input="pct" value="${esc(_ct.pct)}"><span class="bt-prefix">%</span></div>
+        </label>
+      </div>
+      <div class="bt-flbl">Tope de unidad máxima</div>
+      <div class="bt-chips">${capChip(5000, "$5k")}${capChip(10000, "$10k")}${capChip(20000, "$20k")}${capChip(null, "Sin tope")}</div>
+    </div>
+    <div class="bt-actions"><button class="share-card-btn" style="width:100%" data-action="ct-run">${_ct.loading ? "⏳ Calculando…" : "▶ Calcular"}</button></div>
+    <div id="ctResults">${_ct.res ? ctRenderResults() : ""}</div>`;
+    }
+
+    function ctRenderResults() {
+      const r = _ct.res;
+      if (!r) return "";
+      const desglose = r.desglose_mensual || [];
+      return `<div class="kpi-row" style="margin-top:12px">
+      <div class="kpi"><div class="kpi-label">Bankroll final</div><div class="kpi-value accent">${fmtC(r.bank_final)}</div></div>
+      <div class="kpi"><div class="kpi-label">Return</div><div class="kpi-value ${signColor(r.neto)}">${r.bank_inicial > 0 ? (r.neto >= 0 ? "+" : "") + (r.neto / r.bank_inicial * 100).toFixed(1) + "%" : "—"}</div></div>
+    </div>
+    <div class="card" style="margin:10px 0"><div class="card-title">Evolución del bankroll</div>${chartPlaceholder("chartCompounding", "bt2", true)}</div>
+    <div class="card"><div class="card-title">Desglose año/mes</div>
+      <div class="table-wrap"><table class="data-table">
+      <thead><tr><th>Mes</th><th>Bankroll inicial</th><th>P/L del mes</th><th>Bankroll final</th></tr></thead>
+      <tbody>${desglose.map(m => {
+        // desglose_mensual (analytics.py:_bt_metricas_neto) no trae bank_ini directo:
+        // se deriva del neto acumulado (neto_fin = neto al cierre del mes; neto_fin − pl = neto al inicio).
+        const bankIni = r.bank_inicial + (m.neto_fin - m.pl);
+        const bankFin = r.bank_inicial + m.neto_fin;
+        return `<tr><td>${mesLabel(m.mes)}</td><td class="num">${fmtC(bankIni)}</td><td class="num ${signColor(m.pl)}">${fmts(m.pl)}</td><td class="num">${fmtC(bankFin)}</td></tr>`;
+      }).join("")}</tbody>
+      </table></div>
+    </div>
+    ${r.quiebra ? `<div class="bt-alert bt-alert-danger" style="margin-top:10px">💥 El bankroll llegó a $0 el ${esc(r.fecha_quiebra || "")}. La simulación se detuvo ahí.</div>` : ""}`;
+    }
+
+    async function runCompounding() {
+      if (_ct.loading) return;
+      const bank = parseFloat(_ct.bank_inicial), pct = parseFloat(_ct.pct);
+      const errEl = msg => (tg?.showAlert ? tg.showAlert(msg) : alert(msg));
+      if (!(bank > 0)) { errEl("El bankroll inicial debe ser mayor que 0."); return; }
+      if (!(pct > 0) || pct > 100) { errEl("El % de unidad debe estar entre 0 y 100."); return; }
+      const payload = { bank_inicial: bank, modo_stake: "porcentaje", stake_valor: pct, filtros: {} };
+      if (_ct.cap) payload.stake_cap = _ct.cap;
+      const btn = document.querySelector("[data-action='ct-run']");
+      const orig = btn ? btn.textContent : "";
+      _ct.loading = true;
+      if (btn) { btn.disabled = true; btn.textContent = "⏳ Calculando…"; }
+      haptic("light");
+      try {
+        const resp = await fetch(`${API_URL}/api/backtest`, { method: "POST", headers: apiHeaders(), body: JSON.stringify(payload) });
+        const j = await safeJson(resp);
+        if (!resp.ok || j.error) throw new Error(j.error || `Error ${resp.status}`);
+        _ct.res = j.resultado;
+        const box = document.getElementById("ctResults");
+        if (box) box.innerHTML = ctRenderResults();
+        haptic("success");
+        setTimeout(makeChartCompounding, 60);
+      } catch (err) {
+        haptic("error");
+        errEl("❌ " + err.message);
+      } finally {
+        _ct.loading = false;
+        if (btn) { btn.disabled = false; btn.textContent = orig || "▶ Calcular"; }
+      }
+    }
+
+    function makeChartCompounding() {
+      const c = document.getElementById("chartCompounding");
+      const curva = _ct.res?.curva;
+      if (!c || !curva?.length) return;
+      destroyChart("ct");
+      charts.ct = new Chart(c, { type: "line", data: { labels: curva.map(p => `#${p.i}`), datasets: [{ label: "Bankroll", data: curva.map(p => p.bank), borderColor: "#00CD96", backgroundColor: "rgba(0,205,150,0.08)", borderWidth: 2, pointRadius: 0, fill: true, tension: 0.2 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => fmtC(ctx.parsed.y) } } }, scales: { x: { grid: { color: cssVar("--chart-grid") }, ticks: { display: false } }, y: { grid: { color: cssVar("--chart-grid") }, ticks: { callback: axisM, font: { size: 10, family: "Space Mono" }, color: cssVar("--chart-tick") } } } } });
+    }
+
     /* ── Tab: Apuestas ── */
     function renderApuestas() {
       const deportesUnicos = ["Todos", ...new Set(DATA.apuestas.map(a => a.deporte).filter(Boolean))];
@@ -1940,11 +2210,90 @@
     <div class="filter-row">${deportesUnicos.map(d => `<button class="filter-chip ${d === filtroDeporte ? "active" : ""}" data-filtro-deporte="${esc(d)}">${esc(d)}</button>`).join("")}</div>
     <div id="apuestasLista">${renderApuestasList()}</div>`;
     }
+    // Wager Log (B8): índice cronológico global (1..N sobre TODAS las apuestas,
+    // no solo las filtradas/paginadas) — misma columna "#" que la referencia.
+    function _wlIndiceMap() {
+      const all = DATA.apuestas.slice().sort((a, b) => {
+        const fa = a.fecha_partido || a.fecha || "", fb = b.fecha_partido || b.fecha || "";
+        if (fa !== fb) return fa < fb ? -1 : 1;
+        return (a.row_id || 0) - (b.row_id || 0);
+      });
+      const m = new Map();
+      all.forEach((a, i) => m.set(a.row_id, i + 1));
+      return m;
+    }
+    function _wlSortValue(a, col) {
+      if (col === "fecha") return a.fecha_partido || a.fecha || "";
+      if (col === "monto") return a.monto || 0;
+      if (col === "cuota") return parseFloat(a.cuota) || 0;
+      if (col === "ganancia") return a.ganancia || 0;
+      return a.fecha_partido || a.fecha || "";
+    }
+    // Position: FAV/DOG para Moneyline/Handicap (cuota decimal < 2.0 = favorito,
+    // implica >50% de probabilidad); el resto de tipos muestra su categoría
+    // (igual que la referencia distingue "TOTAL" como posición).
+    function posicionBet(a) {
+      const tipo = normalizaTipo(a.tipo);
+      const cuota = parseFloat(a.cuota);
+      if (tipo === "Moneyline" || tipo === "Handicap") {
+        if (!(cuota > 0)) return "—";
+        return cuota < 2.0 ? "FAV" : "DOG";
+      }
+      return tipo;
+    }
+    function diaSemanaLabel(a) {
+      const f = (a.fecha_partido || a.fecha || "").slice(0, 10);
+      if (f.length !== 10) return "—";
+      const d = new Date(f + "T12:00:00");
+      if (isNaN(d)) return "—";
+      return ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"][d.getDay()];
+    }
     function renderApuestasList() {
       const term = filtroEquipo.toLowerCase().trim();
-      const filt = DATA.apuestas.filter(a => filtroDeporte === "Todos" || a.deporte === filtroDeporte).filter(a => !term || (a.equipo1 || "").toLowerCase().includes(term) || (a.equipo2 || "").toLowerCase().includes(term));
-      const mostrar = [...filt].reverse().slice(0, 50);
-      const truncated = filt.length > 50; return `<div class="card"><div class="card-title">${filt.length} apuesta${filt.length !== 1 ? "s" : ""}${truncated ? " <span style='color:var(--text-2);font-weight:400;font-size:10px'>(mostrando últimas 50)</span>" : ""}</div>${mostrar.length === 0 ? '<div class="empty">Sin resultados</div>' : mostrar.map(renderBetItem).join("")}</div>`;
+      let filt = DATA.apuestas
+        .filter(a => filtroDeporte === "Todos" || a.deporte === filtroDeporte)
+        .filter(a => !term || (a.equipo1 || "").toLowerCase().includes(term) || (a.equipo2 || "").toLowerCase().includes(term));
+      const momentumActivo = !!filtroMomentumIds;
+      if (momentumActivo) filt = filt.filter(a => filtroMomentumIds.has(a.row_id));
+      const idxMap = _wlIndiceMap();
+      const dir = wlSortDir === "asc" ? 1 : -1;
+      const ordenado = filt.slice().sort((a, b) => {
+        const va = _wlSortValue(a, wlSortCol), vb = _wlSortValue(b, wlSortCol);
+        if (va < vb) return -1 * dir;
+        if (va > vb) return 1 * dir;
+        return 0;
+      });
+      const filtroBanner = momentumActivo ? `<div class="filter-chip active" style="margin-bottom:8px">🎯 Filtrado a picks de Momentum <button data-action="wl-clear-momentum" style="background:none;border:none;color:inherit;margin-left:6px;cursor:pointer">✕</button></div>` : "";
+      if (!ordenado.length) return `${filtroBanner}<div class="empty">Sin resultados</div>`;
+      const totalPages = Math.max(1, Math.ceil(ordenado.length / WL_PAGE_SIZE));
+      if (wlPage > totalPages) wlPage = totalPages;
+      if (wlPage < 1) wlPage = 1;
+      const pagina = ordenado.slice((wlPage - 1) * WL_PAGE_SIZE, wlPage * WL_PAGE_SIZE);
+      const th = (col, label) => `<th data-wl-sort="${col}">${label}${wlSortCol === col ? (wlSortDir === "asc" ? " ▲" : " ▼") : ""}</th>`;
+      return `${filtroBanner}<div class="card" style="padding:0">
+      <div class="card-title" style="padding:14px 14px 0">${ordenado.length} apuesta${ordenado.length !== 1 ? "s" : ""}</div>
+      <div class="table-wrap"><table class="data-table wager-log">
+      <thead><tr><th>#</th>${th("fecha", "Fecha")}<th>Liga</th><th>Play</th>${th("monto", "Monto")}<th>To Win</th><th>Tipo</th>${th("cuota", "Cuota")}<th>W/L</th>${th("ganancia", "Return")}<th>Position</th><th>Día</th></tr></thead>
+      <tbody>${pagina.map(a => {
+        const idx = idxMap.get(a.row_id) || "—";
+        const fecha = (a.fecha_partido || a.fecha || "").slice(0, 10) || "—";
+        const esParlay = (a.equipo2 || "").startsWith("PARLAY");
+        const play = esParlay ? `Parlay · ${esc(a.equipo2 || "")}` : `${esc(a.equipo1 || "?")} vs ${esc(a.equipo2 || "?")} · ${esc(formatTipoApuesta(a))}`;
+        const wl = a.status === "win" ? `<span class="green">WIN</span>` : a.status === "loss" ? `<span class="red">LOSS</span>` : a.status === "void" ? "VOID" : "PEND";
+        return `<tr>
+        <td>${idx}</td><td>${fecha}</td><td>${esc(a.liga || "—")}</td><td>${play}</td>
+        <td class="num">${fmt(a.monto)}</td><td class="num">${a.potencial ? fmt(a.potencial) : "—"}</td>
+        <td>${esc(normalizaTipo(a.tipo))}</td><td class="num">${a.cuota || "—"}</td><td>${wl}</td>
+        <td class="num ${signColor(a.ganancia)}">${fmts(a.ganancia)}</td><td>${esc(posicionBet(a))}</td><td>${diaSemanaLabel(a)}</td>
+      </tr>`;
+      }).join("")}</tbody>
+      </table></div>
+      <div class="wl-pager">
+        <button data-wl-page="-1" ${wlPage <= 1 ? "disabled" : ""}>‹</button>
+        <span>Página ${wlPage} / ${totalPages}</span>
+        <button data-wl-page="1" ${wlPage >= totalPages ? "disabled" : ""}>›</button>
+      </div>
+    </div>`;
     }
     const _RE_SUFIJO_HOME_AWAY = /^((?:Asian\s+Handicap|Handicap|Moneyline|1X2)(?:\s+[+\-]?\d+(?:\.\d+)?)?)\s*-\s*(Home|Away|Draw|Empate|Local|Visitante)\s*$/i;
 
@@ -1998,6 +2347,26 @@
     /* ── Charts ── */
     function axisM(v) { const a = Math.abs(v); return a >= 1000 ? `$${(v / 1000).toFixed(1)}k` : `$${v}` }
     function destroyChart(k) { if (charts[k]) { charts[k].destroy(); delete charts[k]; } }
+
+    function makeChartCumulative() {
+      const c = document.getElementById("chartCumulative");
+      const ord = apuestasOrdenadas();
+      if (!c || !ord.length) return;
+      destroyChart("cumulative");
+      let acum = 0;
+      const data = ord.map(a => { acum += (a.ganancia || 0); return +acum.toFixed(2); });
+      charts.cumulative = new Chart(c, { type: "line", data: { labels: ord.map((_, i) => `#${i + 1}`), datasets: [{ label: "Ganancia acumulada", data, borderColor: "#00CD96", backgroundColor: "rgba(0,205,150,0.08)", borderWidth: 2, pointRadius: 0, fill: true, tension: 0.25 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => fmts(ctx.parsed.y) } } }, scales: { x: { grid: { color: cssVar("--chart-grid") }, ticks: { display: false } }, y: { grid: { color: cssVar("--chart-grid") }, ticks: { callback: axisM, font: { size: 10, family: "Space Mono" }, color: cssVar("--chart-tick") } } } } });
+    }
+
+    function makeChartMonthlyPL() {
+      const c = document.getElementById("chartMonthlyPL");
+      if (!c) return;
+      destroyChart("monthlypl");
+      const datos = monthlyPLVista === "semanal" ? calcSemanal() : DATA.grafica_meses.map(m => ({ periodo: m.mes, neto: m.neto }));
+      if (!datos.length) return;
+      const labels = datos.map(d => monthlyPLVista === "semanal" ? d.periodo.replace(/^\d{4}-/, "") : mesLabel(d.periodo));
+      charts.monthlypl = new Chart(c, { type: "bar", data: { labels, datasets: [{ label: "Net", data: datos.map(d => +d.neto.toFixed(2)), backgroundColor: datos.map(d => d.neto >= 0 ? "rgba(0,205,150,0.75)" : "rgba(255,61,90,0.75)"), borderRadius: 5, borderSkipped: false }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { color: cssVar("--chart-grid") }, ticks: { font: { size: 10, family: "Space Mono" }, color: cssVar("--chart-tick") } }, y: { grid: { color: cssVar("--chart-grid") }, ticks: { callback: axisM, font: { size: 10, family: "Space Mono" }, color: cssVar("--chart-tick") } } } } });
+    }
 
     function makeChartNeto() {
       const c = document.getElementById("chartNeto");
@@ -2054,19 +2423,22 @@
       Chart.defaults.plugins.tooltip.borderWidth = 1;
       Chart.defaults.plugins.tooltip.padding = 10;
       Chart.defaults.interaction = { mode: "index", intersect: false };
-      if (tabActual === "resumen") { makeChartNeto(); makeChartMeses(); }
+      if (tabActual === "resumen") { makeChartCumulative(); makeChartMonthlyPL(); makeChartNeto(); makeChartMeses(); }
       if (tabActual === "deportes") { makeChartDep(); }
-      if (tabActual === "tipos") { makeChartTipo(); }
+      if (tabActual === "tipos") { makeChartTipoMix(); makeChartTipo(); }
       if (tabActual === "rolling") { makeChartRolling(); }
       if (tabActual === "backtest" && _bt.res) { makeChartBacktest(); }
+      if (tabActual === "compounding" && _ct.res) { makeChartCompounding(); }
     }
 
     /* ── Events ── */
     document.addEventListener("click", e => {
       const chip = e.target.closest("[data-filtro-deporte]");
-      if (chip) { filtroDeporte = chip.dataset.filtroDeporte; document.querySelectorAll("[data-filtro-deporte]").forEach(c => c.classList.toggle("active", c.dataset.filtroDeporte === filtroDeporte)); const l = document.getElementById("apuestasLista"); if (l) l.innerHTML = renderApuestasList(); return; }
+      if (chip) { filtroDeporte = chip.dataset.filtroDeporte; wlPage = 1; document.querySelectorAll("[data-filtro-deporte]").forEach(c => c.classList.toggle("active", c.dataset.filtroDeporte === filtroDeporte)); const l = document.getElementById("apuestasLista"); if (l) l.innerHTML = renderApuestasList(); return; }
       const rs = e.target.closest("[data-rolling-show]");
       if (rs) { rollingShow = parseInt(rs.dataset.rollingShow, 10); haptic("select"); document.querySelectorAll("[data-rolling-show]").forEach(b => b.classList.toggle("active", b === rs)); destroyChart("rolling"); makeChartRolling(); return; }
+      const mplVista = e.target.closest("[data-monthlypl-vista]");
+      if (mplVista) { monthlyPLVista = mplVista.dataset.monthlyplVista; haptic("select"); document.querySelectorAll("[data-monthlypl-vista]").forEach(b => b.classList.toggle("active", b === mplVista)); destroyChart("monthlypl"); makeChartMonthlyPL(); return; }
       // Simulador (backtest): chips de modo de staking y de filtros.
       const btModo = e.target.closest("[data-bt-modo]");
       if (btModo) { btSetModo(btModo.dataset.btModo); return; }
@@ -2076,6 +2448,32 @@
       if (btNB) { btToggleNB(); return; }
       const btChip = e.target.closest("[data-bt-toggle]");
       if (btChip) { btToggle(btChip.dataset.btToggle, btChip.dataset.btValue); return; }
+      const ctCap = e.target.closest("[data-ct-cap]");
+      if (ctCap) { _ct.cap = ctCap.dataset.ctCap === "" ? null : parseInt(ctCap.dataset.ctCap, 10); haptic("select"); document.querySelectorAll("[data-ct-cap]").forEach(b => b.classList.toggle("active", b === ctCap)); return; }
+      const ctRun = e.target.closest("[data-action='ct-run']");
+      if (ctRun) { runCompounding(); return; }
+      const momFiltrar = e.target.closest("[data-action='momentum-filtrar']");
+      if (momFiltrar) {
+        const m = calcMomentum(momentumN, momentumTipo);
+        filtroMomentumIds = new Set(m.picks.map(p => p.row_id));
+        wlPage = 1;
+        haptic("select");
+        showGroup("historial"); showTab("apuestas");
+        return;
+      }
+      const wlClear = e.target.closest("[data-action='wl-clear-momentum']");
+      if (wlClear) { filtroMomentumIds = null; wlPage = 1; const l = document.getElementById("apuestasLista"); if (l) l.innerHTML = renderApuestasList(); return; }
+      const wlPrev = e.target.closest("[data-wl-page]");
+      if (wlPrev) { wlPage += parseInt(wlPrev.dataset.wlPage, 10); const l = document.getElementById("apuestasLista"); if (l) l.innerHTML = renderApuestasList(); return; }
+      const wlSort = e.target.closest("[data-wl-sort]");
+      if (wlSort) {
+        const col = wlSort.dataset.wlSort;
+        if (wlSortCol === col) wlSortDir = wlSortDir === "asc" ? "desc" : "asc";
+        else { wlSortCol = col; wlSortDir = "desc"; }
+        wlPage = 1;
+        const l = document.getElementById("apuestasLista"); if (l) l.innerHTML = renderApuestasList();
+        return;
+      }
 
       const grp = e.target.closest("[data-group]");
       if (grp) { showGroup(grp.dataset.group); return; }
@@ -2123,7 +2521,7 @@
     });
     document.addEventListener("input", e => {
       const el = e.target.closest("[data-search-equipo]");
-      if (el) { filtroEquipo = el.value; const l = document.getElementById("apuestasLista"); if (l) l.innerHTML = renderApuestasList(); return; }
+      if (el) { filtroEquipo = el.value; wlPage = 1; const l = document.getElementById("apuestasLista"); if (l) l.innerHTML = renderApuestasList(); return; }
 
       const gEl = e.target.closest("[data-search-equipo-gestion]");
       if (gEl) { filtroEquipoGestion = gEl.value; _gListLimit = 40; const l = document.getElementById("gLista"); if (l) l.innerHTML = renderGLista(); return; }
@@ -2154,11 +2552,18 @@
         _bt[k] = btIn.value.replace(/,/g, ".");
         return;
       }
+      const ctIn = e.target.closest("[data-ct-input]");
+      if (ctIn) { _ct[ctIn.dataset.ctInput] = ctIn.value.replace(/,/g, "."); return; }
     });
     document.addEventListener("change", e => {
       const el = e.target.closest("#mEsParlay");
       if (el) { toggleParlay(el.checked); return; }
-      
+
+      const mN = e.target.closest("[data-momentum-n]");
+      if (mN) { momentumN = parseInt(mN.value, 10); actualizarMomentum(); return; }
+      const mT = e.target.closest("[data-momentum-tipo]");
+      if (mT) { momentumTipo = mT.value; actualizarMomentum(); return; }
+
       const uEl = e.target.closest("[data-action='upload-image']");
       if (uEl && uEl.files?.length) { analyzeTicket(uEl.files[0]); }
     });
@@ -2176,7 +2581,7 @@
       if (z) { handleDrop(e); }
     });
 
-    const _ALWAYS_RERENDER = new Set(["apuestas", "mes", "calendario", "gestion", "patrones", "backtest"]);
+    const _ALWAYS_RERENDER = new Set(["apuestas", "mes", "calendario", "gestion", "patrones", "backtest", "compounding"]);
 
     /* ── Sub-navegación (segmented control) del grupo activo o de la vista "Más" ── */
     function renderSubNav() {
@@ -2216,6 +2621,7 @@
       if (tabActual === "tipos") { destroyChart("tipo"); }
       if (tabActual === "rolling") { destroyChart("rolling"); }
       if (tabActual === "backtest") { destroyChart("bt"); }
+      if (tabActual === "compounding") { destroyChart("ct"); }
       // Sincronizar grupo / sub-vista avanzada según la sección destino
       if (ADVANCED.includes(id)) {
         if (!_inAdvanced) { _inAdvanced = true; try { tg?.BackButton?.show(); } catch (_) {} }
