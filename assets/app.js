@@ -420,8 +420,9 @@
       if (!t) return "Otro";
       // Parlay — primero: puede contener "winner", "over", etc. en sus picks
       if (/parlay|combo|acumulad|multi.?bet|\bsgp\b|same.?game/.test(t)) return "Parlay";
-      // Combinada mismo partido
-      if (/\bcombinad/.test(t)) return "Combinada";
+      // Combinada mismo partido — incluye bet-builder tipo "Win + O2.5"
+      // (gemelo de analytics.py _RE_COMBINADA).
+      if (/\bcombinad|bet builder|\+\s*(o|u)\d/.test(t)) return "Combinada";
       // Futuro / Outright
       if (/\boutright\b|futures?|to win the|championship|tournament winner|season (wins?|points?|goals?)|award|mvp|heisman|ballon/.test(t)) return "Futuro";
       // Córners / Tarjetas — mercados secundarios: categoría propia ANTES de Moneyline/Handicap/Total O/U
@@ -430,7 +431,8 @@
       if (/\bcards?\b|tarjeta|booking|amonestac/.test(t)) return "Tarjetas";
       // Doble oportunidad — va ANTES de Moneyline: "Double Chance - Home/Draw" no debe
       // caer en Moneyline por el sufijo home/draw (gemelo de analytics.py _RE_DOBLE_OPORTUNIDAD).
-      if (/double chance|doble oportunidad|home\/draw|draw\/away|home\/away/.test(t)) return "Doble oportunidad";
+      // Incluye fraseo "Team Win or Draw" / "Team or Draw" (equivalente a X2/1X en texto libre).
+      if (/double chance|doble oportunidad|home\/draw|draw\/away|home\/away|\bor draw\b|draw or \w/.test(t)) return "Doble oportunidad";
       // Moneyline / Ganador — DNB, to qualify, W1/W2, fight/race winner, MMA
       if (/moneyline|\b1x2\b|\bml\b|ganador|team wins?|\bw[12]\b|\bwinner\b|to win\b|match result|draw no bet|\bdnb\b|to qualify|fight winner|race winner|series winner|method of victory|\bko\b|\btko\b|decision win|round betting|will win/.test(t)) return "Moneyline";
       // Handicap — puck line (NHL), run line (MLB), point spread, AH
@@ -439,8 +441,9 @@
       if (/ambos|btts|both teams to score|\bgg\b|no goal/.test(t)) return "BTTS";
       // Marcador exacto
       if (/correct score|marcador exacto|resultado exacto|exact score/.test(t)) return "Marcador exacto";
-      // Props — va ANTES de Total O/U: "Player Points Over 25.5" debe ser Prop, no Total O/U
-      if (/\bplayer\b|\bprop\b|anytime (scorer|td|goal|basket|touchd)|first (goal|scorer|td|basket|pitch|serve|touchd)|last (goal|scorer|td|touchd)|to score\b|rushing yards|receiving yards|passing yards|\bassists?\b|\brebounds?\b|strikeouts?\b|home run|top (batsman|bowler|scorer)|fall of wicket|wickets?\b|century\b/.test(t)) return "Props";
+      // Props — va ANTES de Total O/U: "Player Points Over 25.5" debe ser Prop, no Total O/U.
+      // Incluye "Win to Nil"/clean sheet y "shots on target" (gemelo de analytics.py _RE_PROPS).
+      if (/\bplayer\b|\bprop\b|anytime (scorer|td|goal|basket|touchd)|first (goal|scorer|td|basket|pitch|serve|touchd)|last (goal|scorer|td|touchd)|to score\b|rushing yards|receiving yards|passing yards|\bassists?\b|\brebounds?\b|strikeouts?\b|home run|top (batsman|bowler|scorer)|fall of wicket|wickets?\b|century\b|win to nil|to nil\b|clean sheet|shots? on target|shots? (over|under)?\s*\d/.test(t)) return "Props";
       // Total O/U — \b evita "overtime", "overview", etc.
       if (/\bover\b|\bunder\b|\btotal\b|\bo\/u\b|más de|menos de|alt(ernate)? total|\bgames? o\/?u\b|\bsets? o\/?u\b|\bruns? o\/?u\b|half total|1st half total|q[1-4] total/.test(t)) return "Total O/U"; return "Otro";
     }
