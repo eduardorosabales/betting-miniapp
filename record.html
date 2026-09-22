@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'self'; script-src 'self' 'unsafe-eval' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://betting-stats-bot-production.up.railway.app https://web-production-aa47e.up.railway.app https://betting-stats-bot-canal3-production.up.railway.app; img-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self';">
+  <title>BetStats — Track Record</title>
+  <meta name="description"
+    content="Historial de apuestas verificado: ROI, winrate y CLV (closing line value) — la métrica que mide ventaja real, no suerte.">
+  <meta property="og:title" content="BetStats — Track Record verificado">
+  <meta property="og:description"
+    content="ROI, winrate y CLV verificados. El CLV compara el precio tomado contra el cierre del mercado: es la forma honesta de medir si un tipster tiene ventaja real.">
+  <meta property="og:type" content="website">
+  <meta name="robots" content="index, follow">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Space+Mono:wght@400;700&family=DM+Sans:wght@400;500;600&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #06080F;
+      --card: #0D1220;
+      --card2: #111826;
+      --border: rgba(255, 255, 255, .07);
+      --accent: #00CD96;
+      --accent-dim: rgba(0, 205, 150, .12);
+      --win: #00CD96;
+      --loss: #FF3D5A;
+      --pend: #F5A623;
+      --text: #E2E8F4;
+      --text-2: #8896A8;
+      --text-3: #5D6B82;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+      --font-head: 'Syne', sans-serif;
+      --font-num: 'Space Mono', monospace;
+      --font-body: 'DM Sans', sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body { height: 100%; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 20px 16px 48px;
+    }
+
+    .wrap { max-width: 720px; margin: 0 auto; }
+
+    header.top { text-align: center; padding: 24px 0 20px; }
+
+    .logo { display: inline-flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+
+    .logo-icon { width: 30px; height: 30px; }
+
+    .logo-text {
+      font-family: var(--font-head);
+      font-weight: 800;
+      font-size: 22px;
+      letter-spacing: -.02em;
+    }
+
+    .logo-text span { color: var(--accent); }
+
+    .tagline { color: var(--text-2); font-size: 14px; max-width: 480px; margin: 6px auto 0; line-height: 1.5; }
+
+    .canal-switch {
+      display: flex; justify-content: center; gap: 6px; margin: 16px 0 4px; flex-wrap: wrap;
+    }
+
+    .canal-chip {
+      border: 1px solid var(--border); background: transparent; color: var(--text-2);
+      border-radius: 999px; padding: 7px 14px; font-size: 12.5px; cursor: pointer;
+      font-family: var(--font-body); min-height: 34px;
+    }
+
+    .canal-chip.active { background: var(--accent); border-color: var(--accent); color: #04140F; font-weight: 700; }
+
+    .card {
+      background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-lg);
+      padding: 18px; margin: 14px 0;
+    }
+
+    .card h2 {
+      font-family: var(--font-head); font-size: 15px; font-weight: 700; margin-bottom: 10px;
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    .card p.note { color: var(--text-2); font-size: 12.5px; line-height: 1.55; margin-top: 8px; }
+
+    .hero-grid {
+      display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;
+    }
+
+    .hero-card {
+      background: var(--card2); border-radius: var(--radius-md); padding: 14px; text-align: center;
+    }
+
+    .hero-label { font-size: 11px; color: var(--text-2); text-transform: uppercase; letter-spacing: .05em; }
+
+    .hero-value {
+      font-family: var(--font-num); font-size: 26px; font-weight: 700; margin-top: 4px;
+    }
+
+    .green { color: var(--win); }
+    .red { color: var(--loss); }
+    .amber { color: var(--pend); }
+
+    .badge {
+      display: inline-block; font-size: 11px; font-weight: 700; padding: 3px 10px;
+      border-radius: 999px; background: var(--card2); color: var(--text-2);
+    }
+
+    .badge.win { background: rgba(0, 205, 150, .15); color: var(--win); }
+    .badge.loss { background: rgba(255, 61, 90, .15); color: var(--loss); }
+    .badge.warn { background: rgba(245, 166, 35, .15); color: var(--pend); }
+
+    .clv-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 4px; }
+
+    .clv-kpi { flex: 1 1 120px; background: var(--card2); border-radius: var(--radius-md); padding: 12px; }
+
+    .clv-kpi .l { font-size: 10.5px; color: var(--text-3); text-transform: uppercase; letter-spacing: .05em; }
+
+    .clv-kpi .v { font-family: var(--font-num); font-size: 19px; font-weight: 700; margin-top: 3px; }
+
+    canvas { max-width: 100%; }
+
+    .cta {
+      display: block; text-align: center; background: var(--accent); color: #04140F;
+      font-family: var(--font-head); font-weight: 800; font-size: 15px; text-decoration: none;
+      padding: 15px; border-radius: var(--radius-md); margin: 18px 0 6px;
+    }
+
+    footer { text-align: center; color: var(--text-3); font-size: 11.5px; margin-top: 18px; line-height: 1.6; }
+
+    .loader, .error-box { text-align: center; padding: 60px 20px; color: var(--text-2); }
+
+    .error-box button {
+      margin-top: 14px; background: var(--card2); color: var(--text); border: 1px solid var(--border);
+      border-radius: var(--radius-md); padding: 10px 18px; font-size: 13px; cursor: pointer;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap" id="app">
+    <div class="loader">Cargando historial…</div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"
+    integrity="sha512-CQBWl4fJHWbryGE+Pc7UAxWMUMNMWzWxF4SQo9CgkJIN1kx6djDQZjh3Y8SZ1d+6I+1zze6Z7kHXO7q3UyZAWw=="
+    crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="assets/record.js?v=20260921"></script>
+</body>
+
+</html>
