@@ -12,13 +12,13 @@
 (function () {
   "use strict";
 
+  // `telegram: null` = ese canal no tiene destino público propio todavía (confirmado por
+  // el usuario, 2026-09-21) → el CTA se OMITE para esa pestaña en vez de un enlace roto.
   const CANALES = {
-    "1": { apiUrl: "https://betting-stats-bot-production.up.railway.app", label: "Canal 1" },
-    "2": { apiUrl: "https://web-production-aa47e.up.railway.app", label: "Canal 2" },
-    "3": { apiUrl: "https://betting-stats-bot-canal3-production.up.railway.app", label: "Canal 3" },
+    "1": { apiUrl: "https://betting-stats-bot-production.up.railway.app", label: "Canal 1", telegram: "https://t.me/tubettingstatsbot" },
+    "2": { apiUrl: "https://web-production-aa47e.up.railway.app", label: "Canal 2", telegram: null },
+    "3": { apiUrl: "https://betting-stats-bot-canal3-production.up.railway.app", label: "Canal 3", telegram: null },
   };
-  // TODO (usuario): reemplazar por el @usuario o link de invitación del canal público real.
-  const CANAL_TELEGRAM_URL = "https://t.me/";
 
   const params = new URLSearchParams(location.search);
   let canalActual = params.has("c") && CANALES[params.get("c")] ? params.get("c") : "1";
@@ -93,6 +93,11 @@
       ? `<div class="card"><h2>📅 ROI por mes</h2><canvas id="chMes" height="160"></canvas></div>`
       : "";
 
+    const tgUrl = CANALES[canalActual].telegram;
+    const ctaBlock = tgUrl
+      ? `<a class="cta" href="${esc(tgUrl)}" target="_blank" rel="noopener">📲 Unirme al canal de Telegram</a>`
+      : "";
+
     return `
       <div class="hero-grid">
         <div class="hero-card"><div class="hero-label">ROI</div><div class="hero-value ${signCls(d.roi_pct)}">${fmtp(d.roi_pct)}</div></div>
@@ -104,7 +109,7 @@
       ${d.wilson_low_pct != null ? `<p class="note" style="text-align:center;margin:10px 0 0">Win rate con intervalo de confianza 95%: ${fmtpAbs(d.wilson_low_pct)} – ${fmtpAbs(d.wilson_high_pct)}</p>` : ""}
       ${clvBlock}
       ${mensualBlock}
-      <a class="cta" href="${esc(CANAL_TELEGRAM_URL)}" target="_blank" rel="noopener">📲 Unirme al canal de Telegram</a>
+      ${ctaBlock}
       <footer>
         Datos generados automáticamente por el bot — cero edición manual.<br>
         Actualizado: ${d.actualizado ? new Date(d.actualizado).toLocaleString("es-MX") : "—"}
