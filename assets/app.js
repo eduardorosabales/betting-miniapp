@@ -692,6 +692,8 @@
       apuestas: () => renderApuestas(),
       calendario: () => renderCalendario(),
       gestion: () => renderGestion(),
+      // clv / politica: registrados por assets/edge.js (INV-XCUT-16/17), que se
+      // carga después y añade sus propias entradas a este objeto y a ADVANCED.
     };
 
     /* ── Render App ── */
@@ -713,6 +715,8 @@
       <div id="capital"  class="section"></div>
       <div id="backtest" class="section"></div>
       <div id="compounding" class="section"></div>
+      <div id="clv"      class="section"></div>
+      <div id="politica" class="section"></div>
       <div id="apuestas" class="section"></div>
       <div id="calendario" class="section"></div>
       <div id="gestion"  class="section"></div>
@@ -2351,7 +2355,10 @@
         const cuandoHtml = cuando ? `<span style="opacity:.6"> · ${cuando}</span>` : "";
         return `<div><b style="opacity:.8">#${i + 1}</b> ${ctxHtml}${teams}${esc(p.tipo_apuesta || "")}${cuota}${cuandoHtml}</div>`;
       }).join("")}</div>` : "";
-      return `<div class="bet-item"><div class="bet-dot ${icon}"></div><div class="bet-info"><div class="bet-teams">${teamsLabel}</div><div class="bet-meta">${metaLabel}</div>${legsHtml}</div><div class="bet-right"><div class="bet-badge bet-badge-${badgeKey}">${statusLabel}</div><div class="bet-monto">${fmt(a.monto)}</div><div class="bet-result ${rc}">${res}</div></div></div>`;
+      // INV-XCUT-16: CLV visible en el listado si la apuesta tiene cierre registrado.
+      const clvHtml = (typeof a.clv === "number")
+        ? `<div class="bet-meta" style="color:${a.clv >= 0 ? "var(--win)" : "var(--loss)"}">CLV ${a.clv >= 0 ? "+" : ""}${(a.clv * 100).toFixed(1)}%</div>` : "";
+      return `<div class="bet-item"><div class="bet-dot ${icon}"></div><div class="bet-info"><div class="bet-teams">${teamsLabel}</div><div class="bet-meta">${metaLabel}</div>${clvHtml}${legsHtml}</div><div class="bet-right"><div class="bet-badge bet-badge-${badgeKey}">${statusLabel}</div><div class="bet-monto">${fmt(a.monto)}</div><div class="bet-result ${rc}">${res}</div></div></div>`;
     }
 
     /* ── Charts ── */
@@ -2785,11 +2792,14 @@
       const rowId = _rowIdOf(a, DATA.apuestas.indexOf(a));
       const si = a.status === "win" ? "✅" : a.status === "loss" ? "❌" : a.status === "void" ? "🔄" : "⏳";
       const gStr = a.status === "win" ? ` → +${fmt(a.ganancia)}` : a.status === "loss" ? ` → -${fmt(a.monto)}` : "";
+      // INV-XCUT-16: CLV visible en la tarjeta si la apuesta tiene cierre registrado.
+      const clvStr = (typeof a.clv === "number")
+        ? ` · <span style="color:${a.clv >= 0 ? "var(--win)" : "var(--loss)"}">CLV ${a.clv >= 0 ? "+" : ""}${(a.clv * 100).toFixed(1)}%</span>` : "";
       return `<div class="g-card">
       <div class="g-card-head">
         <div>
           <div class="g-teams">${si} ${esc(a.equipo1)} vs ${esc(a.equipo2)}</div>
-          <div class="g-meta">${esc(a.deporte || "")}${a.deporte ? " · " : ""}${esc(a.tipo || "")} @ ${esc(String(a.cuota || ""))} · ${fmt(a.monto)}${gStr}${a.fecha_partido ? " · 📅 " + esc(a.fecha_partido) : ""}</div>
+          <div class="g-meta">${esc(a.deporte || "")}${a.deporte ? " · " : ""}${esc(a.tipo || "")} @ ${esc(String(a.cuota || ""))} · ${fmt(a.monto)}${gStr}${a.fecha_partido ? " · 📅 " + esc(a.fecha_partido) : ""}${clvStr}</div>
         </div>
         <div class="g-actions">
           <button class="btn-edit" data-action="edit-bet" data-rowid="${rowId}">✏️</button>

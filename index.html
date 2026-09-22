@@ -10,6 +10,8 @@
     content="default-src 'self'; script-src 'self' 'unsafe-eval' https://cdnjs.cloudflare.com https://telegram.org; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://betting-stats-bot-production.up.railway.app https://web-production-aa47e.up.railway.app https://betting-stats-bot-canal3-production.up.railway.app; img-src 'self' data: blob: https://t.me; frame-src https://oauth.telegram.org; object-src 'none'; base-uri 'self'; form-action 'self';">
   <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon-180.png">
+  <!-- Ventaja real (CLV/precio/política, INV-XCUT-15/16): mismo origen, sin cambio de CSP -->
+  <link rel="stylesheet" href="assets/edge.css?v=20260921">
   <title>Betting Stats</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -2794,7 +2796,10 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"
     integrity="sha512-CQBWl4fJHWbryGE+Pc7UAxWMUMNMWzWxF4SQo9CgkJIN1kx6djDQZjh3Y8SZ1d+6I+1zze6Z7kHXO7q3UyZAWw=="
     crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-  <script src="assets/app.js?v=20260918b"></script>
+  <script src="assets/app.js?v=20260921"></script>
+  <!-- Carga DESPUÉS de app.js: reutiliza sus const/función top-level (script clásico,
+       sin build step, INV-MINI-01). Registra sus propias sub-vistas y eventos (INV-MINI-13). -->
+  <script src="assets/edge.js?v=20260921"></script>
 </body>
 
 </html>

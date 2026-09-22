@@ -1,0 +1,57 @@
+/* edge.css — estilos de la capa "ventaja real" (assets/edge.js): salud de datos, CLV,
+   política pre-apuesta y comparador de canales. Archivo APARTE del <style> de index.html
+   para no tocar el orden de las media queries (INV-MINI-12). Solo clases nuevas (prefijo
+   .ed-), reutiliza las variables CSS del tema (INV-MINI-16). */
+
+.ed-card { background: var(--card); border: 1px solid var(--border, rgba(255,255,255,.08)); border-radius: var(--radius-md); padding: 12px 14px; margin: 10px 0; }
+.ed-card h4 { margin: 0 0 8px; font-size: 13px; font-weight: 700; letter-spacing: .02em; }
+.ed-note { font-size: 11.5px; color: var(--text-2); line-height: 1.55; margin: 6px 0 0; }
+.ed-note b { color: var(--text-1, inherit); }
+.ed-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
+.ed-kpi { flex: 1 1 96px; background: var(--card2); border-radius: 10px; padding: 8px 10px; min-width: 0; }
+.ed-kpi .l { font-size: 10px; color: var(--text-3); text-transform: uppercase; letter-spacing: .05em; }
+.ed-kpi .v { font-size: 17px; font-weight: 700; margin-top: 2px; font-variant-numeric: tabular-nums; }
+.ed-kpi .s { font-size: 10.5px; color: var(--text-2); margin-top: 1px; }
+.ed-alert { display: flex; gap: 8px; font-size: 12px; line-height: 1.5; padding: 8px 10px; border-radius: 10px; margin: 6px 0; background: var(--card2); border-left: 3px solid var(--text-3); }
+.ed-alert.alto  { border-left-color: var(--loss); }
+.ed-alert.medio { border-left-color: #F5A623; }
+.ed-alert.bajo  { border-left-color: var(--accent); }
+.ed-ok { color: var(--win); font-size: 12px; margin: 4px 0; }
+.ed-badge { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 999px; background: var(--card2); color: var(--text-2); white-space: nowrap; vertical-align: middle; }
+.ed-badge.win  { background: rgba(0,205,150,.15); color: var(--win); }
+.ed-badge.loss { background: rgba(255,61,90,.15);  color: var(--loss); }
+.ed-badge.warn { background: rgba(245,166,35,.15); color: #F5A623; }
+.ed-badges { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.ed-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 6px; }
+.ed-table th { text-align: left; font-size: 10px; color: var(--text-3); text-transform: uppercase; letter-spacing: .04em; font-weight: 600; padding: 4px 6px; }
+.ed-table td { padding: 6px; border-top: 1px solid rgba(255,255,255,.06); font-variant-numeric: tabular-nums; }
+.ed-table td.n, .ed-table th.n { text-align: right; }
+.ed-table tr.low td { opacity: .55; }
+.ed-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+.ed-chip { border: 1px solid var(--border, rgba(255,255,255,.12)); background: transparent; color: var(--text-2); border-radius: 999px; padding: 6px 12px; font-size: 12px; cursor: pointer; min-height: 32px; }
+.ed-chip.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+.ed-btn { border: none; background: var(--accent); color: #fff; border-radius: 10px; padding: 10px 14px; font-size: 13px; font-weight: 700; cursor: pointer; min-height: 44px; }
+.ed-btn.ghost { background: transparent; border: 1px solid var(--border, rgba(255,255,255,.14)); color: var(--text-1, inherit); }
+.ed-btn.danger { background: var(--loss); }
+.ed-btn.small { padding: 6px 10px; min-height: 32px; font-size: 12px; }
+.ed-btn:disabled { opacity: .55; }
+.ed-form { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+.ed-form label { font-size: 10.5px; color: var(--text-3); display: block; margin-bottom: 3px; }
+.ed-form input, .ed-form select { width: 100%; box-sizing: border-box; background: var(--card2); border: 1px solid var(--border, rgba(255,255,255,.1)); color: inherit; border-radius: 8px; padding: 9px 10px; font-size: 14px; min-height: 40px; }
+.ed-form .full { grid-column: 1 / -1; }
+.ed-decision { border-radius: 12px; padding: 12px 14px; margin-top: 10px; font-size: 13px; line-height: 1.55; background: var(--card2); border-left: 4px solid var(--text-3); }
+.ed-decision.saltar  { border-left-color: var(--loss); }
+.ed-decision.apostar { border-left-color: var(--win); }
+.ed-rule { border-top: 1px solid rgba(255,255,255,.07); padding: 10px 0; }
+.ed-rule:first-of-type { border-top: none; }
+.ed-rule .top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.ed-rule .nm { font-weight: 700; font-size: 13px; }
+.ed-rule .ev { font-size: 11.5px; color: var(--text-2); margin: 4px 0; line-height: 1.5; }
+.ed-rule.off { opacity: .55; }
+.ed-verdict { font-size: 12px; font-weight: 700; }
+.ed-verdict.ventaja { color: var(--win); }
+.ed-verdict.sin_ventaja { color: var(--loss); }
+.ed-fold { margin-top: 10px; border: 1px dashed var(--border, rgba(255,255,255,.14)); border-radius: 10px; padding: 8px 10px; }
+.ed-fold > summary { font-size: 12px; font-weight: 700; color: var(--accent); cursor: pointer; }
+.ed-cand-actions { display: flex; gap: 6px; margin-top: 6px; }
+@media (min-width: 768px) { .ed-form { grid-template-columns: repeat(4, 1fr); } }
