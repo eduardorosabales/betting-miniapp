@@ -638,9 +638,21 @@
           wr: total > 0 ? b.w / total * 100 : 0, total
         };
       };
+      // Rango real de publicación sobre TODO el historial (incluye pendientes), en minutos del día.
+      let minM = null, maxM = null;
+      DATA.apuestas.forEach(a => {
+        const s = String(a.fecha_publicacion || a.fecha || "");
+        const h = parseInt(s.slice(11, 13), 10), m = parseInt(s.slice(14, 16), 10);
+        if (isNaN(h) || isNaN(m)) return;
+        const t = h * 60 + m;
+        if (minM === null || t < minM) minM = t;
+        if (maxM === null || t > maxM) maxM = t;
+      });
+      const fmtHM = t => t === null ? null : String(Math.floor(t / 60)).padStart(2, "0") + ":" + String(t % 60).padStart(2, "0");
       return {
         porDia: DIAS.map(d => toStats(d, db[d])).filter(x => x.total > 0),
-        porHora: FRANJAS.map(f => toStats(f, hb[f])).filter(x => x.total > 0)
+        porHora: FRANJAS.map(f => toStats(f, hb[f])).filter(x => x.total > 0),
+        horaMin: fmtHM(minM), horaMax: fmtHM(maxM)
       };
     }
 
@@ -1066,6 +1078,7 @@
     ${data.porHora.length ? `
     <div class="card">
       <div class="card-title">Por franja horaria (hora de publicación)</div>
+      ${data.horaMin ? `<div style="font-size:12px;color:var(--text-2);margin-bottom:8px">⏱️ Rango real de publicación (todo el historial): <strong>${data.horaMin}</strong> — <strong>${data.horaMax}</strong></div>` : ""}
       ${data.porHora.map(d => {
         const barW = Math.min(100, Math.abs(d.roi) / maxAbsHora * 100);
         const col = d.roi >= 0 ? "var(--win)" : "var(--loss)";
