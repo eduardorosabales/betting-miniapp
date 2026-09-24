@@ -617,10 +617,11 @@
         else db[dia].l++;
 
         // ── FRANJA HORARIA: usa fecha/hora de REGISTRO ──
-        if (a.fecha) {
-          const dtReg = new Date(a.fecha.replace(" ", "T") + "Z");
-          if (!isNaN(dtReg)) {
-            const { hour } = toMXParts(dtReg);
+        const horaSrc = a.fecha_publicacion || a.fecha;
+        if (horaSrc) {
+          // La API ya entrega "YYYY-MM-DD HH:MM" en hora CDMX: se lee la hora tal cual.
+          const hour = parseInt(String(horaSrc).slice(11, 13), 10);
+          if (!isNaN(hour)) {
             const franja = hour < 6 ? "00-06" : hour < 10 ? "06-10" : hour < 14 ? "10-14" :
               hour < 18 ? "14-18" : hour < 22 ? "18-22" : "22-00";
             hb[franja].apo += a.monto || 0;
@@ -1064,7 +1065,7 @@
     </div>`: ""}
     ${data.porHora.length ? `
     <div class="card">
-      <div class="card-title">Por franja horaria (hora de registro)</div>
+      <div class="card-title">Por franja horaria (hora de publicación)</div>
       ${data.porHora.map(d => {
         const barW = Math.min(100, Math.abs(d.roi) / maxAbsHora * 100);
         const col = d.roi >= 0 ? "var(--win)" : "var(--loss)";
@@ -1077,7 +1078,7 @@
         </div>`;
       }).join("")}
     </div>`: ""}
-    <div class="explainer"><strong>Nota:</strong> El día de semana usa la fecha del evento. La franja horaria usa cuándo registraste la apuesta (hora CDMX). Con más datos este análisis se vuelve más preciso.</div>`;
+    <div class="explainer"><strong>Nota:</strong> El día de semana usa la fecha del evento. La franja horaria usa cuándo se publicó el pick en el canal (hora CDMX; si no hay dato, la hora de registro). Con más datos este análisis se vuelve más preciso.</div>`;
     }
 
     /* ── Tab: Rolling ROI ── */
