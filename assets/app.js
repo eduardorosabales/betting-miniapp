@@ -617,7 +617,7 @@
         else db[dia].l++;
 
         // ── FRANJA HORARIA: usa fecha/hora de REGISTRO ──
-        const horaSrc = a.fecha_publicacion || a.fecha;
+        const horaSrc = a.fecha_publicacion;
         if (horaSrc) {
           // La API ya entrega "YYYY-MM-DD HH:MM" en hora CDMX: se lee la hora tal cual.
           const hour = parseInt(String(horaSrc).slice(11, 13), 10);
@@ -641,7 +641,7 @@
       // Rango real de publicación sobre TODO el historial (incluye pendientes), en minutos del día.
       let minM = null, maxM = null;
       DATA.apuestas.forEach(a => {
-        const s = String(a.fecha_publicacion || a.fecha || "");
+        const s = String(a.fecha_publicacion || "");
         const h = parseInt(s.slice(11, 13), 10), m = parseInt(s.slice(14, 16), 10);
         if (isNaN(h) || isNaN(m)) return;
         const t = h * 60 + m;
@@ -1091,7 +1091,7 @@
         </div>`;
       }).join("")}
     </div>`: ""}
-    <div class="explainer"><strong>Nota:</strong> El día de semana usa la fecha del evento. La franja horaria usa cuándo se publicó el pick en el canal (hora CDMX; si no hay dato, la hora de registro). Con más datos este análisis se vuelve más preciso.</div>`;
+    <div class="explainer"><strong>Nota:</strong> El día de semana usa la fecha del evento. La franja horaria usa cuándo se publicó el pick en el canal (hora CDMX). Apuestas sin hora de publicación confiable no se cuentan. Con más datos este análisis se vuelve más preciso.</div>`;
     }
 
     /* ── Tab: Rolling ROI ── */
