@@ -422,7 +422,7 @@
       if (/parlay|combo|acumulad|multi.?bet|\bsgp\b|same.?game/.test(t)) return "Parlay";
       // Combinada mismo partido — incluye bet-builder tipo "Win + O2.5"
       // (gemelo de analytics.py _RE_COMBINADA).
-      if (/\bcombinad|bet builder|\+\s*(o|u)\d/.test(t)) return "Combinada";
+      if (/\bcombinad|bet builder|\+\s*(o|u)\d|\bgana\b\s*\+/.test(t)) return "Combinada";
       // Futuro / Outright
       if (/\boutright\b|futures?|to win the|championship|tournament winner|season (wins?|points?|goals?)|award|mvp|heisman|ballon/.test(t)) return "Futuro";
       // Córners / Tarjetas — mercados secundarios: categoría propia ANTES de Moneyline/Handicap/Total O/U
@@ -432,11 +432,11 @@
       // Doble oportunidad — va ANTES de Moneyline: "Double Chance - Home/Draw" no debe
       // caer en Moneyline por el sufijo home/draw (gemelo de analytics.py _RE_DOBLE_OPORTUNIDAD).
       // Incluye fraseo "Team Win or Draw" / "Team or Draw" (equivalente a X2/1X en texto libre).
-      if (/double chance|doble oportunidad|home\/draw|draw\/away|home\/away|\bor draw\b|draw or \w/.test(t)) return "Doble oportunidad";
+      if (/double chance|doble oportunidad|home\/draw|draw\/away|home\/away|\bor draw\b|draw or \w|gana o empata|empata o gana|\bo empata\b/.test(t)) return "Doble oportunidad";
       // Moneyline / Ganador — DNB, to qualify, W1/W2, fight/race winner, MMA
-      if (/moneyline|\b1x2\b|\bml\b|ganador|team wins?|\bw[12]\b|\bwinner\b|to win\b|match result|draw no bet|\bdnb\b|to qualify|fight winner|race winner|series winner|method of victory|\bko\b|\btko\b|decision win|round betting|will win/.test(t)) return "Moneyline";
+      if (/moneyline|\b1x2\b|\bml\b|ganador|team wins?|\bw[12]\b|\bwinner\b|to win\b|match result|draw no bet|\bdnb\b|to qualify|fight winner|race winner|series winner|method of victory|\bko\b|\btko\b|decision win|round betting|will win|\bgana\b(?!.*(sin recibir|porter[ií]a|valla invicta))|^(empate|draw)$/.test(t)) return "Moneyline";
       // Handicap — puck line (NHL), run line (MLB), point spread, AH
-      if (/handicap|hcp|\bspread\b|\basian\b|puck line|run line|point spread|european handicap|\beh\b|alt(ernate)? spread/.test(t)) return "Handicap";
+      if (/handicap|hcp|\bspread\b|\basian\b|puck line|run line|point spread|european handicap|\beh\b|alt(ernate)? spread|\S\s[+-]\d+(\.\d+)?$/.test(t)) return "Handicap";
       // BTTS
       if (/ambos|btts|both teams to score|\bgg\b|no goal/.test(t)) return "BTTS";
       // Marcador exacto
