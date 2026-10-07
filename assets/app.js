@@ -774,7 +774,7 @@
       <div class="hero-card"><div class="hero-label">Últimos 7 días</div><div class="hero-value ${sNeto == null ? "" : signColor(sNeto)}" title="${sNeto == null ? "" : fmts(sNeto)}">${sNeto == null ? "—" : fmtsC(sNeto)}</div></div>
     </div>`;
       const shareBtn = `<button class="share-card-btn" data-action="share-card" style="width:100%;margin:2px 0 10px;padding:13px;min-height:48px;display:flex;align-items:center;justify-content:center;gap:8px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius-md);font-size:14px;font-weight:700;cursor:pointer">📸 Compartir imagen</button>`;
-      return `${hero}${shareBtn}<div class="section-header">Detalle <span>·</span> Historial</div>
+      return `${typeof picoBanner === "function" ? picoBanner() : ""}${hero}${shareBtn}<div class="section-header">Detalle <span>·</span> Historial</div>
     <div class="stats-grid">
       <div class="stat-card win-card"><div class="stat-value green">${r.wins}</div><div class="stat-label">Ganadas</div></div>
       <div class="stat-card loss-card"><div class="stat-value red">${r.losses}</div><div class="stat-label">Perdidas</div></div>
