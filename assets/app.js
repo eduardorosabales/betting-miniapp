@@ -744,6 +744,7 @@
       <div id="compounding" class="section"></div>
       <div id="clv"      class="section"></div>
       <div id="politica" class="section"></div>
+      <div id="pico"     class="section"></div>
       <div id="apuestas" class="section"></div>
       <div id="calendario" class="section"></div>
       <div id="gestion"  class="section"></div>
