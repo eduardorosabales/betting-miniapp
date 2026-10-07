@@ -1527,19 +1527,37 @@
       // ── Semáforo de ventaja (EV/Kelly) — campos aditivos, tolera ausencia (INV-BIZ-12) ──
       let ventajaHtml = "";
       if (c.tiene_ventaja != null) {
-        const ok  = c.tiene_ventaja;
-        const col = ok ? "--win" : "--loss";
-        const bg  = ok ? "--win-bg" : "--loss-bg";
-        const titulo = ok ? "🟢 Tienes ventaja" : "🔴 Sin ventaja — el sistema pierde";
+        // 4 estados (INV-BIZ-46): el veredicto sale del IC95% del rendimiento por unidad apostada,
+        // no del signo del edge — con ~300 apuestas el error típico es ±6 puntos y un +0.8% no es
+        // distinguible de 0. Backend viejo (sin veredicto_ventaja) → cae al signo, como antes.
+        const v = c.veredicto_ventaja || (c.tiene_ventaja ? "ventaja" : "pierde");
+        const palette = {
+          ventaja:       ["var(--win)",  "var(--win-bg)",  "🟢 Ventaja demostrada"],
+          pierde:        ["var(--loss)", "var(--loss-bg)", "🔴 El sistema pierde"],
+          sin_evidencia: ["var(--pend)", "rgba(245,166,35,.12)", "🟡 Sin evidencia todavía"],
+          insuficiente:  ["var(--pend)", "rgba(245,166,35,.12)", "🟡 Muestra insuficiente"],
+        };
+        const [col, bg, titulo] = palette[v] || palette.sin_evidencia;
         const cuotaM = ((c.cuota_media_b ?? 0) + 1).toFixed(2);
-        const detalle = ok
-          ? `Winrate ${fmtp((c.winrate_p ?? 0) * 100)} &gt; break-even ${fmtp((c.break_even_wr ?? 0) * 100)} (cuota media ${cuotaM}). Kelly/4 sugerido: <strong>${fmtp((c.kelly_cuarto ?? 0) * 100)}</strong> del capital por apuesta.`
-          : `Winrate ${fmtp((c.winrate_p ?? 0) * 100)} &lt; break-even ${fmtp((c.break_even_wr ?? 0) * 100)} (cuota media ${cuotaM}). Kelly óptimo ≤ 0: ningún capital arregla un edge negativo, solo cambia la velocidad de la ruina. Prioriza subir el winrate o bajar la cuota de entrada.`;
+        const edgeP = fmtp((c.edge_por_stake ?? 0) * 100);
+        const ic = (c.edge_low != null && c.edge_high != null)
+          ? `${fmtp(c.edge_low * 100)} a ${fmtp(c.edge_high * 100)}` : null;
+        const base = `Winrate ${fmtp((c.winrate_p ?? 0) * 100)} vs break-even ${fmtp((c.break_even_wr ?? 0) * 100)} (cuota media ${cuotaM}).`;
+        let detalle;
+        if (v === "ventaja") {
+          detalle = `Rendimiento por unidad apostada <strong>${edgeP}</strong>${ic ? ` (IC95%: ${ic})` : ""}, con el intervalo completo por encima de cero. ${base} Kelly/4 sugerido: <strong>${fmtp((c.kelly_cuarto ?? 0) * 100)}</strong> del capital por apuesta.`;
+        } else if (v === "pierde") {
+          detalle = `Rendimiento por unidad apostada <strong>${edgeP}</strong>${ic ? ` (IC95%: ${ic})` : ""}, con el intervalo completo por debajo de cero. ${base} Kelly óptimo ≤ 0: ningún capital arregla un edge negativo, solo cambia la velocidad de la ruina. Prioriza subir el winrate o bajar la cuota de entrada.`;
+        } else if (v === "insuficiente") {
+          detalle = `Con ${c.n_resueltas ?? "pocas"} apuestas resueltas (menos de 10) no se puede estimar la ventaja. ${base}`;
+        } else {
+          detalle = `Rinde <strong>${edgeP}</strong> por unidad apostada${ic ? `, pero con ${c.n_resueltas ?? "estas"} apuestas el margen va de ${ic}` : ""}: no se distingue de cero. Todavía no hay base para decir que el sistema gana ni que pierde; no subas el stake por esta cifra. ${base}`;
+        }
         ventajaHtml = `
-    <div class="card" style="border:1px solid var(${col});background:var(${bg});margin-bottom:10px">
+    <div class="card" style="border:1px solid ${col};background:${bg};margin-bottom:10px">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
-        <div style="font-weight:800;font-size:14px;color:var(${col})">${titulo}</div>
-        <div style="font-family:var(--font-num);font-size:13px;color:var(${col})">edge ${fmtp((c.edge_por_stake ?? 0) * 100)}/stake</div>
+        <div style="font-weight:800;font-size:14px;color:${col}">${titulo}</div>
+        <div style="font-family:var(--font-num);font-size:13px;color:${col}">edge ${edgeP}/stake</div>
       </div>
       <div style="font-size:12px;color:var(--text-2);margin-top:6px;line-height:1.5">${detalle}</div>
     </div>`;
