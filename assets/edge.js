@@ -72,7 +72,7 @@
         <div class="ed-kpi"><div class="l">Resueltas</div><div class="v">${fmtPct1(s.pct_resueltas)}</div><div class="s">${s.resueltas}/${s.total}</div></div>
         <div class="ed-kpi"><div class="l">Stake asumido</div><div class="v">${fmtPct1(s.pct_stake_asumido)}</div><div class="s">${s.n_stake_asumido} apuestas</div></div>
         <div class="ed-kpi"><div class="l">Sin clasificar</div><div class="v">${fmtPct1(s.pct_sin_clasificar)}</div><div class="s">${s.n_sin_clasificar} en «Otro»</div></div>
-        <div class="ed-kpi"><div class="l">Con cierre (CLV)</div><div class="v">${fmtPct1(s.pct_con_cierre)}</div><div class="s">${s.n_con_cierre}/${s.n_elegibles_cierre || 0}</div></div>
+        <div class="ed-kpi"><div class="l">Con cierre (CLV)</div><div class="v">${fmtPct1(s.pct_con_cierre)}</div><div class="s">${s.n_con_cierre}/${s.n_elegibles_cierre || 0} prepartido${s.n_en_vivo ? ` · ${s.n_en_vivo} en vivo (no aplica)` : ""}</div></div>
       </div>
       ${alertas || `<div class="ed-ok">✅ Sin alertas de calidad de datos.</div>`}
       ${rancias ? `<details class="ed-fold"><summary>Pendientes rancias (${s.pendientes_rancias})</summary>${rancias}</details>` : ""}
@@ -113,13 +113,14 @@
       <h4>📈 CLV — Closing Line Value ${_badgeVeredicto(c.veredicto)}</h4>
       <p class="ed-note">Compara la cuota que tomaste contra la cuota de <b>cierre</b> (justo antes del inicio). Es la métrica que dice si tienes ventaja real <b>mucho antes</b> de que el resultado (ganar/perder) tenga suficiente muestra — con 150 apuestas ya converge, el ROI necesita miles.</p>
       <div class="ed-row">
-        <div class="ed-kpi"><div class="l">Apuestas con cierre</div><div class="v">${c.n}</div><div class="s">${fmtPct1(c.cobertura)} del historial elegible</div></div>
+        <div class="ed-kpi"><div class="l">Apuestas con cierre</div><div class="v">${c.n}</div><div class="s">${fmtPct1(c.cobertura)} del historial prepartido</div></div>
         <div class="ed-kpi"><div class="l">CLV medio</div><div class="v" style="color:${(c.clv_medio || 0) >= 0 ? "var(--win)" : "var(--loss)"}">${fmtPctS(c.clv_medio)}</div></div>
         <div class="ed-kpi"><div class="l">Beat rate</div><div class="v">${fmtPct1(c.beat_rate)}</div><div class="s">${c.beats}/${c.n} por encima del cierre</div></div>
         <div class="ed-kpi"><div class="l">IC 95%</div><div class="v" style="font-size:13px">${fmtPct1(c.wilson_low)} – ${fmtPct1(c.wilson_high)}</div></div>
       </div>
+      ${c.n_en_vivo ? `<p class="ed-note">ℹ️ ${c.n_en_vivo} apuesta(s) <b>en vivo</b> (publicadas después del inicio) no entran al CLV: la cuota en juego se mueve con el marcador y no es comparable con el cierre prepartido.</p>` : ""}
       ${c.n < (c.min_muestra || 30) ? `<p class="ed-note">⚠️ Menos de ${c.min_muestra || 30} apuestas con cierre: el veredicto todavía no es fiable.</p>` : ""}
-      ${c.cobertura < 0.5 ? `<p class="ed-note">⚠️ Solo ${fmtPct1(c.cobertura)} de tus apuestas resueltas tienen cuota de cierre — activa la captura automática o cárgalo a mano para que el CLV represente todo tu historial.</p>` : ""}
+      ${c.cobertura < 0.5 ? `<p class="ed-note">⚠️ Solo ${fmtPct1(c.cobertura)} de tus apuestas prepartido tienen cuota de cierre — activa la captura automática o cárgalo a mano para que el CLV represente todo tu historial.</p>` : ""}
     </div>`;
   }
 
