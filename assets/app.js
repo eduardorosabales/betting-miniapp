@@ -463,6 +463,15 @@
         });
     }
 
+    // Neto (P/L) de una apuesta. OJO: `a.ganancia` en una ganada es el COBRO bruto
+    // (stake incluido) y en una perdida es −stake; sumarlo tal cual inflaba cada
+    // acierto en su stake (FIX-NETO-MINI). void/pendiente → 0.
+    function netoDe(a) {
+      if (a.status === "win") return (a.ganancia || a.monto || 0) - (a.monto || 0);
+      if (a.status === "loss") return -(a.monto || 0);
+      return 0;
+    }
+
     // Agrupa apuestasOrdenadas() por semana ISO (año-Www) sumando neto — vista
     // "Semanal" del chart Monthly P/L (B6). Usa fecha_partido (fallback fecha).
     function calcSemanal() {
@@ -479,7 +488,7 @@
         const week = 1 + Math.round(((tmp - firstThu) / 86400000 - 3 + ((firstThu.getUTCDay() + 6) % 7)) / 7);
         const key = `${tmp.getUTCFullYear()}-W${String(week).padStart(2, "0")}`;
         if (!(key in buckets)) { buckets[key] = 0; orden.push(key); }
-        buckets[key] += (a.ganancia || 0);
+        buckets[key] += netoDe(a);
       }
       return orden.sort().map(k => ({ periodo: k, neto: +buckets[k].toFixed(2) }));
     }
@@ -491,7 +500,7 @@
       const ult = ord.slice(-n);
       const wins = ult.filter(a => a.status === "win").length;
       const losses = ult.length - wins;
-      const neto = ult.reduce((s, a) => s + (a.ganancia || 0), 0);
+      const neto = ult.reduce((s, a) => s + netoDe(a), 0);
       return { wins, losses, neto, n: ult.length };
     }
 
@@ -509,7 +518,7 @@
       }
       const wins = picks.filter(p => p.status === "win").length;
       const losses = picks.length - wins;
-      const neto = picks.reduce((s, p) => s + (p.ganancia || 0), 0);
+      const neto = picks.reduce((s, p) => s + netoDe(p), 0);
       return { wins, losses, neto, n: picks.length, picks };
     }
 
@@ -657,7 +666,8 @@
     }
 
     function calcRolling(ventana = 20) {
-      const res = DATA.apuestas.filter(a => a.status === "win" || a.status === "loss");
+      // Orden cronológico (fecha_partido, row_id) — igual que rolling_roi del backend.
+      const res = apuestasOrdenadas();
       if (res.length < ventana) return [];
       const points = [];
       let netoAcum = 0;
@@ -684,8 +694,12 @@
       if (!cuotas.length) return null;
       const b = cuotas.reduce((s, c) => s + c, 0) / cuotas.length - 1;
       if (b <= 0) return null;
-      const f = Math.max(0, Math.min((p * (b + 1) - 1) / b, 0.25));
-      const ev = p * b - (1 - p);
+      // EV = yield real por unidad (win → cuota−1, loss → −1), no p·b̄ − (1−p): la
+      // cuota media ignora a qué cuota se gana y a cuál se pierde (gemelo de
+      // analytics.ventaja_desde_apuestas, FIX-VENTAJA-CUOTA-MEDIA).
+      const val = res.map(a => [a.status === "win", parseFloat(a.cuota)]).filter(([, c]) => c > 1.01);
+      const ev = val.reduce((s, [w, c]) => s + (w ? c - 1 : -1), 0) / val.length;
+      const f = Math.max(0, Math.min(ev / b, 0.25));
       return { f, fMedio: f / 2, fCuarto: f / 4, p: p * 100, cuotaMedia: b + 1, ev };
     }
 
@@ -2385,7 +2399,7 @@
       if (!c || !ord.length) return;
       destroyChart("cumulative");
       let acum = 0;
-      const data = ord.map(a => { acum += (a.ganancia || 0); return +acum.toFixed(2); });
+      const data = ord.map(a => { acum += netoDe(a); return +acum.toFixed(2); });
       charts.cumulative = new Chart(c, { type: "line", data: { labels: ord.map((_, i) => `#${i + 1}`), datasets: [{ label: "Ganancia acumulada", data, borderColor: "#00CD96", backgroundColor: "rgba(0,205,150,0.08)", borderWidth: 2, pointRadius: 0, fill: true, tension: 0.25 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => fmts(ctx.parsed.y) } } }, scales: { x: { grid: { color: cssVar("--chart-grid") }, ticks: { display: false } }, y: { grid: { color: cssVar("--chart-grid") }, ticks: { callback: axisM, font: { size: 10, family: "Space Mono" }, color: cssVar("--chart-tick") } } } } });
     }
 
