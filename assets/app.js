@@ -2381,6 +2381,24 @@
       return t;
     }
 
+    // INV-XCUT-20 / INV-MINI-42: EV frente a la referencia (1xBet) del pick, o la nota en gris
+    // cuando la referencia no ofrecía la línea del ticket (consenso, solo informativo).
+    function _evRefTexto(a) {
+      const nom = esc(DATA?.valor_ref?.nombre_ref || "1xBet");
+      const pct = n => `${n >= 0 ? "+" : ""}${(n * 100).toFixed(1)}%`;
+      if (typeof a.ev_pick === "number") {
+        const manual = String(a.ref_pick_fuente || "").toLowerCase().endsWith("_manual");
+        return { color: a.ev_pick >= 0 ? "var(--win)" : "var(--loss)",
+                 html: `EV vs ${nom}${manual ? " ✍️" : ""} ${pct(a.ev_pick)}` };
+      }
+      if (String(a.ref_pick_fuente || "").toLowerCase() === "consenso") {
+        const ev = typeof a.ev_consenso === "number" ? ` · consenso EV ${pct(a.ev_consenso)}` : "";
+        const mejor = a.cuota_mejor ? ` · mejor ${esc(a.casa_mejor || "")} ${esc(String(a.cuota_mejor))}` : "";
+        return { color: "var(--text-3)", html: `${nom} no envía esta línea${ev}${mejor}` };
+      }
+      return null;
+    }
+
     function renderBetItem(a) {
       const icon = a.status === "win" ? "win" : a.status === "loss" ? "loss" : a.status === "void" ? "pend" : "pend";
       const res = a.status === "win" ? `+${fmt(a.ganancia)}` : a.status === "loss" ? `-${fmt(a.monto)}` : a.status === "void" ? `🔄 Nula` : ` ⏳ ${fmt(a.potencial)}`;
@@ -2406,8 +2424,8 @@
       const clvHtml = (typeof a.clv === "number")
         ? `<div class="bet-meta" style="color:${a.clv >= 0 ? "var(--win)" : "var(--loss)"}">CLV ${a.clv >= 0 ? "+" : ""}${(a.clv * 100).toFixed(1)}%</div>` : "";
       // INV-XCUT-20: EV del ticket frente a la línea justa de la referencia (1xBet) al registrar el pick.
-      const evHtml = (typeof a.ev_pick === "number")
-        ? `<div class="bet-meta" style="color:${a.ev_pick >= 0 ? "var(--win)" : "var(--loss)"}">EV vs ${esc(DATA?.valor_ref?.nombre_ref || "1xBet")} ${a.ev_pick >= 0 ? "+" : ""}${(a.ev_pick * 100).toFixed(1)}%</div>` : "";
+      const evTxt = _evRefTexto(a);
+      const evHtml = evTxt ? `<div class="bet-meta" style="color:${evTxt.color}">${evTxt.html}</div>` : "";
       return `<div class="bet-item"><div class="bet-dot ${icon}"></div><div class="bet-info"><div class="bet-teams">${teamsLabel}</div><div class="bet-meta">${metaLabel}</div>${clvHtml}${evHtml}${legsHtml}</div><div class="bet-right"><div class="bet-badge bet-badge-${badgeKey}">${statusLabel}</div><div class="bet-monto">${fmt(a.monto)}</div><div class="bet-result ${rc}">${res}</div></div></div>`;
     }
 
@@ -2845,8 +2863,8 @@
       // INV-XCUT-16: CLV visible en la tarjeta si la apuesta tiene cierre registrado.
       const clvStr = (typeof a.clv === "number")
         ? ` · <span style="color:${a.clv >= 0 ? "var(--win)" : "var(--loss)"}">CLV ${a.clv >= 0 ? "+" : ""}${(a.clv * 100).toFixed(1)}%</span>` : "";
-      const evStr = (typeof a.ev_pick === "number")
-        ? ` · <span style="color:${a.ev_pick >= 0 ? "var(--win)" : "var(--loss)"}">EV vs ${esc(DATA?.valor_ref?.nombre_ref || "1xBet")} ${a.ev_pick >= 0 ? "+" : ""}${(a.ev_pick * 100).toFixed(1)}%</span>` : "";
+      const evTxtG = _evRefTexto(a);
+      const evStr = evTxtG ? ` · <span style="color:${evTxtG.color}">${evTxtG.html}</span>` : "";
       return `<div class="g-card">
       <div class="g-card-head">
         <div>

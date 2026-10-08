@@ -174,7 +174,7 @@
       <h4>💹 Valor al apostar vs ${nom}</h4>
       <p class="ed-note">Al registrar cada pick se consulta ${nom}: <b>EV</b> = cuota del ticket ÷ cuota justa de ${nom} (sin su margen) − 1. Positivo = el ticket paga más de lo que ${nom} cree que vale el pick.</p>
       <div class="ed-row">
-        <div class="ed-kpi"><div class="l">Picks medidos</div><div class="v">${v.n}</div>${v.n_otra_fuente ? `<div class="s">+${v.n_otra_fuente} sin ${nom} (consenso)</div>` : ""}</div>
+        <div class="ed-kpi"><div class="l">Picks medidos</div><div class="v">${v.n}</div>${v.n_manual ? `<div class="s">${v.n_manual} cargados a mano ✍️</div>` : ""}${v.n_otra_fuente ? `<div class="s">+${v.n_otra_fuente} sin ${nom} (consenso)</div>` : ""}</div>
         <div class="ed-kpi"><div class="l">EV medio</div><div class="v" style="color:${_colorS(v.ev_medio)}">${fmtPctS(v.ev_medio)}</div><div class="s">mediana ${fmtPctS(v.ev_mediano)}</div></div>
         <div class="ed-kpi"><div class="l">Picks con EV &gt; 0</div><div class="v">${fmtPct1(v.pct_ev_pos)}</div></div>
         <div class="ed-kpi"><div class="l">${nom} vs ticket</div><div class="v" style="color:${_colorS(v.ref_vs_ticket_medio)}">${fmtPctS(v.ref_vs_ticket_medio)}</div><div class="s">cuota de ${nom} al registrar</div></div>
@@ -577,10 +577,27 @@
     _extenderModal(rowId);
   };
 
+  // ¿El pick se consultó pero la referencia no ofrecía su línea? → abrir el bloque manual.
+  function _refPendiente(a) {
+    return (a.ref_pick_fuente || "").toLowerCase() === "consenso";
+  }
+
+  function _refEstado(a) {
+    const f = (a.ref_pick_fuente || "").toLowerCase();
+    const nom = esc(DATA?.valor_ref?.nombre_ref || "1xBet");
+    if (!f) return "";
+    if (f === "consenso") {
+      return `<p class="ed-note">⚠️ ${nom} no envía al bot la línea de este ticket (solo su línea principal). Cárgala aquí desde tu app para medir el EV.</p>`;
+    }
+    const manual = f.endsWith("_manual");
+    return `<p class="ed-note">Guardado${manual ? " (a mano)" : " (automático)"}: ${nom} ${esc(String(a.cuota_ref_pick || "—"))} · justa ${esc(String(a.cuota_ref_pick_justa || "—"))}${typeof a.ev_pick === "number" ? ` · EV ${fmtPctS(a.ev_pick)}` : ""}. Rellena abajo solo si quieres corregirlo.</p>`;
+  }
+
   function _extenderModal(rowId) {
     const body = document.querySelector("#gModal .m-body");
     if (!body) return;
     const a = (rowId !== null) ? (_findApuestaByRowId(rowId) || {}) : {};
+    const nomRef = esc(DATA?.valor_ref?.nombre_ref || "1xBet");
     const wrap = document.createElement("div");
     wrap.innerHTML = `<details class="ed-fold" style="margin-top:10px">
       <summary>💰 Ventaja real (opcional)</summary>
@@ -591,6 +608,16 @@
         <div><label>Cuota de cierre</label><input id="edMCuotaCierre" class="m-input" type="number" step="0.01" value="${esc(a.cuota_cierre || "")}" placeholder="1.95"></div>
       </div>
       <p class="ed-note">La cuota de cierre es el precio del mercado justo antes de que empiece el partido — cárgala a mano si no tienes captura automática, para medir tu CLV.</p>
+    </details>
+    <details class="ed-fold" style="margin-top:10px" ${_refPendiente(a) ? "open" : ""}>
+      <summary>💹 Cuotas de ${nomRef} (desde tu app)</summary>
+      ${_refEstado(a)}
+      <div class="ed-form" style="margin-top:8px">
+        <div><label>Tu lado (p. ej. Más de 7)</label><input id="edMRefLado" class="m-input" type="number" step="0.001" inputmode="decimal" placeholder="1.86"></div>
+        <div><label>Lado contrario (Menos de 7)</label><input id="edMRefOtro" class="m-input" type="number" step="0.001" inputmode="decimal" placeholder="1.90"></div>
+        <div><label>Empate (solo 1X2 de fútbol)</label><input id="edMRefEmpate" class="m-input" type="number" step="0.001" inputmode="decimal" placeholder="—"></div>
+      </div>
+      <p class="ed-note">Copia de la app de ${nomRef} los dos lados de la <b>misma línea</b> que tu ticket. El bot les quita el margen y calcula el EV contra ${nomRef}; ese pick entra en «Valor al apostar».</p>
     </details>`;
     // `.m-foot` es HERMANO de `.m-body` (no su hijo) — basta con añadir al final
     // de `.m-body`, que ya precede al footer en el DOM.
@@ -606,11 +633,21 @@
     const cuotaMejor = document.getElementById("edMCuotaMejor")?.value.trim();
     const casaMejor = document.getElementById("edMCasaMejor")?.value.trim();
     const cuotaCierre = document.getElementById("edMCuotaCierre")?.value.trim();
+    const refLado = document.getElementById("edMRefLado")?.value.trim();
+    const refOtro = document.getElementById("edMRefOtro")?.value.trim();
+    const refEmpate = document.getElementById("edMRefEmpate")?.value.trim();
     const extra = {};
     if (casa) extra.casa = casa;
     if (cuotaMejor) extra.cuota_mejor = cuotaMejor;
     if (casaMejor) extra.casa_mejor = casaMejor;
     if (cuotaCierre) extra.cuota_cierre = cuotaCierre;
+    // Las cuotas de la referencia van juntas; si falta un lado el servidor responde 400
+    // con un mensaje claro (la mini-app no calcula nada, INV-MINI-02).
+    if (refLado || refOtro || refEmpate) {
+      extra.ref_lado = refLado || "";
+      extra.ref_otro = refOtro || "";
+      if (refEmpate) extra.ref_empate = refEmpate;
+    }
 
     if (!Object.keys(extra).length) return _origSubmitBet();
 
