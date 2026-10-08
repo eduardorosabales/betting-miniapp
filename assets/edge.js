@@ -118,6 +118,7 @@
         <div class="ed-kpi"><div class="l">Beat rate</div><div class="v">${fmtPct1(c.beat_rate)}</div><div class="s">${c.beats}/${c.n} por encima del cierre</div></div>
         <div class="ed-kpi"><div class="l">IC 95%</div><div class="v" style="font-size:13px">${fmtPct1(c.wilson_low)} – ${fmtPct1(c.wilson_high)}</div></div>
       </div>
+      ${DATA?.valor_ref?.nombre_ref ? `<p class="ed-note">Cierre de referencia: <b>${esc(DATA.valor_ref.nombre_ref)}</b> sin su margen (si no cotiza el partido, el consenso de las demás casas).</p>` : ""}
       ${c.n_en_vivo ? `<p class="ed-note">ℹ️ ${c.n_en_vivo} apuesta(s) <b>en vivo</b> (publicadas después del inicio) no entran al CLV: la cuota en juego se mueve con el marcador y no es comparable con el cierre prepartido.</p>` : ""}
       ${c.n < (c.min_muestra || 30) ? `<p class="ed-note">⚠️ Menos de ${c.min_muestra || 30} apuestas con cierre: el veredicto todavía no es fiable.</p>` : ""}
       ${c.cobertura < 0.5 ? `<p class="ed-note">⚠️ Solo ${fmtPct1(c.cobertura)} de tus apuestas prepartido tienen cuota de cierre — activa la captura automática o cárgalo a mano para que el CLV represente todo tu historial.</p>` : ""}
@@ -142,6 +143,52 @@
       </div>
       ${mejorEn ? `<p class="ed-note">La mejor cuota apareció más veces en: <b>${mejorEn}</b>.</p>` : ""}
       ${casas ? `<table class="ed-table"><thead><tr><th>Casa</th><th class="n">n</th><th class="n">ROI</th></tr></thead><tbody>${casas}</tbody></table>` : ""}
+    </div>`;
+  }
+
+  // ── Valor al apostar frente a la casa de referencia (1xBet) — INV-XCUT-20 ─────
+  const _colorS = n => (n || 0) >= 0 ? "var(--win)" : "var(--loss)";
+
+  function _renderValorRef() {
+    const v = DATA?.valor_ref;
+    if (!v) return "";
+    const nom = esc(v.nombre_ref || "1xBet");
+    if (!v.n) {
+      return `<div class="ed-card"><h4>💹 Valor al apostar vs ${nom}</h4>
+        <p class="ed-note">Todavía no hay picks con el precio de ${nom} consultado al registrarlos. Se llena solo con la consulta de precio al ingerir (deportes activados en el bot); cada pick nuevo compara la cuota del ticket con la línea justa (sin margen) de ${nom}, con lo que pagan las demás casas y con el cierre.</p>
+        ${v.n_otra_fuente ? `<p class="ed-note">ℹ️ ${v.n_otra_fuente} pick(s) se consultaron cuando ${nom} no cotizaba (se usó el consenso de otras casas) y no entran aquí.</p>` : ""}
+      </div>`;
+    }
+    const mov = v.movimiento || {};
+    const grupos = (v.por_ev || []).map(g => `<tr>
+      <td>${g.grupo === "ev_pos" ? "🟢 EV &gt; 0" : "🔴 EV ≤ 0"}</td><td class="n">${g.n}</td>
+      <td class="n">${g.n_resueltas}</td>
+      <td class="n" style="color:${_colorS(g.unidades)}">${g.unidades >= 0 ? "+" : ""}${g.unidades.toFixed(2)}u</td>
+      <td class="n" style="color:${_colorS(g.yield)}">${fmtPctS(g.yield)}</td>
+      <td class="n" style="color:${_colorS(g.clv_medio)}">${g.n_clv ? fmtPctS(g.clv_medio) : "—"}</td>
+    </tr>`).join("");
+    const supera = (v.casas_que_superan || []).slice(0, 6).map(c => `<tr>
+      <td>${esc(c.casa)}</td><td class="n">${c.veces}</td><td class="n" style="color:var(--win)">${fmtPctS(c.ventaja_media)}</td>
+    </tr>`).join("");
+    return `<div class="ed-card">
+      <h4>💹 Valor al apostar vs ${nom}</h4>
+      <p class="ed-note">Al registrar cada pick se consulta ${nom}: <b>EV</b> = cuota del ticket ÷ cuota justa de ${nom} (sin su margen) − 1. Positivo = el ticket paga más de lo que ${nom} cree que vale el pick.</p>
+      <div class="ed-row">
+        <div class="ed-kpi"><div class="l">Picks medidos</div><div class="v">${v.n}</div>${v.n_otra_fuente ? `<div class="s">+${v.n_otra_fuente} sin ${nom} (consenso)</div>` : ""}</div>
+        <div class="ed-kpi"><div class="l">EV medio</div><div class="v" style="color:${_colorS(v.ev_medio)}">${fmtPctS(v.ev_medio)}</div><div class="s">mediana ${fmtPctS(v.ev_mediano)}</div></div>
+        <div class="ed-kpi"><div class="l">Picks con EV &gt; 0</div><div class="v">${fmtPct1(v.pct_ev_pos)}</div></div>
+        <div class="ed-kpi"><div class="l">${nom} vs ticket</div><div class="v" style="color:${_colorS(v.ref_vs_ticket_medio)}">${fmtPctS(v.ref_vs_ticket_medio)}</div><div class="s">cuota de ${nom} al registrar</div></div>
+      </div>
+      <div class="ed-row">
+        <div class="ed-kpi"><div class="l">${nom} tuvo el mejor precio</div><div class="v">${fmtPct1(v.pct_ref_es_mejor)}</div><div class="s">${v.n_con_mejor} con comparación</div></div>
+        <div class="ed-kpi"><div class="l">La mejor casa pagaba</div><div class="v">${fmtPctS(v.mejor_vs_ref_medio)}</div><div class="s">sobre ${nom} (media)</div></div>
+        <div class="ed-kpi"><div class="l">Movimiento hasta el cierre</div><div class="v" style="color:${_colorS(mov.medio)}">${mov.n ? fmtPctS(mov.medio) : "—"}</div><div class="s">${mov.n ? `${fmtPct1(mov.pct_a_favor)} a favor del pick · n=${mov.n}` : `sin cierres de ${nom} aún`}</div></div>
+      </div>
+      <p class="ed-note"><b>Movimiento</b>: cuánto se acortó la línea justa de ${nom} entre el registro y el cierre. Positivo = el mercado se movió hacia tu pick después de publicarlo (señal de dinero informado a favor).</p>
+      <table class="ed-table"><thead><tr><th>¿Sirve el EV?</th><th class="n">n</th><th class="n">Res.</th><th class="n">Unid.</th><th class="n">Yield</th><th class="n">CLV</th></tr></thead><tbody>${grupos}</tbody></table>
+      ${supera ? `<details class="ed-fold"><summary>Casas que pagaron más que ${nom}</summary>
+        <table class="ed-table"><thead><tr><th>Casa</th><th class="n">Veces</th><th class="n">Ventaja media</th></tr></thead><tbody>${supera}</tbody></table></details>` : ""}
+      ${!v.muestra_suficiente ? `<p class="ed-note">⚠️ Muestra chica (n=${v.n}): úsalo como orientación, no como veredicto.</p>` : ""}
     </div>`;
   }
 
@@ -269,6 +316,7 @@
       <div class="ed-card"><h4>🔎 CLV por segmento</h4>
         <div id="edClvDetalle">${_renderClvDetalleBox()}</div>
       </div>
+      ${_renderValorRef()}
       ${_renderPrecio()}
       ${_renderSistema()}
       <div class="ed-card"><h4>🆚 Comparar canales</h4>
