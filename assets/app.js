@@ -21,6 +21,7 @@
       "1": { apiUrl: _API_DEFAULT, label: "Canal 1", bot: _BOT_DEFAULT },
       "2": { apiUrl: "https://web-production-aa47e.up.railway.app", label: "Canal 2", bot: "tubettingstats2bot" },
       "3": { apiUrl: "https://betting-stats-bot-canal3-production.up.railway.app", label: "Canal 3", bot: "HBCBettingStats_bot" },
+      "4": { apiUrl: "https://betting-stats-bot-canal4-production.up.railway.app", label: "Canal 4", bot: "GuGaBets_bot" },
     };
     const _canalKey = new URLSearchParams(location.search).get("c");
     const CANAL = CANALES[_canalKey] || CANALES["1"];
