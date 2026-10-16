@@ -335,7 +335,7 @@
     return [...new Set((DATA?.apuestas || []).map(a => (a.deporte || "").trim()).filter(Boolean))].sort();
   }
   function _tiposDisponibles() {
-    return [...new Set((DATA?.apuestas || []).map(a => normalizaTipo(a.tipo)).filter(Boolean))].sort();
+    return [...new Set((DATA?.apuestas || []).map(a => tipoDe(a)).filter(Boolean))].sort();
   }
 
   function _renderReglaRow(r) {

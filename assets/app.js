@@ -419,23 +419,29 @@
     function normalizaTipo(raw) {
       const t = (raw || "").toLowerCase().trim();
       if (!t) return "Otro";
-      // Parlay — primero: puede contener "winner", "over", etc. en sus picks
+      // Combinada mismo partido — bet-builder "Win + O2.5", "ML & O1.5 Goals", "or Draw & O1.5",
+      // "Win + BTTS", "to Win and U3.5". Mismo orden que analytics.py (_RE_COMBINADA antes
+      // que _RE_PARLAY, INV-BIZ-55). "Brighton & Hove" no casa: tras el & va un mercado.
+      if (/\bcombinad|bet builder|\+\s*(o|u)\d|\bgana\b\s*\+|[&+]\s*(o|u)\d|[&+]\s*(over|under|total|btts|both teams|ambos|m[aá]s de|menos de)|\band\s+(o|u)\d|\band\s+(over|under)\b/.test(t)) return "Combinada";
+      // Parlay: puede contener "winner", "over", etc. en sus picks
       if (/parlay|combo|acumulad|multi.?bet|\bsgp\b|same.?game/.test(t)) return "Parlay";
-      // Combinada mismo partido — incluye bet-builder tipo "Win + O2.5"
-      // (gemelo de analytics.py _RE_COMBINADA).
-      if (/\bcombinad|bet builder|\+\s*(o|u)\d|\bgana\b\s*\+/.test(t)) return "Combinada";
       // Futuro / Outright
       if (/\boutright\b|futures?|to win the|championship|tournament winner|season (wins?|points?|goals?)|award|mvp|heisman|ballon/.test(t)) return "Futuro";
       // Córners / Tarjetas — mercados secundarios: categoría propia ANTES de Moneyline/Handicap/Total O/U
       // (gemelo de analytics.py _RE_CORNERS/_RE_TARJETAS, INV-BIZ-21 / INV-XCUT-02).
       if (/\bcorners?\b|córner|saques? de esquina|tiros? de esquina/.test(t)) return "Córners";
       if (/\bcards?\b|tarjeta|booking|amonestac/.test(t)) return "Tarjetas";
+      // Mercados de evento con palabras de Moneyline/Total ("to win both halves", "Aces ML",
+      // "Shots - Total Over"): Props ANTES de Moneyline (gemelo de _RE_PROPS_ESPECIAL).
+      if (/both halves|ambas mitades|\baces?\b|\bshots?\b/.test(t)) return "Props";
       // Doble oportunidad — va ANTES de Moneyline: "Double Chance - Home/Draw" no debe
       // caer en Moneyline por el sufijo home/draw (gemelo de analytics.py _RE_DOBLE_OPORTUNIDAD).
       // Incluye fraseo "Team Win or Draw" / "Team or Draw" (equivalente a X2/1X en texto libre).
       if (/double chance|doble oportunidad|home\/draw|draw\/away|home\/away|\bor draw\b|draw or \w|gana o empata|empata o gana|\bo empata\b/.test(t)) return "Doble oportunidad";
       // Moneyline / Ganador — DNB, to qualify, W1/W2, fight/race winner, MMA
       if (/moneyline|\b1x2\b|\bml\b|ganador|team wins?|\bw[12]\b|\bwinner\b|to win\b|match result|draw no bet|\bdnb\b|to qualify|fight winner|race winner|series winner|method of victory|\bko\b|\btko\b|decision win|round betting|will win|\bgana\b(?!.*(sin recibir|porter[ií]a|valla invicta))|^(empate|draw)$|\bclasifica(n|r)?\b|\bpasa de ronda/.test(t)) return "Moneyline";
+      // "Asian Total Over 2.75" es un total, no un hándicap (gemelo de _RE_TOTAL_ASIATICO).
+      if (/asian (handicap\s*-\s*)?total/.test(t)) return "Total O/U";
       // Handicap — puck line (NHL), run line (MLB), point spread, AH
       if (/handicap|hcp|\bspread\b|\basian\b|puck line|run line|point spread|european handicap|\beh\b|alt(ernate)? spread|\S\s[+-]\d+(\.\d+)?$|[+-]\d+(\.\d+)?\s*(games?|sets?|juegos?|maps?|mapas?|frames?|goals?|goles|points?|puntos|runs?|carreras)\b/.test(t)) return "Handicap";
       // BTTS
@@ -447,6 +453,22 @@
       if (/\bplayer\b|\bprop\b|anytime (scorer|td|goal|basket|touchd)|first (goal|scorer|td|basket|pitch|serve|touchd)|last (goal|scorer|td|touchd)|to score\b|rushing yards|receiving yards|passing yards|\bassists?\b|\brebounds?\b|strikeouts?\b|home run|top (batsman|bowler|scorer)|fall of wicket|wickets?\b|century\b|win to nil|to nil\b|clean sheet|porter[ií]a a (0|cero)|valla invicta|sin recibir gol|shots? on target|shots? (over|under)?\s*\d|both halves|ambas mitades|\baces?\b/.test(t)) return "Props";
       // Total O/U — \b evita "overtime", "overview", etc.
       if (/\bover\b|\bunder\b|\btotal\b|\bo\/u\b|más de|menos de|alt(ernate)? total|\bgames? o\/?u\b|\bsets? o\/?u\b|\bruns? o\/?u\b|half total|1st half total|q[1-4] total/.test(t)) return "Total O/U"; return "Otro";
+    }
+    /* Categoría de una apuesta (texto + patas): un "Parlay" con todas las patas del mismo
+       partido es una Combinada. Gemelo de analytics.tipo_de_row (INV-BIZ-55). */
+    function legsMismoPartido(legs) {
+      if (!Array.isArray(legs) || legs.length < 2) return false;
+      const partidos = new Set();
+      for (const l of legs) {
+        if (!l || typeof l !== "object") return false;
+        const e = [l.equipo1, l.equipo2].map(x => String(x || "").trim().toLowerCase()).filter(Boolean);
+        if (e.length) partidos.add(e.sort().join("|"));
+      }
+      return partidos.size === 1;
+    }
+    function tipoDe(a) {
+      const cat = normalizaTipo(a?.tipo);
+      return cat === "Parlay" && legsMismoPartido(a?.legs) ? "Combinada" : cat;
     }
 
     /* Apuestas resueltas (win/loss) en orden cronológico real: mismo criterio que
@@ -563,7 +585,7 @@
     function calcRoiPorTipo() {
       const bucket = {};
       DATA.apuestas.filter(a => a.status === "win" || a.status === "loss").forEach(a => {
-        const t = normalizaTipo(a.tipo);
+        const t = tipoDe(a);
         if (!bucket[t]) bucket[t] = { w: 0, l: 0, apo: 0, gan: 0, cuotas: [] };
         const b = bucket[t];
         b.apo += a.monto || 0;
@@ -1742,7 +1764,7 @@
       // Tipos = CATEGORÍAS canónicas (Moneyline, Handicap, Total O/U…), no la variante
       // cruda con equipo/línea: reusa normalizaTipo (gemelo JS de _normalizar_tipo,
       // INV-XCUT-02/07). El backend filtra por la misma categoría normalizada.
-      const tipos = [...new Set(DATA.apuestas.map(a => normalizaTipo(a.tipo)).filter(Boolean))].sort();
+      const tipos = [...new Set(DATA.apuestas.map(a => tipoDe(a)).filter(Boolean))].sort();
       const chip = (group, label, value, active) =>
         `<button class="bt-chip${active ? " active" : ""}" data-bt-toggle="${group}" data-bt-value="${esc(value)}">${esc(label)}</button>`;
       const depChips = deportes.map(d => chip("deportes", d, d, _bt.sel.deportes.has(d))).join("");
@@ -2295,7 +2317,7 @@
     // implica >50% de probabilidad); el resto de tipos muestra su categoría
     // (igual que la referencia distingue "TOTAL" como posición).
     function posicionBet(a) {
-      const tipo = normalizaTipo(a.tipo);
+      const tipo = tipoDe(a);
       const cuota = parseFloat(a.cuota);
       if (tipo === "Moneyline" || tipo === "Handicap") {
         if (!(cuota > 0)) return "—";
@@ -2345,7 +2367,7 @@
         return `<tr>
         <td>${idx}</td><td>${fecha}</td><td>${esc(a.liga || "—")}</td><td>${play}</td>
         <td class="num">${fmt(a.monto)}</td><td class="num">${a.potencial ? fmt(a.potencial) : "—"}</td>
-        <td>${esc(normalizaTipo(a.tipo))}</td><td class="num">${a.cuota || "—"}</td><td>${wl}</td>
+        <td>${esc(tipoDe(a))}</td><td class="num">${a.cuota || "—"}</td><td>${wl}</td>
         <td class="num ${signColor(a.ganancia)}">${fmts(a.ganancia)}</td><td>${esc(posicionBet(a))}</td><td>${diaSemanaLabel(a)}</td>
       </tr>`;
       }).join("")}</tbody>
