@@ -437,14 +437,14 @@
       // Moneyline / Ganador — DNB, to qualify, W1/W2, fight/race winner, MMA
       if (/moneyline|\b1x2\b|\bml\b|ganador|team wins?|\bw[12]\b|\bwinner\b|to win\b|match result|draw no bet|\bdnb\b|to qualify|fight winner|race winner|series winner|method of victory|\bko\b|\btko\b|decision win|round betting|will win|\bgana\b(?!.*(sin recibir|porter[ií]a|valla invicta))|^(empate|draw)$|\bclasifica(n|r)?\b|\bpasa de ronda/.test(t)) return "Moneyline";
       // Handicap — puck line (NHL), run line (MLB), point spread, AH
-      if (/handicap|hcp|\bspread\b|\basian\b|puck line|run line|point spread|european handicap|\beh\b|alt(ernate)? spread|\S\s[+-]\d+(\.\d+)?$/.test(t)) return "Handicap";
+      if (/handicap|hcp|\bspread\b|\basian\b|puck line|run line|point spread|european handicap|\beh\b|alt(ernate)? spread|\S\s[+-]\d+(\.\d+)?$|[+-]\d+(\.\d+)?\s*(games?|sets?|juegos?|maps?|mapas?|frames?|goals?|goles|points?|puntos|runs?|carreras)\b/.test(t)) return "Handicap";
       // BTTS
       if (/ambos|btts|both teams to score|\bgg\b|no goal/.test(t)) return "BTTS";
       // Marcador exacto
-      if (/correct score|marcador exacto|resultado exacto|exact score/.test(t)) return "Marcador exacto";
+      if (/correct score|marcador exacto|resultado exacto|exact score|(^|\s)[0-3]-[0-3](\s*(in )?sets?)?$/.test(t)) return "Marcador exacto";
       // Props — va ANTES de Total O/U: "Player Points Over 25.5" debe ser Prop, no Total O/U.
       // Incluye "Win to Nil"/clean sheet y "shots on target" (gemelo de analytics.py _RE_PROPS).
-      if (/\bplayer\b|\bprop\b|anytime (scorer|td|goal|basket|touchd)|first (goal|scorer|td|basket|pitch|serve|touchd)|last (goal|scorer|td|touchd)|to score\b|rushing yards|receiving yards|passing yards|\bassists?\b|\brebounds?\b|strikeouts?\b|home run|top (batsman|bowler|scorer)|fall of wicket|wickets?\b|century\b|win to nil|to nil\b|clean sheet|porter[ií]a a (0|cero)|valla invicta|sin recibir gol|shots? on target|shots? (over|under)?\s*\d/.test(t)) return "Props";
+      if (/\bplayer\b|\bprop\b|anytime (scorer|td|goal|basket|touchd)|first (goal|scorer|td|basket|pitch|serve|touchd)|last (goal|scorer|td|touchd)|to score\b|rushing yards|receiving yards|passing yards|\bassists?\b|\brebounds?\b|strikeouts?\b|home run|top (batsman|bowler|scorer)|fall of wicket|wickets?\b|century\b|win to nil|to nil\b|clean sheet|porter[ií]a a (0|cero)|valla invicta|sin recibir gol|shots? on target|shots? (over|under)?\s*\d|both halves|ambas mitades|\baces?\b/.test(t)) return "Props";
       // Total O/U — \b evita "overtime", "overview", etc.
       if (/\bover\b|\bunder\b|\btotal\b|\bo\/u\b|más de|menos de|alt(ernate)? total|\bgames? o\/?u\b|\bsets? o\/?u\b|\bruns? o\/?u\b|half total|1st half total|q[1-4] total/.test(t)) return "Total O/U"; return "Otro";
     }
