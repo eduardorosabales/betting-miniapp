@@ -91,12 +91,12 @@
       const cap = pk.capital_necesario;
       caso = `<div class="card pc-case">
         <div class="card-title">🏆 Caso de referencia — máximo neto histórico</div>
-        <div class="pc-big green" title="${fmts(pk.neto)}">${fmts(pk.neto)}</div>
+        <div class="pc-big green" title="${esc(fmtEq(pk.neto, true))}">${fmts(pk.neto)}</div>${eqLine(pk.neto, true)}
         <p class="pc-story">El canal llegó a <b>${fmts(pk.neto)}</b> de ganancia neta el <b>${fechaCorta(pk.fecha)}</b>,
           usando solo <b>${fmt(cap)}</b> de capital, en <b>${pk.dias} días</b>
           (${pk.apuestas} apuestas${pk.retorno_capital ? ` · <b>${pk.retorno_capital.toFixed(2)}×</b> el capital` : ""}).</p>
         <div class="pc-kpis">
-          <div class="pc-kpi"><div class="l">Capital necesario</div><div class="v">${fmt(cap)}</div><div class="s">exposición máx. ${fmt(pk.exposicion_max)}</div></div>
+          <div class="pc-kpi"><div class="l">Capital necesario</div><div class="v">${fmt(cap)}</div><div class="s">${esc(fmtEq(cap))} · exposición máx. ${fmt(pk.exposicion_max)}</div></div>
           <div class="pc-kpi"><div class="l">Tiempo</div><div class="v">${pk.dias} d</div><div class="s">${pk.dias_activos} con apuestas</div></div>
           <div class="pc-kpi"><div class="l">Winrate</div><div class="v">${pct1(pk.winrate)}</div><div class="s">${pk.wins}W · ${pk.losses}L</div></div>
           <div class="pc-kpi"><div class="l">Rendimiento</div><div class="v ${pk.yield >= 0 ? "green" : "red"}">${pk.yield == null ? "—" : (pk.yield >= 0 ? "+" : "") + pct1(pk.yield)}</div><div class="s">sobre ${fmt(pk.apostado)} apostado</div></div>
@@ -120,7 +120,7 @@
         <div class="pc-bar"><div class="pc-bar-fill" style="width:${(pct * 100).toFixed(1)}%;background:${col}"></div></div>
         <div class="pc-row"><span style="color:${col};font-weight:700">${etq}</span><span>${pct0(ac.retenido)} del pico</span></div>
         ${ac.estado === "maximo"
-          ? `<p class="pc-note">Retiro de referencia (${pct0(p.fraccion_retiro)} de la ganancia vigente): <b>${fmt(ac.retiro_sugerido)}</b>.</p>`
+          ? `<p class="pc-note">Retiro de referencia (${pct0(p.fraccion_retiro)} de la ganancia vigente): <b>${fmt(ac.retiro_sugerido)}</b> (${esc(fmtEq(ac.retiro_sugerido))}).</p>`
           : `<p class="pc-note">Para igualar el récord faltan <b>${fmt(ac.retroceso)}</b> · el pico fue hace ${ac.dias_desde_pico} días.</p>`}
         ${p.peor_retroceso && p.peor_retroceso.monto > 0
           ? `<p class="pc-note">Peor retroceso histórico del canal: <b>${fmt(p.peor_retroceso.monto)}</b> (${pct0(p.peor_retroceso.pct)} de un pico). Es lo que puede devolver una ganancia no retirada.</p>` : ""}
@@ -143,7 +143,7 @@
         <div class="pc-row"><span>🎯 Meta del mes <small style="color:var(--text-3)">(pico medio de ${m.meses_referencia} meses)</small></span><b>${fmt(m.pico_medio)}</b></div>
         <div class="pc-bar"><div class="pc-bar-fill" style="width:${(pm * 100).toFixed(1)}%;background:${col}"></div></div>
         <div class="pc-row"><span style="color:${col};font-weight:700">${pct0(m.pct_pico_medio)} de la meta</span><span>${(m.falta_pico_medio || 0) > 0 ? `faltan ${fmt(m.falta_pico_medio)}` : "meta superada"}</span></div>
-        <p class="pc-note">Al llegar a ~${pct0(0.9)} de la meta: retira (referencia ${pct0(p.fraccion_retiro)} ≈ <b>${fmt(m.retiro_sugerido)}</b>) y no apuestes más hasta <b>${esc(m.siguiente_mes)}</b>.</p>
+        <p class="pc-note">Al llegar a ~${pct0(0.9)} de la meta: retira (referencia ${pct0(p.fraccion_retiro)} ≈ <b>${fmt(m.retiro_sugerido)}</b>, ${esc(fmtEq(m.retiro_sugerido))}) y no apuestes más hasta <b>${esc(m.siguiente_mes)}</b>.</p>
         ${rg && rg.alcanzaron ? `<p class="pc-note">En tus ${rg.meses} meses cerrados, ${rg.alcanzaron} llegaron a ${fmt(rg.umbral)}. Parar al alcanzarlo habría dado <b>${fmt(rg.neto_con_regla)}</b> frente a <b>${fmt(rg.neto_real)}</b> reales <i>(calculado sobre el mismo historial: ilustra la regla, no la garantiza)</i>.</p>` : ""}
       </div>`;
     }

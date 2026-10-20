@@ -301,25 +301,42 @@
     }
 
     function esc(s) { return s == null ? "" : String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;") }
-    const fmt = n => n == null ? "—" : `$${Number(n).toLocaleString("es-MX", { maximumFractionDigits: 0 })}`;
+    // INV-MINI-43: todos los importes de /api/* vienen en UNIDADES (INV-XCUT-22). fmt*/fmtC*
+    // muestran unidades ("12.5u"); fmtEq/eqLine, el equivalente en dinero al valor actual
+    // de la unidad del canal (DATA.unidad.valor, que el owner fija en Ajustes).
+    const _UNIDAD_DEF = { valor: 100, moneda: "$" };
+    const unidad = () => (DATA && DATA.unidad && Number(DATA.unidad.valor) > 0) ? DATA.unidad : _UNIDAD_DEF;
+    const _num2 = a => a.toLocaleString("es-MX", { maximumFractionDigits: 2 });
+    const fmt = n => n == null ? "—" : `${Number(n) < 0 ? "−" : ""}${_num2(Math.abs(Number(n)))}u`;
     const fmtp = n => n == null ? "—" : `${Number(n).toFixed(1)}%`;
     const fmts = n => n == null ? "—" : Number(n) >= 0 ? `+${fmt(n)}` : fmt(n);
-    // Dinero compacto para el resumen inicial (hero + KPIs): $1.5k, $15k, $100k, $1.3M.
-    // Valores < 1000 se muestran completos. El número exacto se conserva en el title (ver fmt).
+    // Unidades compactas para el resumen inicial (hero + KPIs): 12.4u, 340u, 1.5ku.
+    // El número exacto se conserva en el title (ver fmt).
     const fmtC = n => {
       if (n == null) return "—";
       const v = Number(n), a = Math.abs(v), s = v < 0 ? "−" : "";
-      if (a < 1000) return `$${s}${Math.round(a)}`;
-      if (a < 999500) { const k = a / 1e3; return `$${s}${k < 10 ? +k.toFixed(1) : Math.round(k)}k`; }
-      const m = a / 1e6; return `$${s}${m < 10 ? +m.toFixed(2) : +m.toFixed(1)}M`;
+      if (a < 100) return `${s}${+a.toFixed(1)}u`;
+      if (a < 999.5) return `${s}${Math.round(a)}u`;
+      if (a < 999500) { const k = a / 1e3; return `${s}${k < 10 ? +k.toFixed(1) : Math.round(k)}ku`; }
+      const m = a / 1e6; return `${s}${m < 10 ? +m.toFixed(2) : +m.toFixed(1)}Mu`;
     };
     const fmtsC = n => n == null ? "—" : Number(n) >= 0 ? `+${fmtC(n)}` : fmtC(n);
-    // Neto compacto para celdas del calendario (espacio mínimo): ±N o ±N.Xk.
+    // Neto compacto para celdas del calendario (espacio mínimo): ±N.N (en u, sin sufijo).
     const fmtsCompact = n => {
       if (n == null) return "";
       const v = Number(n), s = v >= 0 ? "+" : "−", a = Math.abs(v);
-      return a >= 1000 ? `${s}${(a / 1000).toFixed(a >= 10000 ? 0 : 1)}k` : `${s}${Math.round(a)}`;
+      if (a >= 1000) return `${s}${(a / 1000).toFixed(a >= 10000 ? 0 : 1)}k`;
+      return `${s}${a < 10 ? +a.toFixed(1) : Math.round(a)}`;
     };
+    // Equivalente en dinero de n unidades: "≈ $1,240" / "≈ +$1,240".
+    const fmtEq = (n, signo) => {
+      if (n == null) return "";
+      const u = unidad(), v = Number(n) * Number(u.valor), a = Math.round(Math.abs(v));
+      const s = v < 0 ? "−" : (signo && v > 0 ? "+" : "");
+      return `≈ ${s}${u.moneda}${a.toLocaleString("es-MX")}`;
+    };
+    // Línea pequeña bajo un hero/KPI con el equivalente en dinero.
+    const eqLine = (n, signo) => n == null ? "" : `<div class="eq-line">${esc(fmtEq(n, signo))}</div>`;
     const signColor = n => Number(n) >= 0 ? "green" : "red";
     function mesLabel(m) { if (!m) return "—"; const [y, mo] = m.split("-"); return ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"][parseInt(mo, 10) - 1] + " " + y }
 
@@ -328,7 +345,8 @@
     // Caché de /api/stats en sessionStorage (INV-MINI-04: localStorage prohibido,
     // sessionStorage permitido). Permite pintado instantáneo al reabrir sin re-consultar
     // en frío; siempre se refresca en segundo plano.
-    const _STATS_CACHE_KEY = "betstats_stats_cache";
+    // Sufijo _u: una caché de antes de las unidades (importes en $) no debe pintarse como u.
+    const _STATS_CACHE_KEY = "betstats_stats_cache_u";
     function _loadStatsCache() {
       try { const raw = sessionStorage.getItem(_STATS_CACHE_KEY); return raw ? JSON.parse(raw) : null; } catch (_) { return null; }
     }
@@ -792,11 +810,12 @@
       const s = DATA.stats_semana || null;
       const sNeto = s ? s.neto : null;
       const hero = `<div class="hero-grid">
-      <div class="hero-card"><div class="hero-label">Neto total</div><div class="hero-value ${signColor(r.neto)}" title="${fmts(r.neto)}">${fmtsC(r.neto)}</div></div>
+      <div class="hero-card"><div class="hero-label">Neto total</div><div class="hero-value ${signColor(r.neto)}" title="${fmts(r.neto)}">${fmtsC(r.neto)}</div>${eqLine(r.neto, true)}</div>
       <div class="hero-card"><div class="hero-label">ROI</div><div class="hero-value ${signColor(r.roi)}">${(r.roi ?? 0) >= 0 ? "+" : ""}${fmtp(r.roi)}</div></div>
       <div class="hero-card"><div class="hero-label">Win rate</div><div class="hero-value">${wr}%</div></div>
-      <div class="hero-card"><div class="hero-label">Últimos 7 días</div><div class="hero-value ${sNeto == null ? "" : signColor(sNeto)}" title="${sNeto == null ? "" : fmts(sNeto)}">${sNeto == null ? "—" : fmtsC(sNeto)}</div></div>
-    </div>`;
+      <div class="hero-card"><div class="hero-label">Últimos 7 días</div><div class="hero-value ${sNeto == null ? "" : signColor(sNeto)}" title="${sNeto == null ? "" : fmts(sNeto)}">${sNeto == null ? "—" : fmtsC(sNeto)}</div>${eqLine(sNeto, true)}</div>
+    </div>
+    <div class="unit-note">1u = ${esc(fmtEq(1).replace("≈ ", ""))} · cámbialo en <button class="link-btn" data-action="open-unidad">Ajustes</button></div>`;
       const shareBtn = `<button class="share-card-btn" data-action="share-card" style="width:100%;margin:2px 0 10px;padding:13px;min-height:48px;display:flex;align-items:center;justify-content:center;gap:8px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius-md);font-size:14px;font-weight:700;cursor:pointer">📸 Compartir imagen</button>`;
       return `${typeof picoBanner === "function" ? picoBanner() : ""}${hero}${shareBtn}<div class="section-header">Detalle <span>·</span> Historial</div>
     <div class="stats-grid">
@@ -806,12 +825,12 @@
     </div>
     ${(r.voids ?? 0) > 0 ? `<div class="kpi-row"><div class="kpi"><div class="kpi-label">Nulas (void)</div><div class="kpi-value accent">${r.voids ?? 0}</div></div></div>` : ""}
     <div class="kpi-row">
-      <div class="kpi"><div class="kpi-label">Total apostado</div><div class="kpi-value accent" title="${fmt(r.apostado)}">${fmtC(r.apostado)}</div></div>
-      <div class="kpi"><div class="kpi-label">Total cobrado</div><div class="kpi-value" title="${fmt(r.ganado)}">${fmtC(r.ganado)}</div></div>
+      <div class="kpi"><div class="kpi-label">Total apostado</div><div class="kpi-value accent" title="${fmt(r.apostado)}">${fmtC(r.apostado)}</div>${eqLine(r.apostado)}</div>
+      <div class="kpi"><div class="kpi-label">Total cobrado</div><div class="kpi-value" title="${fmt(r.ganado)}">${fmtC(r.ganado)}</div>${eqLine(r.ganado)}</div>
     </div>
     ${r.mejor_mes ? `<div class="kpi-row">
       <div class="kpi"><div class="kpi-label">🏆 Mejor mes</div><div class="kpi-value accent">${mesLabel(r.mejor_mes.mes)}</div></div>
-      <div class="kpi"><div class="kpi-label">Neto del mes</div><div class="kpi-value ${signColor(r.mejor_mes.neto)}" title="${fmts(r.mejor_mes.neto)}">${fmtsC(r.mejor_mes.neto)}</div></div>
+      <div class="kpi"><div class="kpi-label">Neto del mes</div><div class="kpi-value ${signColor(r.mejor_mes.neto)}" title="${fmts(r.mejor_mes.neto)}">${fmtsC(r.mejor_mes.neto)}</div>${eqLine(r.mejor_mes.neto, true)}</div>
     </div>` : ""}
     ${rachaHtml}
     ${renderRecentForm()}
@@ -862,7 +881,7 @@
     </div>
     ${(s.voids ?? 0) > 0 ? `<div class="kpi-row"><div class="kpi"><div class="kpi-label">Nulas (void)</div><div class="kpi-value accent">${s.voids ?? 0}</div></div></div>` : ""}
     <div class="kpi-row">
-      <div class="kpi"><div class="kpi-label">Neto</div><div class="kpi-value ${signColor(s.neto)}">${fmts(s.neto)}</div></div>
+      <div class="kpi"><div class="kpi-label">Neto</div><div class="kpi-value ${signColor(s.neto)}">${fmts(s.neto)}</div>${eqLine(s.neto, true)}</div>
       <div class="kpi"><div class="kpi-label">ROI</div><div class="kpi-value ${signColor(s.roi)}">${(s.roi ?? 0) >= 0 ? "+" : ""}${fmtp(s.roi)}</div></div>
     </div>
     <div class="kpi-row">
@@ -898,7 +917,7 @@
     </div>
     ${v > 0 ? `<div class="kpi-row"><div class="kpi"><div class="kpi-label">Nulas (void)</div><div class="kpi-value accent">${v}</div></div></div>` : ""}
     <div class="kpi-row">
-      <div class="kpi"><div class="kpi-label">Neto del mes</div><div class="kpi-value ${signColor(neto)}">${fmts(neto)}</div></div>
+      <div class="kpi"><div class="kpi-label">Neto del mes</div><div class="kpi-value ${signColor(neto)}">${fmts(neto)}</div>${eqLine(neto, true)}</div>
       <div class="kpi"><div class="kpi-label">ROI</div><div class="kpi-value ${signColor(roi)}">${roi >= 0 ? "+" : ""}${fmtp(roi)}</div></div>
     </div>
     ${_netoMax !== null ? `<div class="kpi-row">
@@ -1697,10 +1716,11 @@
     // filtros), este SIEMPRE corre sobre TODO el historial sin filtrar — es un
     // tracker de bankroll real, no un análisis exploratorio. Reusa el mismo motor
     // (POST /api/backtest, modo_stake="porcentaje") con el stake_cap nuevo (A2).
-    let _ct = { bank_inicial: "1000", pct: "5", cap: 10000, res: null, loading: false };
+    // Bank y stakes en unidades (INV-MINI-43): 100u de bank, 2u fijas, tope 1000u.
+    let _ct = { bank_inicial: "100", pct: "5", cap: 1000, res: null, loading: false };
 
     let _bt = {
-      bank_inicial: "1000", modo: "fijo", stake_valor: "20",
+      bank_inicial: "100", modo: "fijo", stake_valor: "2",
       cuota_min: "", cuota_max: "", date_from: "", date_to: "",
       sel: { deportes: new Set(), tipos: new Set(), dias: new Set() },
       // Modo "en contra" (fade / anti-tipster, INV-BIZ-25): apostar lo CONTRARIO
@@ -1717,8 +1737,8 @@
         b.classList.toggle("active", b.dataset.btModo === _bt.modo));
       const lbl = document.getElementById("btStakeLabel");
       const suf = document.getElementById("btStakeSuffix");
-      if (lbl) lbl.textContent = _bt.modo === "porcentaje" ? "% del bank por apuesta" : "Monto fijo por apuesta";
-      if (suf) suf.textContent = _bt.modo === "porcentaje" ? "%" : "$";
+      if (lbl) lbl.textContent = _bt.modo === "porcentaje" ? "% del bank por apuesta" : "Unidades fijas por apuesta";
+      if (suf) suf.textContent = _bt.modo === "porcentaje" ? "%" : "u";
     }
     /* Lado de la apuesta: "favor" (seguir al tipster) o "contra" (fade). Solo
        muestra/oculta el bloque de opciones — no re-renderiza la pestaña, para no
@@ -1770,8 +1790,8 @@
       const depChips = deportes.map(d => chip("deportes", d, d, _bt.sel.deportes.has(d))).join("");
       const tipoChips = tipos.map(t => chip("tipos", t, t, _bt.sel.tipos.has(t))).join("");
       const diaChips = _BT_DIAS.map(([lbl, n]) => chip("dias", lbl, String(n), _bt.sel.dias.has(n))).join("");
-      const sufijo = _bt.modo === "porcentaje" ? "%" : "$";
-      const stakeLbl = _bt.modo === "porcentaje" ? "% del bank por apuesta" : "Monto fijo por apuesta";
+      const sufijo = _bt.modo === "porcentaje" ? "%" : "u";
+      const stakeLbl = _bt.modo === "porcentaje" ? "% del bank por apuesta" : "Unidades fijas por apuesta";
 
       return `<div class="section-header">Simulador <span>what-if</span></div>
     <div class="explainer" style="margin-bottom:14px">
@@ -1782,14 +1802,14 @@
       <div class="card-title">⚙️ Parámetros</div>
       <div class="bt-form">
         <label class="bt-field"><span>Bank inicial</span>
-          <div class="bt-input-wrap"><span class="bt-prefix">$</span><input class="bt-input" type="text" inputmode="decimal" data-bt-input="bank_inicial" value="${esc(_bt.bank_inicial)}"></div>
+          <div class="bt-input-wrap"><span class="bt-prefix">u</span><input class="bt-input" type="text" inputmode="decimal" data-bt-input="bank_inicial" value="${esc(_bt.bank_inicial)}"></div>
         </label>
         <label class="bt-field"><span id="btStakeLabel">${stakeLbl}</span>
           <div class="bt-input-wrap"><span class="bt-prefix" id="btStakeSuffix">${sufijo}</span><input class="bt-input" type="text" inputmode="decimal" data-bt-input="stake_valor" value="${esc(_bt.stake_valor)}"></div>
         </label>
       </div>
       <div class="bt-modo-row">
-        <button class="bt-chip${_bt.modo === "fijo" ? " active" : ""}" data-bt-modo="fijo">Monto fijo</button>
+        <button class="bt-chip${_bt.modo === "fijo" ? " active" : ""}" data-bt-modo="fijo">Unidades fijas</button>
         <button class="bt-chip${_bt.modo === "porcentaje" ? " active" : ""}" data-bt-modo="porcentaje">% del bank</button>
       </div>
     </div>
@@ -1883,7 +1903,7 @@
         const om = r.apuestas_omitidas
           ? ` <strong>${r.apuestas_omitidas} apuesta(s) posteriores —incluidas las nuevas— no se simularon.</strong>`
           : "";
-        avisos += `<div class="bt-alert bt-alert-red">💥 <strong>Quiebra${fq}:</strong> el bank llegó a $0 y la simulación se detuvo ahí.${om} Sube el bank inicial o baja el stake para recorrer el historial completo.</div>`;
+        avisos += `<div class="bt-alert bt-alert-red">💥 <strong>Quiebra${fq}:</strong> el bank llegó a 0u y la simulación se detuvo ahí.${om} Sube el bank inicial o baja el stake para recorrer el historial completo.</div>`;
       }
       if (r.stake_insostenible) {
         const fc = r.fecha_corte ? ` el ${esc(r.fecha_corte)}` : "";
@@ -2210,14 +2230,14 @@
       <div class="card-title">⚙️ Parámetros</div>
       <div class="bt-form">
         <label class="bt-field"><span>Bankroll inicial</span>
-          <div class="bt-input-wrap"><span class="bt-prefix">$</span><input class="bt-input" type="text" inputmode="decimal" data-ct-input="bank_inicial" value="${esc(_ct.bank_inicial)}"></div>
+          <div class="bt-input-wrap"><span class="bt-prefix">u</span><input class="bt-input" type="text" inputmode="decimal" data-ct-input="bank_inicial" value="${esc(_ct.bank_inicial)}"></div>
         </label>
         <label class="bt-field"><span>% de unidad por apuesta</span>
           <div class="bt-input-wrap"><input class="bt-input" type="text" inputmode="decimal" data-ct-input="pct" value="${esc(_ct.pct)}"><span class="bt-prefix">%</span></div>
         </label>
       </div>
       <div class="bt-flbl">Tope de unidad máxima</div>
-      <div class="bt-chips">${capChip(5000, "$5k")}${capChip(10000, "$10k")}${capChip(20000, "$20k")}${capChip(null, "Sin tope")}</div>
+      <div class="bt-chips">${capChip(500, "500u")}${capChip(1000, "1,000u")}${capChip(2000, "2,000u")}${capChip(null, "Sin tope")}</div>
     </div>
     <div class="bt-actions"><button class="share-card-btn" style="width:100%" data-action="ct-run">${_ct.loading ? "⏳ Calculando…" : "▶ Calcular"}</button></div>
     <div id="ctResults">${_ct.res ? ctRenderResults() : ""}</div>`;
@@ -2244,7 +2264,7 @@
       }).join("")}</tbody>
       </table></div>
     </div>
-    ${r.quiebra ? `<div class="bt-alert bt-alert-danger" style="margin-top:10px">💥 El bankroll llegó a $0 el ${esc(r.fecha_quiebra || "")}. La simulación se detuvo ahí.</div>` : ""}`;
+    ${r.quiebra ? `<div class="bt-alert bt-alert-danger" style="margin-top:10px">💥 El bankroll llegó a 0u el ${esc(r.fecha_quiebra || "")}. La simulación se detuvo ahí.</div>` : ""}`;
     }
 
     async function runCompounding() {
@@ -2453,7 +2473,7 @@
     }
 
     /* ── Charts ── */
-    function axisM(v) { const a = Math.abs(v); return a >= 1000 ? `$${(v / 1000).toFixed(1)}k` : `$${v}` }
+    function axisM(v) { const a = Math.abs(v); return a >= 1000 ? `${(v / 1000).toFixed(1)}ku` : `${+Number(v).toFixed(2)}u` }
     function destroyChart(k) { if (charts[k]) { charts[k].destroy(); delete charts[k]; } }
 
     function makeChartCumulative() {
@@ -2610,6 +2630,8 @@
         if (act === "edit-bet") { openModal(parseInt(actEl.dataset.rowid, 10)); return; }
         if (act === "delete-bet") { confirmDel(parseInt(actEl.dataset.rowid, 10), actEl.dataset.label); return; }
         if (act === "close-modal") { closeModal(); return; }
+        if (act === "open-unidad") { openUnidadModal(); return; }
+        if (act === "save-unidad") { saveUnidad(); return; }
         if (act === "trigger-upload") { document.getElementById("uInput").click(); return; }
         if (act === "add-parlay-pick") { addParlayPick(); return; }
         if (act === "calc-cuota") { calcCuotaAuto(); return; }
@@ -2648,6 +2670,8 @@
         const msg = document.getElementById("cuotaAutoMsg");
         if (msg) msg.style.display = "none";
       }
+
+      if (e.target.closest("[data-unidad-input]")) { _syncUnidadPreview(); return; }
 
       const btIn = e.target.closest("[data-bt-input]");
       if (btIn) {
@@ -2855,6 +2879,7 @@
 
   <div class="g-toolbar">
     <button class="btn-add" data-action="new-bet">➕ Nueva apuesta</button>
+    <button class="btn-unidad" data-action="open-unidad" title="Cuánto dinero vale 1 unidad">💱 1u = ${esc(fmtEq(1).replace("≈ ", ""))}</button>
     <span style="font-size:11px;color:var(--text-3)">${DATA?.apuestas?.length ?? 0} registradas</span>
   </div>
 
@@ -3019,7 +3044,7 @@
           <div class="m-group"><label class="m-label">Tipo de apuesta</label><input id="mTipo" class="m-input" value="${esc(v.tipo)}" placeholder="moneyline, handicap, total over 2.5, corners total over 9.5…"></div>
           <div class="m-row">
             <div class="m-group"><label class="m-label">Cuota</label><input id="mCuota" class="m-input" type="number" step="0.01" value="${esc(String(v.cuota))}" placeholder="1.85"></div>
-            <div class="m-group"><label class="m-label">Monto ($)</label><input id="mMonto" class="m-input" type="number" value="${esc(String(v.monto))}" placeholder="100"></div>
+            <div class="m-group"><label class="m-label">Unidades <span class="m-hint">(1u = ${esc(fmtEq(1).replace("≈ ", ""))})</span></label><input id="mMonto" class="m-input" type="number" step="0.01" min="0" value="${esc(String(v.monto))}" placeholder="1"></div>
           </div>
         </div>
 
@@ -3048,7 +3073,7 @@
               </div>
               <div id="cuotaAutoMsg" style="font-size:11px;color:var(--text-2);margin-top:4px;display:none"></div>
             </div>
-            <div class="m-group"><label class="m-label">Monto ($)</label><input id="mMonto" class="m-input" type="number" value="${esc(String(v.monto))}" placeholder="100"></div>
+            <div class="m-group"><label class="m-label">Unidades <span class="m-hint">(1u = ${esc(fmtEq(1).replace("≈ ", ""))})</span></label><input id="mMonto" class="m-input" type="number" step="0.01" min="0" value="${esc(String(v.monto))}" placeholder="1"></div>
           </div>
         </div>
 
@@ -3104,6 +3129,75 @@
       _editRowId = null;
       _parlayPicks = [];  // ← limpiar picks al cerrar
       _ocrCombinadaPicks = [];
+    }
+
+    /* ── Valor de la unidad (INV-MINI-43 / INV-XCUT-22) ──
+       Todo se lleva en unidades; aquí el owner fija cuánto dinero es 1u en ESTE canal.
+       "Recalcular" convierte el historial (monto ÷ valor nuevo); "Mantener" deja las
+       unidades ya registradas y solo las apuestas nuevas usan el valor nuevo. */
+    function openUnidadModal() {
+      if (!_isAuthed()) return;
+      const u = unidad();
+      const neto = DATA?.resumen?.neto;
+      document.getElementById("gModal").innerHTML = `
+  <div class="m-overlay" id="mOverlay">
+    <div class="m-sheet">
+      <div class="m-handle"></div>
+      <div class="m-head"><div class="m-title"><span>💱 Valor de la unidad</span>
+        <button class="m-close" data-action="close-modal">✕</button></div></div>
+      <div class="m-body">
+        <p class="unit-help">Las estadísticas de este canal se llevan en <b>unidades</b>. Aquí defines cuánto dinero es 1u: se usa para convertir el importe de los tickets y para mostrar el equivalente en dinero.</p>
+        <div class="m-group"><label class="m-label">1 unidad = (${esc(u.moneda)})</label>
+          <input id="uValor" class="m-input" type="text" inputmode="decimal" value="${esc(String(u.valor))}" data-unidad-input></div>
+        <div class="m-group">
+          <label class="unit-opt"><input type="radio" name="uModo" value="reescalar" checked data-unidad-input>
+            <span><b>Recalcular el historial</b> — cada apuesta pasa a monto ÷ valor nuevo. El dinero que representa no cambia.</span></label>
+          <label class="unit-opt"><input type="radio" name="uModo" value="mantener" data-unidad-input>
+            <span><b>Mantener las unidades registradas</b> — solo las apuestas nuevas usan el valor nuevo.</span></label>
+        </div>
+        <div class="unit-preview" id="uPreview">${_unidadPreview(u.valor, true, neto)}</div>
+      </div>
+      <div class="m-foot">
+        <div class="m-err" id="mErr"></div>
+        <button class="m-submit" id="uSaveBtn" data-action="save-unidad">💾 Guardar</button>
+      </div>
+    </div>
+  </div>`;
+    }
+    function _unidadPreview(valorNuevo, reescalar, neto) {
+      const u = unidad(), v = parseFloat(String(valorNuevo).replace(",", "."));
+      if (!(v > 0)) return "Escribe un valor mayor que 0.";
+      if (neto == null) return `1u = ${esc(u.moneda)}${v.toLocaleString("es-MX")}`;
+      const netoNuevo = reescalar ? neto * Number(u.valor) / v : neto;
+      const dinero = Math.round(netoNuevo * v);
+      return `Tu neto quedaría en <b>${esc(fmts(netoNuevo))}</b> (≈ ${dinero < 0 ? "−" : "+"}${esc(u.moneda)}${Math.abs(dinero).toLocaleString("es-MX")}).`;
+    }
+    function _syncUnidadPreview() {
+      const el = document.getElementById("uPreview"); if (!el) return;
+      const val = document.getElementById("uValor")?.value || "";
+      const re = document.querySelector('input[name="uModo"]:checked')?.value !== "mantener";
+      el.innerHTML = _unidadPreview(val, re, DATA?.resumen?.neto);
+    }
+    async function saveUnidad() {
+      const raw = (document.getElementById("uValor")?.value || "").trim().replace(",", ".");
+      const valor = parseFloat(raw);
+      if (!(valor > 0) || !isFinite(valor)) { showErr("⚠️ El valor debe ser un número mayor que 0."); return; }
+      const reescalar = document.querySelector('input[name="uModo"]:checked')?.value !== "mantener";
+      const btn = document.getElementById("uSaveBtn");
+      if (btn) { btn.disabled = true; btn.textContent = "⏳ Guardando…"; }
+      try {
+        const resp = await fetch(`${API_URL}/api/config/unidad`, {
+          method: "PUT", headers: apiHeaders(), body: JSON.stringify({ valor, reescalar_historial: reescalar }),
+        });
+        const j = await safeJson(resp);
+        if (!j.ok) throw new Error(j.error || `Error ${resp.status}`);
+        haptic("success");
+        closeModal();
+        recargar();
+      } catch (err) {
+        if (btn) { btn.disabled = false; btn.textContent = "💾 Guardar"; }
+        showErr("⚠️ " + err.message);
+      }
     }
     // archivo: index.html — funciones del modo Parlay
 
@@ -3306,7 +3400,7 @@
           Parlay · ${d.picks.length} picks · Cuota total: ${esc(String(d.cuota || ""))}
         </div>
         <div style="width:100%;margin-top:8px;text-align:left">${picksHtml}</div>
-        <div class="u-sub" style="margin-top:6px">Revisa el monto y guarda ↓</div>`;
+        <div class="u-sub" style="margin-top:6px">Revisa las unidades y guarda ↓</div>`;
         } else if (esCombinada) {
           // Guardar las selecciones para enviarlas como legs al confirmar (mismo partido).
           _ocrCombinadaPicks = d.picks.map(p => ({ tipo_apuesta: p.tipo_apuesta || "" }));
@@ -3317,7 +3411,7 @@
           Combinada · ${d.picks.length} selecciones · Cuota: ${esc(String(d.cuota || ""))}
         </div>
         <div style="width:100%;margin-top:8px;text-align:left;font-size:11px;padding:4px 0">${sels}</div>
-        <div class="u-sub" style="margin-top:6px">Revisa el monto y guarda ↓</div>`;
+        <div class="u-sub" style="margin-top:6px">Revisa las unidades y guarda ↓</div>`;
         } else {
           uz.innerHTML = `<div class="u-icon">✅</div><div class="u-text" style="color:var(--win)">Ticket detectado — revisa los campos</div>`;
         }
@@ -3337,7 +3431,8 @@
       const st = document.getElementById("mStatus")?.value || "pending";
       const notasVis = document.getElementById("mNotasVisible")?.value.trim() || "";
 
-      if (!monto) { showErr("⚠️ Ingresa el monto."); return; }
+      if (!monto) { showErr("⚠️ Ingresa las unidades apostadas."); return; }
+      if (!(parseFloat(monto) > 0)) { showErr("⚠️ Las unidades deben ser mayores que 0."); return; }
 
       let payload;
 
@@ -3361,7 +3456,7 @@
         ).join(" || ");
 
         const notas = notasVis ? `${notasPicks} || Nota: ${notasVis}` : notasPicks;
-        const ganancia = (parseFloat(monto) * cuotaTotal).toFixed(2);
+        const ganancia = (parseFloat(monto) * cuotaTotal).toFixed(4);   // en u (INV-MINI-43)
         const p0 = validPicks[0];
 
         payload = {
@@ -3431,14 +3526,14 @@
               if (!(cuotaEdit > 0) || !(montoEdit > 0)) {
                 if (btn) { btn.disabled = false; btn.textContent = originalTxt; }
                 if (mb) { try { mb.hideProgress(); mb.enable(); } catch (_) {} }
-                showErr("⚠️ Completa cuota y monto válidos antes de marcar como ganada.");
+                showErr("⚠️ Completa cuota y unidades válidas antes de marcar como ganada.");
                 return;
               }
-              // Retorno bruto: monto × cuota.
-              payload.ganancia_real = String((cuotaEdit * montoEdit).toFixed(2));
+              // Retorno bruto: unidades × cuota (4 decimales: los importes van en u).
+              payload.ganancia_real = String((cuotaEdit * montoEdit).toFixed(4));
             }
             // Convención del sistema (bot.py / postgres.py): loss = -monto, void = 0.
-            if (st === "loss") payload.ganancia_real = String((-Math.abs(montoEdit || 0)).toFixed(2));
+            if (st === "loss") payload.ganancia_real = String((-Math.abs(montoEdit || 0)).toFixed(4));
             if (st === "void") payload.ganancia_real = "0";
           }
           resp = await fetch(`${API_URL}/api/bets/${_editRowId}`, { method: "PUT", headers: apiHeaders(), body: JSON.stringify(payload) });
