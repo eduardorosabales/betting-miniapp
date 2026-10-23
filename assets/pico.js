@@ -24,9 +24,9 @@
   const pct1 = n => n == null ? "—" : `${(n * 100).toFixed(1)}%`;
 
   const VEREDICTO = {
-    parar:      { col: "var(--loss)", cls: "stop", icono: "🛑", titulo: "Asegura ganancias" },
-    precaucion: { col: "#F5A623",     cls: "warn", icono: "🟡", titulo: "Precaución" },
-    seguir:     { col: "var(--win)",  cls: "ok",   icono: "🟢", titulo: "Sin alertas" },
+    parar:      { col: "var(--loss)", cls: "stop", icono: ico("alert"), titulo: "Asegura ganancias" },
+    precaucion: { col: "var(--pend)",     cls: "warn", icono: ico("alert"), titulo: "Precaución" },
+    seguir:     { col: "var(--win)",  cls: "ok",   icono: ico("check"), titulo: "Sin alertas" },
   };
 
   // ── Curva de neto acumulado con el pico marcado (SVG inline, sin librerías) ──────────
@@ -90,7 +90,7 @@
     if (pk) {
       const cap = pk.capital_necesario;
       caso = `<div class="card pc-case">
-        <div class="card-title">🏆 Caso de referencia — máximo neto histórico</div>
+        <div class="card-title">Caso de referencia — máximo neto histórico</div>
         <div class="pc-big green" title="${esc(fmtEq(pk.neto, true))}">${fmts(pk.neto)}</div>${eqLine(pk.neto, true)}
         <p class="pc-story">El canal llegó a <b>${fmts(pk.neto)}</b> de ganancia neta el <b>${fechaCorta(pk.fecha)}</b>,
           usando solo <b>${fmt(cap)}</b> de capital, en <b>${pk.dias} días</b>
@@ -113,9 +113,9 @@
     if (pk && ac) {
       const pct = Math.max(0, Math.min(1, ac.retenido));
       const etq = { maximo: "En el máximo", cerca: "Cerca del máximo", retroceso: "Retroceso", profundo: "Retroceso profundo" }[ac.estado] || "";
-      const col = ac.estado === "maximo" ? "var(--win)" : ac.estado === "cerca" ? "var(--accent)" : ac.estado === "retroceso" ? "#F5A623" : "var(--loss)";
+      const col = ac.estado === "maximo" ? "var(--win)" : ac.estado === "cerca" ? "var(--accent)" : ac.estado === "retroceso" ? "var(--pend)" : "var(--loss)";
       hoy = `<div class="card">
-        <div class="card-title">📍 Dónde estás hoy</div>
+        <div class="card-title">Dónde estás hoy</div>
         <div class="pc-row"><span>Neto actual</span><b class="${ac.neto >= 0 ? "green" : "red"}">${fmts(ac.neto)}</b></div>
         <div class="pc-bar"><div class="pc-bar-fill" style="width:${(pct * 100).toFixed(1)}%;background:${col}"></div></div>
         <div class="pc-row"><span style="color:${col};font-weight:700">${etq}</span><span>${pct0(ac.retenido)} del pico</span></div>
@@ -128,19 +128,19 @@
     }
 
     const estMes = {
-      meta: ["💰 Meta del mes alcanzada", "var(--loss)"], cerca_meta: ["🎯 Cerca de la meta del mes", "#F5A623"],
-      record: ["🏆 Mes récord", "var(--win)"], cerca_record: ["🎯 Cerca del récord", "var(--accent)"],
-      devolviendo: ["🔻 Devolviendo", "#F5A623"], positivo: ["✅ En positivo", "var(--win)"],
-      negativo: ["🧊 En negativo", "var(--loss)"], sin_datos: ["Sin apuestas este mes", "var(--text-3)"],
+      meta: ["Meta del mes alcanzada", "var(--loss)"], cerca_meta: ["Cerca de la meta del mes", "var(--pend)"],
+      record: ["Mes récord", "var(--win)"], cerca_record: ["Cerca del récord", "var(--accent)"],
+      devolviendo: ["Devolviendo", "var(--pend)"], positivo: ["En positivo", "var(--win)"],
+      negativo: ["En negativo", "var(--loss)"], sin_datos: ["Sin apuestas este mes", "var(--text-3)"],
     }[m.estado] || ["", "var(--text-3)"];
     // Meta del mes = pico neto promedio de los meses cerrados (INV-BIZ-49): al acercarse, retirar y parar.
     let meta = "";
     if (m.pico_medio) {
       const pm = Math.max(0, Math.min(1, m.pct_pico_medio || 0));
-      const col = (m.pct_pico_medio || 0) >= 0.9 ? "var(--loss)" : (m.pct_pico_medio || 0) >= 0.7 ? "#F5A623" : "var(--accent)";
+      const col = (m.pct_pico_medio || 0) >= 0.9 ? "var(--loss)" : (m.pct_pico_medio || 0) >= 0.7 ? "var(--pend)" : "var(--accent)";
       const rg = m.regla;
       meta = `<div class="pc-meta">
-        <div class="pc-row"><span>🎯 Meta del mes <small style="color:var(--text-3)">(pico medio de ${m.meses_referencia} meses)</small></span><b>${fmt(m.pico_medio)}</b></div>
+        <div class="pc-row"><span>Meta del mes <small style="color:var(--text-3)">(pico medio de ${m.meses_referencia} meses)</small></span><b>${fmt(m.pico_medio)}</b></div>
         <div class="pc-bar"><div class="pc-bar-fill" style="width:${(pm * 100).toFixed(1)}%;background:${col}"></div></div>
         <div class="pc-row"><span style="color:${col};font-weight:700">${pct0(m.pct_pico_medio)} de la meta</span><span>${(m.falta_pico_medio || 0) > 0 ? `faltan ${fmt(m.falta_pico_medio)}` : "meta superada"}</span></div>
         <p class="pc-note">Al llegar a ~${pct0(0.9)} de la meta: retira (referencia ${pct0(p.fraccion_retiro)} ≈ <b>${fmt(m.retiro_sugerido)}</b>, ${esc(fmtEq(m.retiro_sugerido))}) y no apuestes más hasta <b>${esc(m.siguiente_mes)}</b>.</p>
@@ -155,14 +155,14 @@
       ? `<tr><td>${esc(x.etiqueta)}</td><td class="n">${fmt(x.pico)}</td><td class="n">día ${x.dia_del_mes}</td><td class="n">${x.dias} d · ${x.apuestas}</td><td class="n">${pct0(x.winrate)}</td><td class="n">${fmt(x.capital_necesario)}</td><td class="n ${x.neto_cierre >= 0 ? "green" : "red"}">${fmts(x.neto_cierre)}</td></tr>`
       : `<tr class="low"><td>${esc(x.etiqueta)}</td><td class="n" colspan="6">nunca estuvo en positivo</td></tr>`).join("");
     const como = det.length ? `<div class="card">
-      <div class="card-title">🧭 Cómo se logró el pico en cada mes</div>
+      <div class="card-title">Cómo se logró el pico en cada mes</div>
       ${pf ? `<p class="pc-note" style="margin-top:0">Pico típico: hacia el <b>día ${pf.dia_del_mes.toFixed(0)}</b> del mes, en ~<b>${pf.dias.toFixed(0)} días</b> y ~<b>${pf.apuestas.toFixed(0)} apuestas</b>, con winrate ~<b>${pct0(pf.winrate)}</b> y ~<b>${fmt(pf.capital_necesario)}</b> de capital (mediana de ${pf.n} meses).</p>` : ""}
       <div class="pc-scroll"><table class="ed-table pc-table"><thead><tr><th>Mes</th><th class="n">Pico</th><th class="n">Cuándo</th><th class="n">Tiempo · apuestas</th><th class="n">WR</th><th class="n">Capital</th><th class="n">Cerró</th></tr></thead><tbody>${filas}</tbody></table></div>
       <p class="pc-note">«Cerró» es lo que quedó al final del mes: la diferencia con el pico es lo que se devolvió por seguir apostando.</p>
     </div>` : "";
 
     const mes = `<div class="card">
-      <div class="card-title">📅 ${esc(mesLabel(m.clave))} — estado del mes</div>
+      <div class="card-title">${esc(mesLabel(m.clave))} — estado del mes</div>
       <div class="pc-row"><span style="color:${estMes[1]};font-weight:700">${estMes[0]}</span><b class="${m.neto >= 0 ? "green" : "red"}">${fmts(m.neto)}</b></div>
       ${meta}
       <div class="pc-kpis">
@@ -176,12 +176,12 @@
     </div>`;
 
     const avisos = (p.avisos && p.avisos.length)
-      ? `<div class="card"><div class="card-title">🔔 Avisos</div>${_avisosHtml(p.avisos)}</div>` : "";
+      ? `<div class="card"><div class="card-title">Avisos</div>${_avisosHtml(p.avisos)}</div>` : "";
 
     return `${cabecera}${avisos}${mes}${como}${caso}${hoy}
       <div class="explainer">
         <strong>Cómo leerlo:</strong> el <em>máximo</em> es el mayor neto acumulado (al cierre de cada día) de todo el historial; el <em>capital necesario</em> es el dinero que había que tener disponible para sostener las apuestas hasta ese punto (dinero vivo menos balance ya realizado). Los avisos son una regla de disciplina del bankroll —asegurar ganancias en máximos y cerrar meses récord—, <strong>no una predicción</strong>: un máximo no vuelve más probable una mala racha, pero la ganancia que no se retira sí puede devolverse.
-        ${p.muestra_suficiente ? "" : `<br>⚠️ Muestra baja (${p.n_resueltas} resueltas &lt; 30): cifras orientativas.`}
+        ${p.muestra_suficiente ? "" : `<br>Muestra baja (${p.n_resueltas} resueltas &lt; 30): cifras orientativas.`}
       </div>`;
   }
 

@@ -61,20 +61,20 @@
     const s = DATA?.salud;
     if (!s) return "";
     const alertas = (s.alertas || []).map(a =>
-      `<div class="ed-alert ${a.nivel}">⚠️ ${esc(a.mensaje)}</div>`).join("");
+      `<div class="ed-alert ${a.nivel}">${esc(a.mensaje)}</div>`).join("");
     const rancias = (s.rancias || []).slice(0, 8).map(r =>
       `<div style="font-size:11.5px;padding:3px 0;border-top:1px solid rgba(255,255,255,.06)">
          #${r.row_id} ${esc(r.partido)} — ${esc(r.fecha_partido)} <span style="color:var(--loss)">(${r.dias} d)</span>
        </div>`).join("");
     return `<div class="ed-card">
-      <h4>🩺 Salud de los datos</h4>
+      <h4>Salud de los datos</h4>
       <div class="ed-row">
         <div class="ed-kpi"><div class="l">Resueltas</div><div class="v">${fmtPct1(s.pct_resueltas)}</div><div class="s">${s.resueltas}/${s.total}</div></div>
         <div class="ed-kpi"><div class="l">Stake asumido</div><div class="v">${fmtPct1(s.pct_stake_asumido)}</div><div class="s">${s.n_stake_asumido} apuestas</div></div>
         <div class="ed-kpi"><div class="l">Sin clasificar</div><div class="v">${fmtPct1(s.pct_sin_clasificar)}</div><div class="s">${s.n_sin_clasificar} en «Otro»</div></div>
         <div class="ed-kpi"><div class="l">Con cierre (CLV)</div><div class="v">${fmtPct1(s.pct_con_cierre)}</div><div class="s">${s.n_con_cierre}/${s.n_elegibles_cierre || 0} prepartido${s.n_en_vivo ? ` · ${s.n_en_vivo} en vivo (no aplica)` : ""}</div></div>
       </div>
-      ${alertas || `<div class="ed-ok">✅ Sin alertas de calidad de datos.</div>`}
+      ${alertas || `<div class="ed-ok">Sin alertas de calidad de datos.</div>`}
       ${rancias ? `<details class="ed-fold"><summary>Pendientes rancias (${s.pendientes_rancias})</summary>${rancias}</details>` : ""}
     </div>`;
   }
@@ -86,12 +86,12 @@
     const t = r.todas, s = r.solo_stake_real;
     const delta = r.delta_roi_pp;
     return `<div class="ed-card">
-      <h4>💵 ROI con stake real</h4>
+      <h4>ROI con stake real</h4>
       <p class="ed-note">${r.n_excluidas} apuesta(s) usan un monto asumido (no el real apostado). Comparación con y sin ellas:</p>
       <div class="ed-row">
         <div class="ed-kpi"><div class="l">ROI (todas)</div><div class="v" style="color:${t.roi >= 0 ? "var(--win)" : "var(--loss)"}">${fmtp(t.roi)}</div><div class="s">n=${t.n}</div></div>
         <div class="ed-kpi"><div class="l">ROI (stake real)</div><div class="v" style="color:${s.roi >= 0 ? "var(--win)" : "var(--loss)"}">${fmtp(s.roi)}</div><div class="s">n=${s.n}</div></div>
-        <div class="ed-kpi"><div class="l">Diferencia</div><div class="v" style="color:${Math.abs(delta || 0) > 3 ? "#F5A623" : "inherit"}">${delta == null ? "—" : `${delta >= 0 ? "+" : ""}${delta.toFixed(1)}pp`}</div></div>
+        <div class="ed-kpi"><div class="l">Diferencia</div><div class="v" style="color:${Math.abs(delta || 0) > 3 ? "var(--pend)" : "inherit"}">${delta == null ? "—" : `${delta >= 0 ? "+" : ""}${delta.toFixed(1)}pp`}</div></div>
       </div>
       ${Math.abs(delta || 0) > 3 ? `<p class="ed-note">La diferencia es grande: los montos asumidos están distorsionando tu ROI oficial.</p>` : ""}
     </div>`;
@@ -99,9 +99,9 @@
 
   // ── CLV global + precio + valor del sistema (ya en /api/stats) ────────────────
   function _badgeVeredicto(v) {
-    const map = { ventaja: ["win", "🟢 Ventaja"], sin_ventaja: ["loss", "🔴 Sin ventaja"],
-                  indeterminado: ["warn", "🟡 Indeterminado"], insuficiente: ["", "⚪ Muestra insuficiente"],
-                  sin_datos: ["", "⚪ Sin datos"] };
+    const map = { ventaja: ["win", "Ventaja"], sin_ventaja: ["loss", "Sin ventaja"],
+                  indeterminado: ["warn", "Indeterminado"], insuficiente: ["", "Muestra insuficiente"],
+                  sin_datos: ["", "Sin datos"] };
     const [cls, txt] = map[v] || ["", v || "—"];
     return `<span class="ed-badge ${cls}">${txt}</span>`;
   }
@@ -110,7 +110,7 @@
     const c = DATA?.clv;
     if (!c) return "";
     return `<div class="ed-card">
-      <h4>📈 CLV — Closing Line Value ${_badgeVeredicto(c.veredicto)}</h4>
+      <h4>CLV — Closing Line Value ${_badgeVeredicto(c.veredicto)}</h4>
       <p class="ed-note">Compara la cuota que tomaste contra la cuota de <b>cierre</b> (justo antes del inicio). Es la métrica que dice si tienes ventaja real <b>mucho antes</b> de que el resultado (ganar/perder) tenga suficiente muestra — con 150 apuestas ya converge, el ROI necesita miles.</p>
       <div class="ed-row">
         <div class="ed-kpi"><div class="l">Apuestas con cierre</div><div class="v">${c.n}</div><div class="s">${fmtPct1(c.cobertura)} del historial prepartido</div></div>
@@ -119,15 +119,15 @@
         <div class="ed-kpi"><div class="l">IC 95%</div><div class="v" style="font-size:13px">${fmtPct1(c.wilson_low)} – ${fmtPct1(c.wilson_high)}</div></div>
       </div>
       ${DATA?.valor_ref?.nombre_ref ? `<p class="ed-note">Cierre de referencia: <b>${esc(DATA.valor_ref.nombre_ref)}</b> sin su margen (si no cotiza el partido, el consenso de las demás casas).</p>` : ""}
-      ${c.n_en_vivo ? `<p class="ed-note">ℹ️ ${c.n_en_vivo} apuesta(s) <b>en vivo</b> (publicadas después del inicio) no entran al CLV: la cuota en juego se mueve con el marcador y no es comparable con el cierre prepartido.</p>` : ""}
-      ${c.n < (c.min_muestra || 30) ? `<p class="ed-note">⚠️ Menos de ${c.min_muestra || 30} apuestas con cierre: el veredicto todavía no es fiable.</p>` : ""}
-      ${c.cobertura < 0.5 ? `<p class="ed-note">⚠️ Solo ${fmtPct1(c.cobertura)} de tus apuestas prepartido tienen cuota de cierre — activa la captura automática o cárgalo a mano para que el CLV represente todo tu historial.</p>` : ""}
+      ${c.n_en_vivo ? `<p class="ed-note">${c.n_en_vivo} apuesta(s) <b>en vivo</b> (publicadas después del inicio) no entran al CLV: la cuota en juego se mueve con el marcador y no es comparable con el cierre prepartido.</p>` : ""}
+      ${c.n < (c.min_muestra || 30) ? `<p class="ed-note">Menos de ${c.min_muestra || 30} apuestas con cierre: el veredicto todavía no es fiable.</p>` : ""}
+      ${c.cobertura < 0.5 ? `<p class="ed-note">Solo ${fmtPct1(c.cobertura)} de tus apuestas prepartido tienen cuota de cierre — activa la captura automática o cárgalo a mano para que el CLV represente todo tu historial.</p>` : ""}
     </div>`;
   }
 
   function _renderPrecio() {
     const p = DATA?.precio;
-    if (!p || !p.n_con_mejor) return `<div class="ed-card"><h4>💰 Precio (line shopping)</h4><p class="ed-note">Todavía no hay apuestas con «Cuota mejor» registrada. Añádela al crear/editar una apuesta para medir cuánto dejas en la mesa por no comparar precio entre casas.</p></div>`;
+    if (!p || !p.n_con_mejor) return `<div class="ed-card"><h4>Precio (line shopping)</h4><p class="ed-note">Todavía no hay apuestas con «Cuota mejor» registrada. Añádela al crear/editar una apuesta para medir cuánto dejas en la mesa por no comparar precio entre casas.</p></div>`;
     const casas = (p.por_casa || []).slice(0, 8).map(c => `<tr>
       <td>${esc(c.casa)}</td><td class="n">${c.n}</td>
       <td class="n" style="color:${(c.roi ?? 0) >= 0 ? "var(--win)" : "var(--loss)"}">${c.roi == null ? "—" : fmtp(c.roi)}</td>
@@ -135,7 +135,7 @@
     const mejorEn = (p.mejor_precio_en || []).slice(0, 5)
       .map(x => `${esc(x.casa)} (${x.veces})`).join(" · ");
     return `<div class="ed-card">
-      <h4>💰 Precio — dinero dejado en la mesa</h4>
+      <h4>Precio — dinero dejado en la mesa</h4>
       <div class="ed-row">
         <div class="ed-kpi"><div class="l">Valor esperado cedido</div><div class="v" style="color:var(--loss)">${fmtC(p.perdido_esperado)}</div></div>
         <div class="ed-kpi"><div class="l">Realizado (en ganadas)</div><div class="v" style="color:var(--loss)">${fmtC(p.perdido_realizado)}</div></div>
@@ -154,14 +154,14 @@
     if (!v) return "";
     const nom = esc(v.nombre_ref || "1xBet");
     if (!v.n) {
-      return `<div class="ed-card"><h4>💹 Valor al apostar vs ${nom}</h4>
+      return `<div class="ed-card"><h4>Valor al apostar vs ${nom}</h4>
         <p class="ed-note">Todavía no hay picks con el precio de ${nom} consultado al registrarlos. Se llena solo con la consulta de precio al ingerir (deportes activados en el bot); cada pick nuevo compara la cuota del ticket con la línea justa (sin margen) de ${nom}, con lo que pagan las demás casas y con el cierre.</p>
-        ${v.n_otra_fuente ? `<p class="ed-note">ℹ️ ${v.n_otra_fuente} pick(s) se consultaron cuando ${nom} no cotizaba (se usó el consenso de otras casas) y no entran aquí.</p>` : ""}
+        ${v.n_otra_fuente ? `<p class="ed-note">${v.n_otra_fuente} pick(s) se consultaron cuando ${nom} no cotizaba (se usó el consenso de otras casas) y no entran aquí.</p>` : ""}
       </div>`;
     }
     const mov = v.movimiento || {};
     const grupos = (v.por_ev || []).map(g => `<tr>
-      <td>${g.grupo === "ev_pos" ? "🟢 EV &gt; 0" : "🔴 EV ≤ 0"}</td><td class="n">${g.n}</td>
+      <td>${g.grupo === "ev_pos" ? "EV &gt; 0" : "EV ≤ 0"}</td><td class="n">${g.n}</td>
       <td class="n">${g.n_resueltas}</td>
       <td class="n" style="color:${_colorS(g.unidades)}">${g.unidades >= 0 ? "+" : ""}${g.unidades.toFixed(2)}u</td>
       <td class="n" style="color:${_colorS(g.yield)}">${fmtPctS(g.yield)}</td>
@@ -171,7 +171,7 @@
       <td>${esc(c.casa)}</td><td class="n">${c.veces}</td><td class="n" style="color:var(--win)">${fmtPctS(c.ventaja_media)}</td>
     </tr>`).join("");
     return `<div class="ed-card">
-      <h4>💹 Valor al apostar vs ${nom}</h4>
+      <h4>Valor al apostar vs ${nom}</h4>
       <p class="ed-note">Al registrar cada pick se consulta ${nom}: <b>EV</b> = cuota del ticket ÷ cuota justa de ${nom} (sin su margen) − 1. Positivo = el ticket paga más de lo que ${nom} cree que vale el pick.</p>
       <div class="ed-row">
         <div class="ed-kpi"><div class="l">Picks medidos</div><div class="v">${v.n}</div>${v.n_manual ? `<div class="s">${v.n_manual} cargados a mano ✍️</div>` : ""}${v.n_otra_fuente ? `<div class="s">+${v.n_otra_fuente} sin ${nom} (consenso)</div>` : ""}</div>
@@ -188,7 +188,7 @@
       <table class="ed-table"><thead><tr><th>¿Sirve el EV?</th><th class="n">n</th><th class="n">Res.</th><th class="n">Unid.</th><th class="n">Yield</th><th class="n">CLV</th></tr></thead><tbody>${grupos}</tbody></table>
       ${supera ? `<details class="ed-fold"><summary>Casas que pagaron más que ${nom}</summary>
         <table class="ed-table"><thead><tr><th>Casa</th><th class="n">Veces</th><th class="n">Ventaja media</th></tr></thead><tbody>${supera}</tbody></table></details>` : ""}
-      ${!v.muestra_suficiente ? `<p class="ed-note">⚠️ Muestra chica (n=${v.n}): úsalo como orientación, no como veredicto.</p>` : ""}
+      ${!v.muestra_suficiente ? `<p class="ed-note">Muestra chica (n=${v.n}): úsalo como orientación, no como veredicto.</p>` : ""}
     </div>`;
   }
 
@@ -200,14 +200,14 @@
       <td class="n" style="color:${g.unidades >= 0 ? "var(--win)" : "var(--loss)"}">${g.unidades >= 0 ? "+" : ""}${g.unidades.toFixed(2)}u</td>
     </tr>`).join("");
     return `<div class="ed-card">
-      <h4>🎯 Valor de obedecer al sistema</h4>
+      <h4>Valor de obedecer al sistema</h4>
       <p class="ed-note">Sobre las apuestas resueltas donde el sistema ya opinó (modo <b>${esc(DATA?.config?.modo || "advise")}</b>). Unidades = stake unitario desde la cuota (comparable, sin importar el monto real de cada día).</p>
       <div class="ed-row">
         <div class="ed-kpi"><div class="l">Si obedecías siempre</div><div class="v" style="color:${s.unidades_si_obedece >= 0 ? "var(--win)" : "var(--loss)"}">${s.unidades_si_obedece >= 0 ? "+" : ""}${s.unidades_si_obedece.toFixed(2)}u</div></div>
         <div class="ed-kpi"><div class="l">Sin filtrar nada</div><div class="v">${s.unidades_todas >= 0 ? "+" : ""}${s.unidades_todas.toFixed(2)}u</div></div>
         <div class="ed-kpi"><div class="l">Valor de la política</div><div class="v" style="color:${s.valor_politica >= 0 ? "var(--win)" : "var(--loss)"}">${s.valor_politica >= 0 ? "+" : ""}${s.valor_politica.toFixed(2)}u</div></div>
       </div>
-      ${!s.muestra_suficiente ? `<p class="ed-note">⚠️ Muestra chica (n=${s.n}): esta comparación todavía es ruido.</p>` : ""}
+      ${!s.muestra_suficiente ? `<p class="ed-note">Muestra chica (n=${s.n}): esta comparación todavía es ruido.</p>` : ""}
       <table class="ed-table"><thead><tr><th>Decisión</th><th class="n">n</th><th class="n">WR</th><th class="n">Unidades</th></tr></thead><tbody>${filas}</tbody></table>
     </div>`;
   }
@@ -235,7 +235,7 @@
     if (_clvCargando || (_clvDetalle && !force)) return;
     _clvCargando = true; _clvError = null;
     const box = document.getElementById("edClvDetalle");
-    if (box) box.innerHTML = `<p class="ed-note">⏳ Calculando segmentos…</p>`;
+    if (box) box.innerHTML = `<p class="ed-note">Calculando segmentos…</p>`;
     try {
       _clvDetalle = await _apiGet("/api/clv");
     } catch (e) {
@@ -247,8 +247,8 @@
   }
 
   function _renderClvDetalleBox() {
-    if (_clvError) return `<p class="ed-note">❌ ${esc(_clvError)} <button class="ed-btn ghost small" data-ed-action="clv-reload">Reintentar</button></p>`;
-    if (!_clvDetalle) return `<p class="ed-note">⏳ Cargando…</p>`;
+    if (_clvError) return `<p class="ed-note">${esc(_clvError)} <button class="ed-btn ghost small" data-ed-action="clv-reload">Reintentar</button></p>`;
+    if (!_clvDetalle) return `<p class="ed-note">Cargando…</p>`;
     const seg = _clvDetalle.segmentos || {};
     return _tablaSegmentos("Por deporte", seg.deporte)
       + _tablaSegmentos("Por tipo de mercado", seg.tipo)
@@ -262,7 +262,7 @@
     if (_cmpCargando) return;
     _cmpCargando = true;
     const box = document.getElementById("edComparador");
-    if (box) box.innerHTML = `<p class="ed-note">⏳ Consultando canales…</p>`;
+    if (box) box.innerHTML = `<p class="ed-note">Consultando canales…</p>`;
     const entradas = Object.entries(CANALES);
     const resultados = await Promise.all(entradas.map(async ([key, canal]) => {
       try {
@@ -288,11 +288,11 @@
       const marcaActivo = activo(r.key) ? " · <b>este canal</b>" : "";
       if (r.error === "auth") {
         return `<tr><td>${esc(r.canal.label)}${marcaActivo}</td><td colspan="4" style="color:var(--text-3)">
-          🔒 No autenticado en este canal (cada bot firma su propia sesión — ábrelo desde su WebApp para comparar)
+          No autenticado en este canal (cada bot firma su propia sesión — ábrelo desde su WebApp para comparar)
         </td></tr>`;
       }
       if (r.error) {
-        return `<tr><td>${esc(r.canal.label)}${marcaActivo}</td><td colspan="4" style="color:var(--text-3)">❌ ${esc(r.error)}</td></tr>`;
+        return `<tr><td>${esc(r.canal.label)}${marcaActivo}</td><td colspan="4" style="color:var(--text-3)">${esc(r.error)}</td></tr>`;
       }
       const g = r.data.global || {};
       return `<tr><td>${esc(r.canal.label)}${marcaActivo}</td>
@@ -313,15 +313,15 @@
       ${_renderSalud()}
       ${_renderRoiReal()}
       ${_renderClvGlobal()}
-      <div class="ed-card"><h4>🔎 CLV por segmento</h4>
+      <div class="ed-card"><h4>CLV por segmento</h4>
         <div id="edClvDetalle">${_renderClvDetalleBox()}</div>
       </div>
       ${_renderValorRef()}
       ${_renderPrecio()}
       ${_renderSistema()}
-      <div class="ed-card"><h4>🆚 Comparar canales</h4>
+      <div class="ed-card"><h4>Comparar canales</h4>
         <p class="ed-note">¿Cuál de tus tipsters/canales rinde mejor? Compara por CLV (no por ROI: con historiales cortos el ROI es ruido).</p>
-        <button class="ed-btn ghost small" data-ed-action="cmp-reload">🔄 Consultar canales</button>
+        <button class="ed-btn ghost small" data-ed-action="cmp-reload">Consultar canales</button>
         <div id="edComparador" style="margin-top:8px">${_cmpCanales ? _renderComparadorBox() : ""}</div>
       </div>`;
   }
@@ -341,7 +341,7 @@
   function _renderReglaRow(r) {
     const m = r.meta || {};
     const accionCls = r.accion === "saltar" ? "loss" : "win";
-    const accionTxt = r.accion === "saltar" ? "🔴 SALTAR" : "🟢 APOSTAR";
+    const accionTxt = r.accion === "saltar" ? "SALTAR" : "APOSTAR";
     const filtroTxt = Object.entries(r.filtro || {})
       .filter(([, v]) => v != null && v !== "" && !(Array.isArray(v) && !v.length))
       .map(([k, v]) => `${k}=${Array.isArray(v) ? v.join("/") : v}`).join(" · ") || "(sin filtro)";
@@ -364,8 +364,8 @@
   }
 
   function _renderReglas() {
-    if (_reglasError) return `<p class="ed-note">❌ ${esc(_reglasError)} <button class="ed-btn ghost small" data-ed-action="reglas-reload">Reintentar</button></p>`;
-    if (!_reglas) return `<p class="ed-note">⏳ Cargando…</p>`;
+    if (_reglasError) return `<p class="ed-note">${esc(_reglasError)} <button class="ed-btn ghost small" data-ed-action="reglas-reload">Reintentar</button></p>`;
+    if (!_reglas) return `<p class="ed-note">Cargando…</p>`;
     const filas = (_reglas.reglas || []);
     if (!filas.length) return `<p class="ed-note">Sin reglas congeladas todavía. Descúbrelas en el <b>Simulador → Buscador</b> y congela las que sobrevivan al holdout, o créala manualmente abajo.</p>`;
     return filas.map(_renderReglaRow).join("");
@@ -399,13 +399,13 @@
   function _renderNuevaReglaForm() {
     const n = _nuevaRegla;
     return `<div class="ed-card">
-      <h4>➕ Nueva regla</h4>
+      <h4>Nueva regla</h4>
       <div class="ed-form">
         <div class="full"><label>Nombre</label><input id="edRNombre" value="${esc(n.nombre)}" placeholder="Ej: Basket hándicap, cuota alta"></div>
         <div><label>Acción</label>
           <select id="edRAccion">
-            <option value="saltar" ${n.accion === "saltar" ? "selected" : ""}>🔴 Saltar</option>
-            <option value="apostar" ${n.accion === "apostar" ? "selected" : ""}>🟢 Apostar</option>
+            <option value="saltar" ${n.accion === "saltar" ? "selected" : ""}>Saltar</option>
+            <option value="apostar" ${n.accion === "apostar" ? "selected" : ""}>Apostar</option>
           </select>
         </div>
         <div><label>Cuota mín.</label><input id="edRCuotaMin" type="number" step="0.01" value="${esc(n.cuota_min)}"></div>
@@ -440,14 +440,14 @@
   async function _enviarRegla(body, forzar) {
     const errBox = document.getElementById("edRErr");
     const btn = document.querySelector("[data-ed-action='regla-crear']");
-    if (btn) { btn.disabled = true; btn.textContent = "⏳ Evaluando…"; }
+    if (btn) { btn.disabled = true; btn.textContent = "Evaluando…"; }
     try {
       const payload = forzar ? { ...body, forzar: true } : body;
       const resp = await fetch(`${API_URL}/api/policy`, { method: "POST", headers: apiHeaders(), body: JSON.stringify(payload) });
       const j = await resp.json().catch(() => ({}));
       if (resp.status === 409 && j.error === "holdout_no_positivo") {
         if (errBox) {
-          errBox.innerHTML = `⚠️ ${esc(j.detalle || "")} <button class="ed-btn ghost small" data-ed-action="regla-forzar" style="margin-top:6px">Congelar de todos modos</button>`;
+          errBox.innerHTML = `${esc(j.detalle || "")} <button class="ed-btn ghost small" data-ed-action="regla-forzar" style="margin-top:6px">Congelar de todos modos</button>`;
           errBox.dataset.pending = JSON.stringify(body);
         }
         return;
@@ -459,7 +459,7 @@
       const sec = document.getElementById("politica");
       if (sec) sec.innerHTML = renderPolitica();
     } catch (e) {
-      if (errBox) errBox.textContent = "❌ " + e.message;
+      if (errBox) errBox.textContent = "" + e.message;
       haptic("error");
     } finally {
       if (btn) { btn.disabled = false; btn.textContent = "Congelar regla"; }
@@ -469,18 +469,18 @@
   function _renderEvaluador() {
     const p = _evalPick;
     let resultadoHtml = "";
-    if (_evalError) resultadoHtml = `<p class="ed-note" style="color:var(--loss)">❌ ${esc(_evalError)}</p>`;
+    if (_evalError) resultadoHtml = `<p class="ed-note" style="color:var(--loss)">${esc(_evalError)}</p>`;
     else if (_evalResultado) {
       const ev = _evalResultado.evaluacion;
       const cls = ev.decision === "saltar" ? "saltar" : ev.decision === "apostar" ? "apostar" : "";
       resultadoHtml = `<div class="ed-decision ${cls}">
-        <b>${ev.decision === "saltar" ? "🔴 SALTAR" : ev.decision === "apostar" ? "🟢 APOSTAR" : ev.decision === "neutral" ? "🟡 Neutral" : "⚪ Sin datos"}</b><br>
+        <b>${ev.decision === "saltar" ? "SALTAR" : ev.decision === "apostar" ? "APOSTAR" : ev.decision === "neutral" ? "Neutral" : "Sin datos"}</b><br>
         ${esc(ev.razon || "")}
         ${ev.decision === "apostar" ? `<br><b>Stake sugerido: ${fmt(ev.stake_sugerido)}</b>` : ""}
       </div>`;
     }
     return `<div class="ed-card">
-      <h4>🔍 Consultar un pick</h4>
+      <h4>Consultar un pick</h4>
       <p class="ed-note">¿Qué diría el sistema de este pick, sin registrarlo?</p>
       <div class="ed-form">
         <div><label>Deporte</label><input id="edEDeporte" value="${esc(p.deporte)}" placeholder="Soccer"></div>
@@ -490,7 +490,7 @@
         <div><label>Fecha</label><input id="edEFecha" type="date" value="${esc(p.fecha_partido)}"></div>
         <div><label>Hora</label><input id="edEHora" type="time" value="${esc(p.hora_partido)}"></div>
       </div>
-      <button class="ed-btn" style="margin-top:8px" data-ed-action="pick-evaluar">${_evalCargando ? "⏳ Consultando…" : "Consultar"}</button>
+      <button class="ed-btn" style="margin-top:8px" data-ed-action="pick-evaluar">${_evalCargando ? "Consultando…" : "Consultar"}</button>
       <div style="margin-top:8px">${resultadoHtml}</div>
     </div>`;
   }
@@ -522,10 +522,10 @@
   function renderPolitica() {
     setTimeout(() => { _cargarReglas(false); }, 0);
     return `<div class="section-header">Política <span>pre-apuesta</span></div>
-      <div class="ed-card"><h4>⚙️ Configuración activa</h4><div id="edPoliticaConfig">${_renderConfigPolitica()}</div>
+      <div class="ed-card"><h4>Configuración activa</h4><div id="edPoliticaConfig">${_renderConfigPolitica()}</div>
         <p class="ed-note">Se ajusta con variables de entorno del bot (STAKE_POLICY_MODE, BANKROLL, KELLY_FRACTION…) — no desde aquí.</p></div>
       ${_renderEvaluador()}
-      <div class="ed-card"><h4>🧊 Reglas congeladas</h4><div id="edReglas">${_renderReglas()}</div></div>
+      <div class="ed-card"><h4>Reglas congeladas</h4><div id="edReglas">${_renderReglas()}</div></div>
       ${_renderNuevaReglaForm()}`;
   }
 
@@ -555,14 +555,14 @@
     if (act === "regla-toggle") {
       const id = el.dataset.edId, activa = el.dataset.edActiva === "1";
       _apiPost(`/api/policy/${id}/active`, { activa }, "POST")
-        .then(() => _cargarReglas(true)).catch(err => alert("❌ " + err.message));
+        .then(() => _cargarReglas(true)).catch(err => alert("" + err.message));
       return;
     }
     if (act === "regla-borrar") {
       const id = el.dataset.edId;
       if (!confirm("¿Borrar esta regla?")) return;
       _apiDelete(`/api/policy/${id}`)
-        .then(() => _cargarReglas(true)).catch(err => alert("❌ " + err.message));
+        .then(() => _cargarReglas(true)).catch(err => alert("" + err.message));
       return;
     }
     if (act === "pick-evaluar") { _evaluarPick(); return; }
@@ -587,7 +587,7 @@
     const nom = esc(DATA?.valor_ref?.nombre_ref || "1xBet");
     if (!f) return "";
     if (f === "consenso") {
-      return `<p class="ed-note">⚠️ ${nom} no envía al bot la línea de este ticket (solo su línea principal). Cárgala aquí desde tu app para medir el EV.</p>`;
+      return `<p class="ed-note">${nom} no envía al bot la línea de este ticket (solo su línea principal). Cárgala aquí desde tu app para medir el EV.</p>`;
     }
     const manual = f.endsWith("_manual");
     return `<p class="ed-note">Guardado${manual ? " (a mano)" : " (automático)"}: ${nom} ${esc(String(a.cuota_ref_pick || "—"))} · justa ${esc(String(a.cuota_ref_pick_justa || "—"))}${typeof a.ev_pick === "number" ? ` · EV ${fmtPctS(a.ev_pick)}` : ""}. Rellena abajo solo si quieres corregirlo.</p>`;
@@ -600,7 +600,7 @@
     const nomRef = esc(DATA?.valor_ref?.nombre_ref || "1xBet");
     const wrap = document.createElement("div");
     wrap.innerHTML = `<details class="ed-fold" style="margin-top:10px">
-      <summary>💰 Ventaja real (opcional)</summary>
+      <summary>Ventaja real (opcional)</summary>
       <div class="ed-form" style="margin-top:8px">
         <div><label>Casa de apuestas</label><input id="edMCasa" class="m-input" value="${esc(a.casa || "")}" placeholder="Bet365"></div>
         <div><label>Cuota mejor vista</label><input id="edMCuotaMejor" class="m-input" type="number" step="0.01" value="${esc(a.cuota_mejor || "")}" placeholder="2.05"></div>
@@ -610,7 +610,7 @@
       <p class="ed-note">La cuota de cierre es el precio del mercado justo antes de que empiece el partido — cárgala a mano si no tienes captura automática, para medir tu CLV.</p>
     </details>
     <details class="ed-fold" style="margin-top:10px" ${_refPendiente(a) ? "open" : ""}>
-      <summary>💹 Cuotas de ${nomRef} (desde tu app)</summary>
+      <summary>Cuotas de ${nomRef} (desde tu app)</summary>
       ${_refEstado(a)}
       <div class="ed-form" style="margin-top:8px">
         <div><label>Tu lado (p. ej. Más de 7)</label><input id="edMRefLado" class="m-input" type="number" step="0.001" inputmode="decimal" placeholder="1.86"></div>

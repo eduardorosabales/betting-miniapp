@@ -32,6 +32,41 @@
     if (CANAL !== CANALES["1"]) {
       document.title = "Betting Stats · " + CANAL.label;
     }
+    // ── Iconos (INV-MINI-44): trazos SVG propios en lugar de emojis en la UI de la app.
+    // Strings estáticos (sin datos del usuario); edge.js/pico.js los reusan vía ico().
+    const ICON = {
+      home: '<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.5"/>',
+      chart: '<path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 6-6"/>',
+      list: '<path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3.5 6h.01"/><path d="M3.5 12h.01"/><path d="M3.5 18h.01"/>',
+      sliders: '<path d="M20 7h-9"/><path d="M14 17H4"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/>',
+      refresh: '<path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/>',
+      share: '<path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"/><path d="m16 6-4-4-4 4"/><path d="M12 2v13"/>',
+      plus: '<path d="M12 5v14"/><path d="M5 12h14"/>',
+      search: '<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>',
+      edit: '<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>',
+      trash: '<path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="m19 6-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>',
+      chevL: '<path d="m15 18-6-6 6-6"/>',
+      chevR: '<path d="m9 18 6-6-6-6"/>',
+      chevD: '<path d="m6 9 6 6 6-6"/>',
+      logout: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/>',
+      coins: '<circle cx="9" cy="9" r="6"/><path d="M18.1 10.4A6 6 0 1 1 10.3 18"/><path d="M8 7h1v4"/>',
+      check: '<path d="M20 6 9 17l-5-5"/>',
+      x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+      clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+      minus: '<path d="M5 12h14"/>',
+      up: '<path d="M7 17 17 7"/><path d="M8 7h9v9"/>',
+      down: '<path d="m7 7 10 10"/><path d="M17 8v9H8"/>',
+      flame: '<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14-.22-4.05 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.43-2.29 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>',
+      chartBar: '<path d="M3 3v18h18"/><path d="M8 17v-5"/><path d="M13 17V8"/><path d="M18 17v-3"/>',
+      logo: '<path d="M5 20v-7"/><path d="M12 20V5"/><path d="M19 20v-10"/>',
+      image: '<rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.5-3.5L9 20"/>',
+      layers: '<path d="m12 3 9 5-9 5-9-5 9-5z"/><path d="m3 13 9 5 9-5"/>',
+      link: '<path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/>',
+      sparkles: '<path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 3v4"/><path d="M21 5h-4"/>',
+      alert: '<path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/>',
+    };
+    const ico = (n, cls) => `<svg class="ico${cls ? " " + cls : ""}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[n] || ""}</svg>`;
+
     const tg = window.Telegram?.WebApp;
     const _isLowGPU = navigator.userAgent.includes("Linux") && !navigator.userAgent.includes("Android");
     // ── Tema: hereda el modo claro/oscuro del cliente Telegram ────────────────────
@@ -46,27 +81,55 @@
       const root = document.documentElement;
       root.dataset.theme = dark ? "dark" : "light";
       const S = (v, c) => { if (c) root.style.setProperty(v, c); };
-      S("--bg", tp.bg_color);
-      S("--surface", tp.secondary_bg_color || tp.bg_color);
-      S("--card", tp.section_bg_color || tp.secondary_bg_color || tp.bg_color);
-      S("--card2", tp.secondary_bg_color || tp.section_bg_color);
+      // Convención de Telegram (INV-MINI-44): secondary_bg = fondo de página y
+      // section_bg = tarjeta, así las tarjetas se separan del fondo en claro y oscuro.
+      const page = tp.secondary_bg_color || tp.bg_color;
+      const card = tp.section_bg_color || tp.bg_color;
+      S("--bg", page);
+      S("--surface", card);
+      S("--card", card);
+      S("--card2", _mixHex(card, tp.text_color, dark ? 0.07 : 0.05));
       S("--text", tp.text_color);
       S("--text-2", tp.hint_color || tp.subtitle_text_color);
       const line = dark ? "255,255,255" : "20,28,46";
-      root.style.setProperty("--border", `rgba(${line},${dark ? 0.06 : 0.12})`);
-      root.style.setProperty("--text-3", `rgba(${line},${dark ? 0.30 : 0.45})`);
-      root.style.setProperty("--chart-grid", `rgba(${line},${dark ? 0.06 : 0.10})`);
-      root.style.setProperty("--chart-tick", tp.hint_color || (dark ? "#4A5568" : "#6B7A90"));
-      // "Chrome" de la app (header + barra inferior): superficie sólida del tema para
-      // que texto e iconos de navegación mantengan contraste también en modo claro.
-      const chrome = tp.secondary_bg_color || tp.bg_color;
-      if (chrome) {
-        root.style.setProperty("--header-bg", chrome);
-        root.style.setProperty("--nav-bg", chrome);
-        root.style.setProperty("--nav-bg-solid", chrome);
+      root.style.setProperty("--border", `rgba(${line},${dark ? 0.07 : 0.08})`);
+      root.style.setProperty("--text-3", `rgba(${line},${dark ? 0.38 : 0.42})`);
+      root.style.setProperty("--chart-grid", `rgba(${line},${dark ? 0.06 : 0.07})`);
+      root.style.setProperty("--chart-tick", tp.hint_color || (dark ? "#7A808B" : "#8A909B"));
+      if (!dark) {
+        root.style.setProperty("color-scheme", "light");
+        root.style.setProperty("--accent", "#5B63F0");
+        root.style.setProperty("--accent-dim", "rgba(91,99,240,0.10)");
+        root.style.setProperty("--border-hi", "rgba(91,99,240,0.40)");
+        root.style.setProperty("--win", "#16A35F");
+        root.style.setProperty("--win-bg", "rgba(22,163,95,0.10)");
+        root.style.setProperty("--loss", "#E5484D");
+        root.style.setProperty("--loss-bg", "rgba(229,72,77,0.09)");
+        root.style.setProperty("--pend", "#C9820F");
+        root.style.setProperty("--pend-bg", "rgba(201,130,15,0.11)");
+      }
+      // "Chrome" de la app: header translúcido sobre el fondo y barra inferior del
+      // color de tarjeta, para que iconos y texto mantengan contraste en ambos modos.
+      if (page) root.style.setProperty("--header-bg", _hexAlpha(page, 0.86));
+      if (card) {
+        root.style.setProperty("--nav-bg", _hexAlpha(card, 0.92));
+        root.style.setProperty("--nav-bg-solid", card);
       }
       try { tg.setBackgroundColor("bg_color"); } catch (_) {}
       try { tg.setHeaderColor("secondary_bg_color"); } catch (_) {}
+    }
+    // Helpers de color para themeParams (siempre "#rrggbb"); si no es hex, se devuelve tal cual.
+    function _hexRgb(h) {
+      const m = /^#?([0-9a-f]{6})$/i.exec(String(h || "").trim());
+      if (!m) return null;
+      const n = parseInt(m[1], 16);
+      return [n >> 16, (n >> 8) & 255, n & 255];
+    }
+    function _hexAlpha(h, a) { const c = _hexRgb(h); return c ? `rgba(${c[0]},${c[1]},${c[2]},${a})` : h; }
+    function _mixHex(a, b, t) {
+      const x = _hexRgb(a), y = _hexRgb(b);
+      if (!x || !y) return a;
+      return "#" + x.map((v, i) => Math.round(v + (y[i] - v) * t).toString(16).padStart(2, "0")).join("");
     }
     function refreshChartsTheme() {
       if (typeof Chart === "undefined") return;
@@ -121,7 +184,7 @@
         document.getElementById("web-login").style.display = "none";
         await cargarDatos();
       } catch (err) {
-        if (errEl) errEl.textContent = "⚠️ " + err.message;
+        if (errEl) errEl.textContent = "" + err.message;
       }
     };
 
@@ -217,7 +280,7 @@
     function chartPlaceholder(canvasId, makeKey, tall = false) {
       const cls = tall ? "chart-wrap-tall" : "chart-wrap";
       if (_noBlur && window.innerWidth < 768) {
-        return `<div class="${cls}" id="cwrap-${canvasId}" style="display:flex;align-items:center;justify-content:center;background:var(--card2);border-radius:var(--radius-md)"><button style="background:transparent;border:1px solid var(--border);color:var(--text-2);padding:10px 20px;min-height:44px;display:inline-flex;align-items:center;border-radius:var(--radius-md);font-size:13px;font-weight:600;cursor:pointer" data-action="load-lazy-chart" data-canvas-id="${canvasId}" data-make-key="${makeKey}">📊 Cargar gráfica</button></div>`;
+        return `<div class="${cls}" id="cwrap-${canvasId}" style="display:flex;align-items:center;justify-content:center;background:var(--card2);border-radius:var(--radius-md)"><button class="lazy-chart-btn" data-action="load-lazy-chart" data-canvas-id="${canvasId}" data-make-key="${makeKey}">${ico("chartBar", "ico-sm")}Cargar gráfica</button></div>`;
       }
       return `<div class="${cls}"><canvas id="${canvasId}" aria-label="Gráfica ${canvasId}" role="img"></canvas></div>`;
     }
@@ -276,10 +339,10 @@
     // más de las secciones existentes (no se elimina ninguna); los análisis avanzados
     // viven en una sub-vista "Más" con BackButton nativo de Telegram.
     const NAV_GROUPS = [
-      { id: "resumen",   icon: "🏠", label: "Resumen",   sections: ["resumen", "semana"], more: true },
-      { id: "graficas",  icon: "📈", label: "Gráficas",  sections: ["deportes", "tipos", "rolling", "temporal"] },
-      { id: "historial", icon: "📋", label: "Historial", sections: ["apuestas", "mes", "calendario"] },
-      { id: "gestion",   icon: "⚙️", label: "Gestión",   sections: ["gestion"] },
+      { id: "resumen",   icon: "home",    label: "Resumen",   sections: ["resumen", "semana"], more: true },
+      { id: "graficas",  icon: "chart",   label: "Gráficas",  sections: ["deportes", "tipos", "rolling", "temporal"] },
+      { id: "historial", icon: "list",    label: "Historial", sections: ["apuestas", "mes", "calendario"] },
+      { id: "gestion",   icon: "sliders", label: "Gestión",   sections: ["gestion"] },
     ];
     const ADVANCED = ["kelly", "capital", "patrones", "backtest", "compounding"];
     const SECTION_LABELS = {
@@ -364,23 +427,24 @@
       const u = (tg && tg.initDataUnsafe ? tg.initDataUnsafe.user : null) || _webSession?.user || null;
       const name = u && u.first_name ? String(u.first_name).trim() : "";
       const initial = name ? name[0].toUpperCase() : "B";
-      const hi = name ? `Hola, ${esc(name)}` : "Hola 👋";
+      const hi = name ? `Hola, ${esc(name)}` : "Hola";
+      const titulo = CANAL !== CANALES["1"] ? `Betting Stats · ${esc(CANAL.label)}` : "Betting Stats";
       const refresh = opts && opts.refresh
-        ? `<button class="refresh-btn refresh-round" data-action="recargar" aria-label="Recargar">↻</button>`
+        ? `<button class="refresh-btn refresh-round" data-action="recargar" aria-label="Recargar" title="Recargar">${ico("refresh", "ico-sm")}</button>`
         : "";
       const logoutBtn = (!tg && _webSession)
-        ? `<button data-action="logout" style="background:transparent;border:none;color:var(--text-2);font-size:12px;cursor:pointer;padding:6px 10px;min-height:44px;border-radius:var(--radius-sm)">✕ Salir</button>`
+        ? `<button class="logout-btn" data-action="logout">${ico("logout", "ico-sm")}Salir</button>`
         : "";
-      return `<div class="header"><div class="header-inner"><div class="user-block"><div class="avatar">${esc(initial)}</div><div class="greet"><span class="hi">${hi}</span><span class="nm">Bet<span>Stats</span></span></div></div>${refresh}${logoutBtn}</div></div>`;
+      return `<div class="header"><div class="header-inner"><div class="user-block"><div class="avatar">${esc(initial)}</div><div class="greet"><span class="hi">${hi}</span><span class="nm">${titulo}</span></div></div><div class="header-actions">${logoutBtn}${refresh}</div></div></div>`;
     }
     function _renderSkeleton() {
-      const c = `<div class="skeleton" style="height:86px"></div>`;
       document.getElementById("app").innerHTML = `
     ${_headerHTML({ refresh: false })}
     <div class="content">
-      <div class="hero-grid">${c}${c}${c}${c}</div>
-      <div class="skeleton" style="height:120px"></div>
-      <div class="skeleton" style="height:200px"></div>
+      <div class="skeleton" style="height:52px;border-radius:999px;margin:4px 0 18px"></div>
+      <div class="skeleton sk-hero" style="height:300px"></div>
+      <div class="skeleton" style="height:46px;border-radius:999px;margin-bottom:24px"></div>
+      <div class="skeleton" style="height:220px"></div>
     </div>`;
     }
     function _showStaleBanner() {
@@ -389,7 +453,7 @@
       const b = document.createElement("div");
       b.id = "staleBanner";
       b.className = "stale-banner";
-      b.innerHTML = `<span>⚠️ Mostrando datos guardados (sin conexión).</span><button data-action="recargar">Reintentar</button>`;
+      b.innerHTML = `<span>Sin conexión: mostrando los últimos datos guardados.</span><button data-action="recargar">Reintentar</button>`;
       cont.insertBefore(b, cont.firstChild);
     }
     async function cargarDatos() {
@@ -428,7 +492,7 @@
         if (paintedFromCache) {
           _showStaleBanner();   // ya hay datos en pantalla: avisar sin romper la vista
         } else {
-          document.getElementById("app").innerHTML = `<div style="padding:20px"><div class="error-box"><p>Sin conexión</p><br><small>${esc(msg)}</small><br><button class="retry-btn" data-action="recargar">↻ Reintentar</button></div></div>`;
+          document.getElementById("app").innerHTML = `<div style="padding:20px"><div class="error-box"><p>No pudimos cargar tus datos</p><small>${esc(msg)}</small><br><button class="retry-btn" data-action="recargar">${ico("refresh", "ico-sm")}Reintentar</button></div></div>`;
         }
       } finally { clearTimeout(timeout); }
     }
@@ -569,7 +633,7 @@
       const wr = m.n > 0 ? (m.wins / m.n * 100) : 0;
       const opcionesN = [1, 2, 3, 4, 5].map(n => `<option value="${n}" ${n === momentumN ? "selected" : ""}>${n}</option>`).join("");
       return `<div class="card">
-      <div class="card-title">Momentum ${r.racha >= 2 ? `· racha actual: ${r.racha}${r.tipo_racha === "win" ? "W" : "L"}` : ""}</div>
+      <div class="card-head"><div class="card-title">Momentum</div>${r.racha >= 2 ? `<span class="card-meta">racha actual ${r.racha}${r.tipo_racha === "win" ? "W" : "L"}</span>` : ""}</div>
       <div class="momentum-controls">
         <span>Después de exactamente</span>
         <select data-momentum-n>${opcionesN}</select>
@@ -584,13 +648,13 @@
     }
     function renderMomentumResult(m, wr) {
       if (!m.n) return `<div class="empty">No hay suficientes datos para esta racha.</div>`;
-      return `<div class="kpi-row">
-      <div class="kpi"><div class="kpi-label">Record</div><div class="kpi-value">${m.wins}-${m.losses}</div></div>
+      return `<div class="kpi-row three">
+      <div class="kpi"><div class="kpi-label">Récord</div><div class="kpi-value">${m.wins}–${m.losses}</div></div>
       <div class="kpi"><div class="kpi-label">Win rate</div><div class="kpi-value">${wr.toFixed(0)}%</div></div>
-      <div class="kpi"><div class="kpi-label">Net P/L</div><div class="kpi-value ${signColor(m.neto)}">${fmts(m.neto)}</div></div>
+      <div class="kpi"><div class="kpi-label">Neto</div><div class="kpi-value ${signColor(m.neto)}">${fmts(m.neto)}</div></div>
     </div>
-    <div style="font-size:11px;color:var(--text-2);margin:6px 0 8px">${m.n} ${m.n === 1 ? "vez" : "veces"} en el historial</div>
-    <button class="filter-chip" data-action="momentum-filtrar">Filtrar historial a estos picks</button>`;
+    <div class="card-meta" style="margin:10px 0 12px">${m.n} ${m.n === 1 ? "vez" : "veces"} en el historial</div>
+    <button class="filter-chip" data-action="momentum-filtrar">Ver estos picks en el historial</button>`;
     }
     function actualizarMomentum() {
       const box = document.getElementById("momentumResult");
@@ -793,8 +857,8 @@
       const nav = document.getElementById("bottomNav");
       nav.style.display = "flex";
       // Sidebar logo — visible solo en desktop (≥768px) vía CSS
-      const _sidebarLogo = `<div class="sidebar-logo"><div class="sidebar-logo-icon"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="2.5" y="14" width="4" height="7" rx="1.4" fill="#fff" fill-opacity=".55"/><rect x="10" y="10.5" width="4" height="10.5" rx="1.4" fill="#fff" fill-opacity=".78"/><rect x="17.5" y="6.5" width="4" height="14.5" rx="1.4" fill="#fff"/><path d="M3 10.2L9.2 6.4 13 8.3 20.5 3.4" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M16.8 3.4H20.7V7.1" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="sidebar-logo-text">Bet<span>Stats</span></div></div>`;
-      nav.innerHTML = _sidebarLogo + NAV_GROUPS.map(n => `<button class="nav-item" data-group="${n.id}"><span class="nav-icon">${n.icon}</span><span class="nav-label">${n.label}</span></button>`).join("");
+      const _sidebarLogo = `<div class="sidebar-logo"><div class="sidebar-logo-icon">${ico("logo")}</div><div class="sidebar-logo-text">Betting Stats</div></div>`;
+      nav.innerHTML = _sidebarLogo + NAV_GROUPS.map(n => `<button class="nav-item" data-group="${n.id}"><span class="nav-icon">${ico(n.icon)}</span><span class="nav-label">${n.label}</span></button>`).join("");
       // BackButton nativo: vuelve de la sub-vista "Más análisis" a Resumen.
       if (tg?.BackButton && !_backReady) { tg.BackButton.onClick(() => closeAdvanced()); _backReady = true; }
       const saved = tabActual;
@@ -805,60 +869,94 @@
     function renderResumen() {
       const r = DATA.resumen;
       const wr = ((r.winrate ?? 0)).toFixed(1);
-      const rachaHtml = r.racha >= 2 ? `<div class="racha-badge ${r.tipo_racha === "win" ? "racha-win" : "racha-loss"}"><span class="racha-icon">${r.tipo_racha === "win" ? "🔥" : "🧊"}</span>Racha de ${r.racha} ${r.tipo_racha === "win" ? "victorias" : "derrotas"} seguidas</div>` : "";
-      // Resumen ejecutivo: 4 métricas clave visibles al abrir, antes del detalle.
+      const rachaHtml = r.racha >= 2 ? `<div class="racha-badge ${r.tipo_racha === "win" ? "racha-win" : "racha-loss"}"><span class="racha-icon">${ico(r.tipo_racha === "win" ? "flame" : "down")}</span>Racha de ${r.racha} ${r.tipo_racha === "win" ? "victorias" : "derrotas"} seguidas</div>` : "";
+      // Héroe (INV-MINI-44): el neto total es el protagonista, con su curva y las
+      // métricas clave debajo. Mismas cifras que el antiguo hero-grid (INV-MINI-15/43).
       const s = DATA.stats_semana || null;
       const sNeto = s ? s.neto : null;
-      const hero = `<div class="hero-grid">
-      <div class="hero-card"><div class="hero-label">Neto total</div><div class="hero-value ${signColor(r.neto)}" title="${fmts(r.neto)}">${fmtsC(r.neto)}</div>${eqLine(r.neto, true)}</div>
-      <div class="hero-card"><div class="hero-label">ROI</div><div class="hero-value ${signColor(r.roi)}">${(r.roi ?? 0) >= 0 ? "+" : ""}${fmtp(r.roi)}</div></div>
-      <div class="hero-card"><div class="hero-label">Win rate</div><div class="hero-value">${wr}%</div></div>
-      <div class="hero-card"><div class="hero-label">Últimos 7 días</div><div class="hero-value ${sNeto == null ? "" : signColor(sNeto)}" title="${sNeto == null ? "" : fmts(sNeto)}">${sNeto == null ? "—" : fmtsC(sNeto)}</div>${eqLine(sNeto, true)}</div>
-    </div>
-    <div class="unit-note">1u = ${esc(fmtEq(1).replace("≈ ", ""))} · cámbialo en <button class="link-btn" data-action="open-unidad">Ajustes</button></div>`;
-      const shareBtn = `<button class="share-card-btn" data-action="share-card" style="width:100%;margin:2px 0 10px;padding:13px;min-height:48px;display:flex;align-items:center;justify-content:center;gap:8px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius-md);font-size:14px;font-weight:700;cursor:pointer">📸 Compartir imagen</button>`;
-      return `${typeof picoBanner === "function" ? picoBanner() : ""}${hero}${shareBtn}<div class="section-header">Detalle <span>·</span> Historial</div>
-    <div class="stats-grid">
-      <div class="stat-card win-card"><div class="stat-value green">${r.wins}</div><div class="stat-label">Ganadas</div></div>
-      <div class="stat-card loss-card"><div class="stat-value red">${r.losses}</div><div class="stat-label">Perdidas</div></div>
-      <div class="stat-card pend-card"><div class="stat-value yellow">${r.pending}</div><div class="stat-label">Pendientes</div></div>
-    </div>
-    ${(r.voids ?? 0) > 0 ? `<div class="kpi-row"><div class="kpi"><div class="kpi-label">Nulas (void)</div><div class="kpi-value accent">${r.voids ?? 0}</div></div></div>` : ""}
-    <div class="kpi-row">
-      <div class="kpi"><div class="kpi-label">Total apostado</div><div class="kpi-value accent" title="${fmt(r.apostado)}">${fmtC(r.apostado)}</div>${eqLine(r.apostado)}</div>
-      <div class="kpi"><div class="kpi-label">Total cobrado</div><div class="kpi-value" title="${fmt(r.ganado)}">${fmtC(r.ganado)}</div>${eqLine(r.ganado)}</div>
-    </div>
-    ${r.mejor_mes ? `<div class="kpi-row">
-      <div class="kpi"><div class="kpi-label">🏆 Mejor mes</div><div class="kpi-value accent">${mesLabel(r.mejor_mes.mes)}</div></div>
-      <div class="kpi"><div class="kpi-label">Neto del mes</div><div class="kpi-value ${signColor(r.mejor_mes.neto)}" title="${fmts(r.mejor_mes.neto)}">${fmtsC(r.mejor_mes.neto)}</div>${eqLine(r.mejor_mes.neto, true)}</div>
-    </div>` : ""}
+      const delta = sNeto == null ? "" : `<span class="delta ${sNeto >= 0 ? "up" : "down"}" title="${esc(fmts(sNeto))} · ${esc(fmtEq(sNeto, true))}">${ico(sNeto >= 0 ? "up" : "down")}${fmtsC(sNeto)} en 7 días</span>`;
+      const hero = `<section class="hero">
+      <div class="hero-top"><span class="hero-eyebrow">Neto total</span></div>
+      <div class="hero-amount ${signColor(r.neto)}" title="${fmts(r.neto)}">${fmtsC(r.neto)}</div>
+      <div class="hero-subline"><span>${esc(fmtEq(r.neto, true))}</span>${delta}</div>
+      ${heroSparkline()}
+      <div class="hero-metrics">
+        <div class="hero-metric"><div class="hero-metric-v ${signColor(r.roi)}">${(r.roi ?? 0) >= 0 ? "+" : ""}${fmtp(r.roi)}</div><div class="hero-metric-l">ROI</div></div>
+        <div class="hero-metric"><div class="hero-metric-v">${wr}%</div><div class="hero-metric-l">Win rate</div></div>
+        <div class="hero-metric"><div class="hero-metric-v">${r.wins}–${r.losses}</div><div class="hero-metric-l">Récord</div></div>
+      </div>
+    </section>
+    <div class="action-row">
+      <button class="pill-btn primary share-card-btn" data-action="share-card">${ico("share", "ico-sm")}Compartir</button>
+      <button class="pill-btn" data-action="open-unidad" title="Cuánto dinero vale 1 unidad">${ico("coins", "ico-sm")}1u = ${esc(fmtEq(1).replace("≈ ", ""))}</button>
+    </div>`;
+      const total = r.wins + r.losses + (r.pending || 0) + (r.voids || 0);
+      const seg = (n, color) => n > 0 ? `<i style="flex:${n};background:${color}"></i>` : "";
+      const leg = (label, n, color) => `<div class="seg-item"><span class="seg-dot" style="background:${color}"></span><span class="seg-item-l">${label}</span><span class="seg-item-v">${n}</span></div>`;
+      const historial = `<div class="card">
+      <div class="card-head"><div class="card-title">Historial</div><span class="card-meta">${total} apuestas</span></div>
+      <div class="seg-bar">${seg(r.wins, "var(--win)")}${seg(r.losses, "var(--loss)")}${seg(r.pending, "var(--pend)")}${seg(r.voids, "var(--text-3)")}</div>
+      <div class="seg-legend">
+        ${leg("Ganadas", r.wins, "var(--win)")}${leg("Perdidas", r.losses, "var(--loss)")}
+        ${leg("Pendientes", r.pending ?? 0, "var(--pend)")}${leg("Nulas", r.voids ?? 0, "var(--text-3)")}
+      </div>
+    </div>`;
+      const dinero = `<div class="card"><div class="stat-list">
+      <div class="stat-row"><span class="stat-row-l">Total apostado</span><span class="stat-row-v" title="${fmt(r.apostado)}">${fmtC(r.apostado)}${eqLine(r.apostado)}</span></div>
+      <div class="stat-row"><span class="stat-row-l">Total cobrado</span><span class="stat-row-v" title="${fmt(r.ganado)}">${fmtC(r.ganado)}${eqLine(r.ganado)}</span></div>
+      ${r.mejor_mes ? `<div class="stat-row"><span class="stat-row-l">Mejor mes · ${mesLabel(r.mejor_mes.mes)}</span><span class="stat-row-v ${signColor(r.mejor_mes.neto)}" title="${fmts(r.mejor_mes.neto)}">${fmtsC(r.mejor_mes.neto)}${eqLine(r.mejor_mes.neto, true)}</span></div>` : ""}
+    </div></div>`;
+      return `${typeof picoBanner === "function" ? picoBanner() : ""}${hero}
+    <div class="dash-grid">${historial}${dinero}</div>
     ${rachaHtml}
-    ${renderRecentForm()}
-    ${renderMomentum()}
-    <div class="card"><div class="card-title">Win rate — ${wr}%</div>
-      <div class="progress-wrap"><div class="progress-labels"><span class="green">${r.wins}W</span><span class="muted">${wr}%</span><span class="red">${r.losses}L</span></div>
-      <div class="progress-track"><div class="progress-fill" style="width:${wr}%"></div></div></div></div>
-    <div class="card"><div class="card-title">Ganancia acumulada</div>${chartPlaceholder("chartCumulative", "cumulative", true)}</div>
-    <div class="card"><div class="card-title">Monthly P/L</div>
+    <div class="card"><div class="card-head"><div class="card-title">Ganancia acumulada</div><span class="card-meta">pick a pick</span></div>${chartPlaceholder("chartCumulative", "cumulative", true)}</div>
+    <div class="dash-grid">${renderRecentForm()}${renderMomentum()}</div>
+    <div class="card"><div class="card-title">Neto por periodo</div>
       <div class="range-sel">
         <button class="range-chip ${monthlyPLVista === "mensual" ? "active" : ""}" data-monthlypl-vista="mensual">Mensual</button>
         <button class="range-chip ${monthlyPLVista === "semanal" ? "active" : ""}" data-monthlypl-vista="semanal">Semanal</button>
       </div>
       ${chartPlaceholder("chartMonthlyPL", "monthlypl")}</div>
-    <div class="card"><div class="card-title">Neto acumulado</div>${chartPlaceholder("chartNeto", "neto")}</div>
-    <div class="card"><div class="card-title">Apostado vs Ganado</div>${chartPlaceholder("chartMeses", "meses")}</div>`;
+    <div class="dash-grid">
+      <div class="card"><div class="card-title">Neto acumulado por mes</div>${chartPlaceholder("chartNeto", "neto")}</div>
+      <div class="card"><div class="card-title">Apostado vs. cobrado</div>${chartPlaceholder("chartMeses", "meses")}</div>
+    </div>`;
+    }
+
+    // Sparkline del héroe: neto acumulado pick a pick (mismo cálculo que la gráfica
+    // "Ganancia acumulada"), en SVG inline sin librerías y coloreado por tema.
+    function heroSparkline() {
+      const ord = apuestasOrdenadas();
+      if (ord.length < 2) return "";
+      let acum = 0;
+      const serie = [0].concat(ord.map(a => (acum += netoDe(a))));
+      const paso = Math.max(1, Math.ceil(serie.length / 140));
+      const pts = serie.filter((_, i) => i % paso === 0 || i === serie.length - 1);
+      const min = Math.min(...pts), max = Math.max(...pts), rango = (max - min) || 1;
+      const W = 300, H = 84, pad = 8;
+      const xy = pts.map((v, i) => [i / (pts.length - 1) * W, pad + (1 - (v - min) / rango) * (H - pad * 2)]);
+      const line = xy.map((p, i) => `${i ? "L" : "M"}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join("");
+      const area = `${line}L${W},${H}L0,${H}Z`;
+      const color = acum >= 0 ? "var(--accent)" : "var(--loss)";
+      const y0 = pad + (1 - (0 - min) / rango) * (H - pad * 2);
+      const cero = (min < 0 && max > 0) ? `<line x1="0" x2="${W}" y1="${y0.toFixed(1)}" y2="${y0.toFixed(1)}" style="stroke:var(--text-3)" stroke-width="1" stroke-dasharray="3 4" vector-effect="non-scaling-stroke" opacity=".6"/>` : "";
+      return `<svg class="hero-spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="Evolución del neto acumulado">
+        <defs><linearGradient id="heroSparkFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:${color};stop-opacity:.28"/><stop offset="1" style="stop-color:${color};stop-opacity:0"/></linearGradient></defs>
+        ${cero}<path d="${area}" fill="url(#heroSparkFill)"/>
+        <path d="${line}" fill="none" style="stroke:${color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
+      </svg>`;
     }
 
     /* ── Recent Form (L5/L10) ── */
     function renderRecentForm() {
       const l5 = calcRecentForm(5), l10 = calcRecentForm(10);
       if (!l5.n) return "";
-      const item = (f, label) => `<div class="kpi">
-        <div class="kpi-label">${label}</div>
-        <div class="kpi-value">${f.wins}-${f.losses}</div>
-        <div class="${signColor(f.neto)}" style="font-family:var(--font-num);font-size:12px;margin-top:4px">${fmts(f.neto)}</div>
+      const item = (f, label) => `<div>
+        <div class="form-cell-l">${label}</div>
+        <div class="form-cell-v">${f.wins}–${f.losses}</div>
+        <div class="form-cell-s ${signColor(f.neto)}">${fmts(f.neto)}</div>
       </div>`;
-      return `<div class="kpi-row">${item(l5, "Últimas 5")}${item(l10, "Últimas 10")}</div>`;
+      return `<div class="card"><div class="card-title">Forma reciente</div><div class="form-grid">${item(l5, "Últimas 5")}${item(l10, "Últimas 10")}</div></div>`;
     }
 
     /* ── Tab: Semana ── */
@@ -896,9 +994,9 @@
       if (!DATA || !mesesDisponibles.length) return '<div class="empty">No hay datos de meses</div>';
       const idx = mesesDisponibles.indexOf(mesActual);
       return `<div class="mes-selector">
-    <button class="mes-nav" data-mes-dir="-1" ${idx <= 0 ? "disabled style='opacity:0.3;cursor:default'" : ""}>‹</button>
+    <button class="mes-nav" data-mes-dir="-1" aria-label="Mes anterior" ${idx <= 0 ? "disabled" : ""}>${ico("chevL")}</button>
     <span class="mes-label" id="mesLabel">${mesLabel(mesActual)}</span>
-    <button class="mes-nav" data-mes-dir="1" ${idx >= mesesDisponibles.length - 1 ? "disabled style='opacity:0.3;cursor:default'" : ""}>›</button>
+    <button class="mes-nav" data-mes-dir="1" aria-label="Mes siguiente" ${idx >= mesesDisponibles.length - 1 ? "disabled" : ""}>${ico("chevR")}</button>
   </div>
   <div id="mesContent">${renderMesContent()}</div>`;
     }
@@ -921,7 +1019,7 @@
       <div class="kpi"><div class="kpi-label">ROI</div><div class="kpi-value ${signColor(roi)}">${roi >= 0 ? "+" : ""}${fmtp(roi)}</div></div>
     </div>
     ${_netoMax !== null ? `<div class="kpi-row">
-      <div class="kpi"><div class="kpi-label">📈 Pico neto (acum.)</div><div class="kpi-value ${signColor(_netoMax)}">${fmts(_netoMax)}</div><div style="font-size:9px;color:var(--text-2);margin-top:3px">Máx. global alcanzado este mes</div></div>
+      <div class="kpi"><div class="kpi-label">Pico neto (acum.)</div><div class="kpi-value ${signColor(_netoMax)}">${fmts(_netoMax)}</div><div style="font-size:9px;color:var(--text-2);margin-top:3px">Máx. global alcanzado este mes</div></div>
     </div>`: ""}
     <div class="kpi-row">
       <div class="kpi"><div class="kpi-label">Apostado</div><div class="kpi-value accent">${fmt(apo)}</div></div>
@@ -957,9 +1055,9 @@
       calDiaSel = null;
       const idx = mesesDisponibles.indexOf(mesCalActual);
       return `<div class="mes-selector">
-    <button class="mes-nav" data-mescal-dir="-1" ${idx <= 0 ? "disabled style='opacity:0.3;cursor:default'" : ""}>‹</button>
+    <button class="mes-nav" data-mescal-dir="-1" aria-label="Mes anterior" ${idx <= 0 ? "disabled" : ""}>${ico("chevL")}</button>
     <span class="mes-label" id="calLabel">${mesLabel(mesCalActual)}</span>
-    <button class="mes-nav" data-mescal-dir="1" ${idx >= mesesDisponibles.length - 1 ? "disabled style='opacity:0.3;cursor:default'" : ""}>›</button>
+    <button class="mes-nav" data-mescal-dir="1" aria-label="Mes siguiente" ${idx >= mesesDisponibles.length - 1 ? "disabled" : ""}>${ico("chevR")}</button>
   </div>
   <div id="calBody">${renderCalContent()}</div>`;
     }
@@ -1029,11 +1127,11 @@
       if (!deps.length) return '<div class="empty">Sin datos</div>';
       return `<div class="section-header">ROI por <span>deporte</span></div>
     <div class="kpi-row">
-      <div class="kpi"><div class="kpi-label">🟢 Mejor</div><div class="kpi-value green" style="font-size:14px;margin-top:4px">${esc(deps[0].nombre)}</div><div style="font-family:var(--font-num);font-size:12px;color:var(--win);margin-top:4px">${deps[0].roi >= 0 ? "+" : ""}${fmtp(deps[0].roi)}</div></div>
-      <div class="kpi"><div class="kpi-label">🔴 Peor</div><div class="kpi-value red" style="font-size:14px;margin-top:4px">${esc(deps[deps.length - 1].nombre)}</div><div style="font-family:var(--font-num);font-size:12px;color:var(--loss);margin-top:4px">${fmtp(deps[deps.length - 1].roi)}</div></div>
+      <div class="kpi"><div class="kpi-label">Mejor</div><div class="kpi-value green" style="font-size:14px;margin-top:4px">${esc(deps[0].nombre)}</div><div style="font-family:var(--font-num);font-size:12px;color:var(--win);margin-top:4px">${deps[0].roi >= 0 ? "+" : ""}${fmtp(deps[0].roi)}</div></div>
+      <div class="kpi"><div class="kpi-label">Peor</div><div class="kpi-value red" style="font-size:14px;margin-top:4px">${esc(deps[deps.length - 1].nombre)}</div><div style="font-family:var(--font-num);font-size:12px;color:var(--loss);margin-top:4px">${fmtp(deps[deps.length - 1].roi)}</div></div>
     </div>
     <div class="card"><div class="card-title">ROI comparativo</div>${chartPlaceholder("chartDep", "dep")}</div>
-    <div class="card"><div class="card-title">Desglose</div>${deps.map(d => { const total = d.wins + d.losses, wr = total > 0 ? (d.wins / total * 100).toFixed(0) : 0; return `<div class="sport-item"><div><div class="sport-name">${esc(d.nombre)}</div><div class="sport-sub">${d.wins}W·${d.losses}L·${wr}%WR·${fmt(d.apostado)}</div></div><div class="sport-roi ${d.roi >= 0 ? "green" : "red"}">${d.roi >= 0 ? "+" : ""}${fmtp(d.roi)}</div></div>`; }).join("")}</div>`;
+    <div class="card"><div class="card-title">Desglose</div>${deps.map(d => { const total = d.wins + d.losses, wr = total > 0 ? (d.wins / total * 100).toFixed(0) : 0; return `<div class="sport-item"><div><div class="sport-name">${esc(d.nombre)}</div><div class="sport-sub">${d.wins}–${d.losses} · ${wr}% WR · ${fmt(d.apostado)} apostado</div></div><div class="sport-roi ${d.roi >= 0 ? "green" : "red"}">${d.roi >= 0 ? "+" : ""}${fmtp(d.roi)}</div></div>`; }).join("")}</div>`;
     }
 
     /* ── Tab: Tipos ── */
@@ -1043,8 +1141,8 @@
       const maxAbsRoi = Math.max(...tipos.map(t => Math.abs(t.roi)), 1);
       const kpisMejorPeor = tipos.length > 1 ? `
     <div class="kpi-row">
-      <div class="kpi"><div class="kpi-label">🏆 Mejor tipo</div><div class="kpi-value green" style="font-size:14px;margin-top:4px">${esc(tipos[0].tipo)}</div><div style="font-family:var(--font-num);font-size:12px;color:var(--win);margin-top:4px">${tipos[0].roi >= 0 ? "+" : ""}${fmtp(tipos[0].roi)}</div></div>
-      <div class="kpi"><div class="kpi-label">⚠️ Peor tipo</div><div class="kpi-value red" style="font-size:14px;margin-top:4px">${esc(tipos[tipos.length - 1].tipo)}</div><div style="font-family:var(--font-num);font-size:12px;color:var(--loss);margin-top:4px">${fmtp(tipos[tipos.length - 1].roi)}</div></div>
+      <div class="kpi"><div class="kpi-label">Mejor tipo</div><div class="kpi-value green" style="font-size:14px;margin-top:4px">${esc(tipos[0].tipo)}</div><div style="font-family:var(--font-num);font-size:12px;color:var(--win);margin-top:4px">${tipos[0].roi >= 0 ? "+" : ""}${fmtp(tipos[0].roi)}</div></div>
+      <div class="kpi"><div class="kpi-label">Peor tipo</div><div class="kpi-value red" style="font-size:14px;margin-top:4px">${esc(tipos[tipos.length - 1].tipo)}</div><div style="font-family:var(--font-num);font-size:12px;color:var(--loss);margin-top:4px">${fmtp(tipos[tipos.length - 1].roi)}</div></div>
     </div>`: "";
       return `<div class="section-header">ROI por <span>tipo</span></div>
     ${kpisMejorPeor}
@@ -1075,7 +1173,7 @@
 
     // Paleta fija por tipo (mismo verde acento + tonos complementarios del tema,
     // sin introducir colores ajenos a la identidad visual existente).
-    const TIPO_MIX_COLORS = ["#00CD96", "#6C63FF", "#F5A623", "#FF3D5A", "#3DB5FF", "#B673FF", "#5D6B82"];
+    const TIPO_MIX_COLORS = ["#7C83FF", "#3DD68C", "#F5B54A", "#FF6B6B", "#4CC9F0", "#C084FC", "#8A909B"];
     function tipoMixColor(i) { return TIPO_MIX_COLORS[i % TIPO_MIX_COLORS.length]; }
 
     function renderTipoMixLegend(tipos) {
@@ -1118,7 +1216,7 @@
         const col = d.roi >= 0 ? "var(--win)" : "var(--loss)";
         const best = d.roi === Math.max(...data.porDia.map(x => x.roi));
         return `<div class="dia-row">
-          <span class="dia-label" style="color:${best ? "var(--accent)" : "var(--text-2)"}">${d.label}${best ? " ⭐" : ""}</span>
+          <span class="dia-label" style="color:${best ? "var(--accent)" : "var(--text-2)"}">${d.label}${best ? " ★" : ""}</span>
           <div class="dia-bar-wrap"><div class="dia-bar-fill" style="width:${barW}%;background:${col}"></div></div>
           <span class="dia-roi" style="color:${col}">${d.roi >= 0 ? "+" : ""}${d.roi.toFixed(1)}%</span>
           <span class="dia-wl">${d.wins}W-${d.losses}L</span>
@@ -1135,13 +1233,13 @@
     ${data.porHora.length ? `
     <div class="card">
       <div class="card-title">Por franja horaria (hora de publicación)</div>
-      ${data.horaMin ? `<div style="font-size:12px;color:var(--text-2);margin-bottom:8px">⏱️ Rango real de publicación (todo el historial): <strong>${data.horaMin}</strong> — <strong>${data.horaMax}</strong></div>` : ""}
+      ${data.horaMin ? `<div style="font-size:12px;color:var(--text-2);margin-bottom:8px">Rango real de publicación (todo el historial): <strong>${data.horaMin}</strong> — <strong>${data.horaMax}</strong></div>` : ""}
       ${data.porHora.map(d => {
         const barW = Math.min(100, Math.abs(d.roi) / maxAbsHora * 100);
         const col = d.roi >= 0 ? "var(--win)" : "var(--loss)";
         const best = d.roi === Math.max(...data.porHora.map(x => x.roi));
         return `<div class="dia-row">
-          <span class="dia-label" style="color:${best ? "var(--accent)" : "var(--text-2)"};font-size:10px">${d.label}${best ? " ⭐" : ""}</span>
+          <span class="dia-label" style="color:${best ? "var(--accent)" : "var(--text-2)"};font-size:10px">${d.label}${best ? " ★" : ""}</span>
           <div class="dia-bar-wrap"><div class="dia-bar-fill" style="width:${barW}%;background:${col}"></div></div>
           <span class="dia-roi" style="color:${col}">${d.roi >= 0 ? "+" : ""}${d.roi.toFixed(1)}%</span>
           <span class="dia-wl">${d.wins}W-${d.losses}L</span>
@@ -1159,7 +1257,7 @@
       const res = DATA.apuestas.filter(a => a.status === "win" || a.status === "loss").length;
       if (!points.length) return `<div class="section-header">ROI <span>rodante</span></div><div class="empty">Necesitas al menos ${VENTANA} apuestas resueltas. Tienes ${res}.</div>`;
       const ultimo = points[points.length - 1];
-      const tendencia = points.length >= 3 ? (() => { const t = points.slice(-3).map(p => p.roi); return t[2] > t[0] + 3 ? "📈 Mejorando" : t[2] < t[0] - 3 ? "📉 Empeorando" : "➡️ Estable"; })() : "—";
+      const tendencia = points.length >= 3 ? (() => { const t = points.slice(-3).map(p => p.roi); return t[2] > t[0] + 3 ? "Mejorando" : t[2] < t[0] - 3 ? "Empeorando" : "Estable"; })() : "—";
       return `<div class="section-header">ROI <span>rodante</span></div>
     <div class="rolling-kpi">
       <div class="rolling-kpi-item">
@@ -1194,12 +1292,11 @@
       const k = calcKelly();
       if (!k) return `<div class="section-header">Kelly <span>Criterion</span></div><div class="empty">Necesitas al menos 10 apuestas con cuota registrada.</div>`;
       const evColor = k.ev > 0 ? "green" : "red";
-      const evEmoji = k.ev > 0 ? "✅" : "❌";
       const kellyPct = Math.min(k.f * 100, 25);
       return `<div class="section-header">Kelly <span>Criterion</span></div>
     <div class="card">
       <div class="card-title">Valor esperado (EV)</div>
-      <div style="font-family:var(--font-num);font-size:32px;font-weight:700;color:var(--${evColor});margin-bottom:8px">${evEmoji} ${k.ev >= 0 ? "+" : ""}${k.ev.toFixed(3)}</div>
+      <div style="font-size:34px;font-weight:650;letter-spacing:-.03em;color:var(--${evColor});margin-bottom:8px">${k.ev >= 0 ? "+" : ""}${k.ev.toFixed(3)}</div>
       <div style="font-size:12px;color:var(--text-2)">Por unidad apostada. Positivo = ventaja estadística sobre la casa.</div>
     </div>
     <div class="kpi-row">
@@ -1217,7 +1314,7 @@
         </div>
         <div class="kelly-card" style="border-color:var(--border-hi)">
           <div class="kelly-card-pct accent">${(k.fMedio * 100).toFixed(1)}%</div>
-          <div class="kelly-card-lbl">Kelly medio ⭐</div>
+          <div class="kelly-card-lbl">Kelly medio ★</div>
           <div class="kelly-card-sub">Recomendado</div>
         </div>
         <div class="kelly-card">
@@ -1426,7 +1523,7 @@
 
       return `
         <div class="nm-wrap">
-          <div class="pat-sec pat-sec--info"><span class="pat-ico">⚙️</span><span>Motor de Neto Mensual</span></div>
+          <div class="pat-sec pat-sec--info"><span>Motor de Neto Mensual</span></div>
           ${resumen}
           <div class="nm-grid">${tarjetas}</div>
         </div>`;
@@ -1459,7 +1556,7 @@
       if (el) {
         el.innerHTML = `<div class="section-header">Patrones <span>IA</span></div>
           <div class="empty" style="display:flex;flex-direction:column;align-items:center;gap:12px;padding:40px 20px">
-            <div class="loader-logo" style="animation:pulse 1s infinite alternate;font-size:32px">🤖</div>
+            <div class="loader-logo" style="animation:pulse 1s infinite alternate;font-size:32px">${ico("sparkles", "ico-lg")}</div>
             <p>Claude está analizando todo tu historial para encontrar patrones EV+...</p>
             <small style="color:var(--text-3)">(Este proceso puede tardar unos 10-20 segundos)</small>
           </div>`;
@@ -1501,13 +1598,13 @@
           // con botón explícito. NO lanzar análisis automático.
           el.innerHTML = `<div class="section-header">Patrones <span>IA</span></div>
             <div class="explainer" style="margin-bottom:16px;background:rgba(0,168,128,0.06);border-color:rgba(0,168,128,0.25)">
-              🤖 <strong>BetStats IA:</strong> Claude analiza la distribución de tu ROI por Deporte, Mercado, Día y Cuotas para encontrar sesgos estadísticos.
+              <strong>BetStats IA:</strong> Claude analiza la distribución de tu ROI por Deporte, Mercado, Día y Cuotas para encontrar sesgos estadísticos.
             </div>
             <div class="empty" style="display:flex;flex-direction:column;align-items:center;gap:16px;padding:32px 20px">
-              <div style="font-size:40px">🤖</div>
+              <div>${ico("sparkles", "ico-lg")}</div>
               <p style="text-align:center;margin:0">Aún no has ejecutado el análisis IA.</p>
               <small style="color:var(--text-3);text-align:center">Presiona el botón para que Claude analice tu historial y detecte patrones EV+.</small>
-              <button class="retry-btn" data-action="force-patrones" style="margin:0;padding:10px 20px;font-size:13px">⚡ Iniciar análisis IA</button>
+              <button class="retry-btn" data-action="force-patrones" style="margin:0;padding:10px 20px;font-size:13px">Iniciar análisis IA</button>
             </div>`;
           return el.innerHTML;
         }
@@ -1516,7 +1613,7 @@
       if (_patronesCargando) {
         el.innerHTML = `<div class="section-header">Patrones <span>IA</span></div>
           <div class="empty" style="display:flex;flex-direction:column;align-items:center;gap:12px;padding:40px 20px">
-            <div class="loader-logo" style="animation:pulse 1s infinite alternate;font-size:32px">🤖</div>
+            <div class="loader-logo" style="animation:pulse 1s infinite alternate;font-size:32px">${ico("sparkles", "ico-lg")}</div>
             <p>Claude está analizando todo tu historial para encontrar patrones EV+...</p>
             <small style="color:var(--text-3)">(Este proceso puede tardar unos 10-20 segundos)</small>
           </div>`;
@@ -1526,7 +1623,7 @@
       if (_patronesData.error) {
         el.innerHTML = `<div class="section-header">Patrones <span>IA</span></div>
           <div class="empty">
-            <p>⚠️ Error al cargar los patrones</p>
+            <p>Error al cargar los patrones</p>
             <small style="color:var(--loss)">${esc(_patronesData.error)}</small>
             <br><br>
             <button class="retry-btn" data-action="retry-patrones">↻ Reintentar</button>
@@ -1551,11 +1648,11 @@
 
       el.innerHTML = `<div class="section-header">Patrones <span>IA</span></div>
         <div class="explainer" style="margin-bottom:16px;background:rgba(0,168,128,0.06);border-color:rgba(0,168,128,0.25)">
-          🤖 <strong>BetStats IA:</strong> Claude analiza la distribución de tu ROI por Deporte, Mercado, Día y Cuotas para encontrar sesgos estadísticos.
+          <strong>BetStats IA:</strong> Claude analiza la distribución de tu ROI por Deporte, Mercado, Día y Cuotas para encontrar sesgos estadísticos.
         </div>
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
           <div style="font-size:11px;color:var(--text-3)">Generado: <strong>${fechaTxt}</strong></div>
-          <button class="retry-btn" data-action="force-patrones" style="margin:0;padding:6px 12px;font-size:11px;background:var(--card);border:1px solid var(--border);color:var(--text)">⚡ Nuevo análisis</button>
+          <button class="retry-btn" data-action="force-patrones" style="margin:0;padding:6px 12px;font-size:11px;background:var(--card);border:1px solid var(--border);color:var(--text)">Nuevo análisis</button>
         </div>
         ${netoHtml}
         <div style="word-break:break-word">${htmlContent}</div>`;
@@ -1575,10 +1672,10 @@
         // distinguible de 0. Backend viejo (sin veredicto_ventaja) → cae al signo, como antes.
         const v = c.veredicto_ventaja || (c.tiene_ventaja ? "ventaja" : "pierde");
         const palette = {
-          ventaja:       ["var(--win)",  "var(--win-bg)",  "🟢 Ventaja demostrada"],
-          pierde:        ["var(--loss)", "var(--loss-bg)", "🔴 El sistema pierde"],
-          sin_evidencia: ["var(--pend)", "rgba(245,166,35,.12)", "🟡 Sin evidencia todavía"],
-          insuficiente:  ["var(--pend)", "rgba(245,166,35,.12)", "🟡 Muestra insuficiente"],
+          ventaja:       ["var(--win)",  "var(--win-bg)",  "Ventaja demostrada"],
+          pierde:        ["var(--loss)", "var(--loss-bg)", "El sistema pierde"],
+          sin_evidencia: ["var(--pend)", "var(--pend-bg)", "Sin evidencia todavía"],
+          insuficiente:  ["var(--pend)", "var(--pend-bg)", "Muestra insuficiente"],
         };
         const [col, bg, titulo] = palette[v] || palette.sin_evidencia;
         const cuotaM = ((c.cuota_media_b ?? 0) + 1).toFixed(2);
@@ -1612,13 +1709,13 @@
         // Aviso de muestra baja (n<30): los prospectivos no son fiables aún (aditivo, tolera ausencia).
         const avisoMuestra = (c.muestra_suficiente === false)
           ? `
-    <div class="card" style="border:1px solid var(--pend);background:rgba(245,166,35,.12);margin-bottom:10px">
-      <div style="font-size:12px;color:var(--pend);line-height:1.5">⚠️ <strong>Muestra baja</strong> (${c.n_resueltas ?? 0} resueltas &lt; 30): los valores prospectivos (p95/p99, racha esperada) son orientativos, todavía no fiables. Ganan precisión al acumular historial.</div>
+    <div class="card" style="border:1px solid var(--pend);background:var(--pend-bg);margin-bottom:10px">
+      <div style="font-size:12px;color:var(--pend);line-height:1.5"><strong>Muestra baja</strong> (${c.n_resueltas ?? 0} resueltas &lt; 30): los valores prospectivos (p95/p99, racha esperada) son orientativos, todavía no fiables. Ganan precisión al acumular historial.</div>
     </div>`
           : "";
         robustoHtml = avisoMuestra + `
     <div class="card" style="margin-bottom:10px">
-      <div class="card-title">🛡️ Recomendación robusta (p95)</div>
+      <div class="card-title">Recomendación robusta (p95)</div>
       <div class="capital-hero" style="padding:10px 0 6px">
         <div class="capital-label">Capital cómodo robusto</div>
         <div class="capital-amount">${fmt(c.capital_comodo_robusto)}</div>
@@ -1795,11 +1892,11 @@
 
       return `<div class="section-header">Simulador <span>what-if</span></div>
     <div class="explainer" style="margin-bottom:14px">
-      🧪 Reproduce tu historial real apostando <strong>solo</strong> lo que elijas, con un bank y un staking a tu medida. Recalcula cuánto habrías ganado o perdido (las pendientes no entran). Con el modo <strong>🔄 En contra</strong> simula lo opuesto: apostar <em>contra</em> cada análisis.
+      Reproduce tu historial real apostando <strong>solo</strong> lo que elijas, con un bank y un staking a tu medida. Recalcula cuánto habrías ganado o perdido (las pendientes no entran). Con el modo <strong>En contra</strong> simula lo opuesto: apostar <em>contra</em> cada análisis.
     </div>
 
     <div class="card" style="margin-bottom:12px">
-      <div class="card-title">⚙️ Parámetros</div>
+      <div class="card-title">Parámetros</div>
       <div class="bt-form">
         <label class="bt-field"><span>Bank inicial</span>
           <div class="bt-input-wrap"><span class="bt-prefix">u</span><input class="bt-input" type="text" inputmode="decimal" data-bt-input="bank_inicial" value="${esc(_bt.bank_inicial)}"></div>
@@ -1815,14 +1912,14 @@
     </div>
 
     <div class="card" style="margin-bottom:12px">
-      <div class="card-title">🎭 Lado de la apuesta</div>
+      <div class="card-title">Lado de la apuesta</div>
       <div class="bt-modo-row" style="margin-top:0">
-        <button class="bt-chip${!_bt.contra ? " active" : ""}" data-bt-lado="favor">👍 A favor</button>
-        <button class="bt-chip${_bt.contra ? " active" : ""}" data-bt-lado="contra">🔄 En contra</button>
+        <button class="bt-chip${!_bt.contra ? " active" : ""}" data-bt-lado="favor">A favor</button>
+        <button class="bt-chip${_bt.contra ? " active" : ""}" data-bt-lado="contra">En contra</button>
       </div>
       <div id="btContraBox" style="${_bt.contra ? "" : "display:none"}">
         <div class="bt-alert bt-alert-muted">
-          🔄 <strong>Modo fade:</strong> apuesta lo <strong>contrario</strong> de cada análisis (si el pick era <em>Over 1.5</em>, se simula <em>Under 1.5</em>). Gana lo que el análisis perdía y pierde lo que ganaba — pero <strong>a la cuota del otro lado</strong>, que también lleva la comisión de la casa. Por eso ir en contra de un tipster perdedor <strong>no</strong> garantiza ganar.
+          <strong>Modo fade:</strong> apuesta lo <strong>contrario</strong> de cada análisis (si el pick era <em>Over 1.5</em>, se simula <em>Under 1.5</em>). Gana lo que el análisis perdía y pierde lo que ganaba — pero <strong>a la cuota del otro lado</strong>, que también lleva la comisión de la casa. Por eso ir en contra de un tipster perdedor <strong>no</strong> garantiza ganar.
         </div>
         <div class="bt-form" style="margin-top:12px">
           <label class="bt-field"><span>Margen de la casa (vig)</span>
@@ -1840,7 +1937,7 @@
     </div>
 
     <div class="card" style="margin-bottom:12px">
-      <div class="card-title">🎚️ Filtros <span style="font-weight:500;color:var(--text-3);font-size:11px">(vacío = todo)</span></div>
+      <div class="card-title">Filtros <span style="font-weight:500;color:var(--text-3);font-size:11px">(vacío = todo)</span></div>
       ${deportes.length ? `<div class="bt-flbl">Deporte</div><div class="bt-chips">${depChips}</div>` : ""}
       ${tipos.length ? `<div class="bt-flbl">Tipo de apuesta</div><div class="bt-chips">${tipoChips}</div>` : ""}
       <div class="bt-flbl">Día de la semana</div><div class="bt-chips">${diaChips}</div>
@@ -1853,14 +1950,14 @@
     </div>
 
     <div class="bt-actions">
-      <button class="bt-run" data-action="bt-run">▶ Simular</button>
+      <button class="bt-run" data-action="bt-run">Simular</button>
       <button class="bt-reset" data-action="bt-reset">Limpiar</button>
     </div>
 
     <div id="btResults">${_bt.res ? btRenderResults() : ""}</div>
 
-    <button class="bt-search-btn" data-action="bt-search">🔎 Buscar el mejor filtro automáticamente</button>
-    <div id="btSearchNota" class="bt-alert bt-alert-muted" style="${_bt.contra ? "" : "display:none"}">ℹ️ El buscador rankea filtros por su rendimiento <strong>a favor</strong>. Al pulsar "Aplicar" con el modo 🔄 En contra activo, el simulador correrá ese filtro <strong>en contra</strong>.</div>
+    <button class="bt-search-btn" data-action="bt-search">Buscar el mejor filtro automáticamente</button>
+    <div id="btSearchNota" class="bt-alert bt-alert-muted" style="${_bt.contra ? "" : "display:none"}">El buscador rankea filtros por su rendimiento <strong>a favor</strong>. Al pulsar "Aplicar" con el modo En contra activo, el simulador correrá ese filtro <strong>en contra</strong>.</div>
     <div id="btSearch">${_bt.search ? btRenderSearch() : ""}</div>`;
     }
 
@@ -1880,10 +1977,10 @@
           : `Con este subconjunto, <strong>seguir los análisis habría rendido más</strong> (${fmts(d.neto - r.neto)} de diferencia).`);
       return `
     <div class="card" style="margin-bottom:12px">
-      <div class="card-title">⚔️ A favor vs en contra <span style="font-weight:500;color:var(--text-3);font-size:11px">(mismas ${r.n_apuestas} apuestas)</span></div>
+      <div class="card-title">A favor vs en contra <span style="font-weight:500;color:var(--text-3);font-size:11px">(mismas ${r.n_apuestas} apuestas)</span></div>
       <div class="bt-cmp" style="margin-bottom:0">
-        <div class="bt-cmp-row"><span>👍 Siguiendo los análisis</span><strong style="color:${col(d.neto)}">${fmts(d.neto)} · ${fmtp(d.roi)} ROI · WR ${fmtp(d.winrate * 100)}</strong></div>
-        <div class="bt-cmp-row"><span>🔄 Apostando en contra</span><strong style="color:${col(r.neto)}">${fmts(r.neto)} · ${fmtp(r.roi)} ROI · WR ${fmtp(r.winrate * 100)}</strong></div>
+        <div class="bt-cmp-row"><span>Siguiendo los análisis</span><strong style="color:${col(d.neto)}">${fmts(d.neto)} · ${fmtp(d.roi)} ROI · WR ${fmtp(d.winrate * 100)}</strong></div>
+        <div class="bt-cmp-row"><span>Apostando en contra</span><strong style="color:${col(r.neto)}">${fmts(r.neto)} · ${fmtp(r.roi)} ROI · WR ${fmtp(r.winrate * 100)}</strong></div>
       </div>
       <div style="font-size:11px;color:var(--text-3);margin-top:10px;line-height:1.5">
         ${veredicto} Los dos netos <strong>no</strong> son opuestos exactos: la casa se queda su margen (${fmtp(r.contrario.margen_pct)}) en cada lado, así que la suma de ambos es negativa. Ese es justo el motivo por el que fadear a un tipster perdedor no es dinero gratis.
@@ -1903,20 +2000,20 @@
         const om = r.apuestas_omitidas
           ? ` <strong>${r.apuestas_omitidas} apuesta(s) posteriores —incluidas las nuevas— no se simularon.</strong>`
           : "";
-        avisos += `<div class="bt-alert bt-alert-red">💥 <strong>Quiebra${fq}:</strong> el bank llegó a 0u y la simulación se detuvo ahí.${om} Sube el bank inicial o baja el stake para recorrer el historial completo.</div>`;
+        avisos += `<div class="bt-alert bt-alert-red"><strong>Quiebra${fq}:</strong> el bank llegó a 0u y la simulación se detuvo ahí.${om} Sube el bank inicial o baja el stake para recorrer el historial completo.</div>`;
       }
       if (r.stake_insostenible) {
         const fc = r.fecha_corte ? ` el ${esc(r.fecha_corte)}` : "";
         const om = r.apuestas_omitidas
           ? ` <strong>${r.apuestas_omitidas} apuesta(s) posteriores no se simularon.</strong>`
           : "";
-        avisos += `<div class="bt-alert bt-alert-red">🛑 <strong>Monto fijo insostenible${fc}:</strong> el bank cayó a ${fmt(r.bank_final)}, por debajo del monto fijo de ${fmt(parseFloat(_bt.stake_valor) || 0)} por apuesta. No puedes seguir apostando ese monto, así que la simulación se detuvo ahí.${om} Baja el monto fijo o sube el bank inicial.</div>`;
+        avisos += `<div class="bt-alert bt-alert-red"><strong>Monto fijo insostenible${fc}:</strong> el bank cayó a ${fmt(r.bank_final)}, por debajo del monto fijo de ${fmt(parseFloat(_bt.stake_valor) || 0)} por apuesta. No puedes seguir apostando ese monto, así que la simulación se detuvo ahí.${om} Baja el monto fijo o sube el bank inicial.</div>`;
       }
       if (!r.muestra_suficiente) {
-        avisos += `<div class="bt-alert bt-alert-amber">⚠️ <strong>Muestra baja</strong> (${r.n_resueltas} apuestas resueltas &lt; 30). El ROI y el winrate de este subconjunto son <strong>orientativos</strong>: filtrar el pasado buscando lo que "habría funcionado" es <em>data-mining</em> y no garantiza resultados futuros.</div>`;
+        avisos += `<div class="bt-alert bt-alert-amber"><strong>Muestra baja</strong> (${r.n_resueltas} apuestas resueltas &lt; 30). El ROI y el winrate de este subconjunto son <strong>orientativos</strong>: filtrar el pasado buscando lo que "habría funcionado" es <em>data-mining</em> y no garantiza resultados futuros.</div>`;
       }
       if (r.excluidas_sin_cuota > 0) {
-        avisos += `<div class="bt-alert bt-alert-muted">ℹ️ ${r.excluidas_sin_cuota} apuesta(s) sin cuota válida quedaron fuera (no se puede recalcular su ganancia).</div>`;
+        avisos += `<div class="bt-alert bt-alert-muted">${r.excluidas_sin_cuota} apuesta(s) sin cuota válida quedaron fuera (no se puede recalcular su ganancia).</div>`;
       }
       // Modo "en contra" (INV-BIZ-25): qué se invirtió y qué quedó fuera. El bot
       // manda `contrario` en cada resultado; se tolera ausente (bot sin desplegar).
@@ -1926,7 +2023,7 @@
         const fuera = [];
         if (ct.descartadas_no_binarias) fuera.push(`${ct.descartadas_no_binarias} de mercado no binario (1X2 con empate, marcador exacto, parlay…)`);
         if (ct.descartadas_sin_contraria) fuera.push(`${ct.descartadas_sin_contraria} sin contraria apostable (cuota demasiado alta)`);
-        avisos += `<div class="bt-alert bt-alert-muted">🔄 <strong>Apostando en contra</strong> de ${ct.invertidas} análisis, con un margen de casa del ${fmtp(ct.margen_pct)}: cuota media ${(ct.cuota_media_original ?? 0).toFixed(2)} en el pick original → <strong>${(ct.cuota_media_contraria ?? 0).toFixed(2)}</strong> en la contraria.${fuera.length ? ` Quedaron fuera ${fuera.join(" y ")}.` : ""}${ct.no_binarias_incluidas ? ` <strong>${ct.no_binarias_incluidas}</strong> no binaria(s) se invirtieron igualmente (aproximación).` : ""}</div>`;
+        avisos += `<div class="bt-alert bt-alert-muted"><strong>Apostando en contra</strong> de ${ct.invertidas} análisis, con un margen de casa del ${fmtp(ct.margen_pct)}: cuota media ${(ct.cuota_media_original ?? 0).toFixed(2)} en el pick original → <strong>${(ct.cuota_media_contraria ?? 0).toFixed(2)}</strong> en la contraria.${fuera.length ? ` Quedaron fuera ${fuera.join(" y ")}.` : ""}${ct.no_binarias_incluidas ? ` <strong>${ct.no_binarias_incluidas}</strong> no binaria(s) se invirtieron igualmente (aproximación).` : ""}</div>`;
       }
 
       const cmpLbl = fade ? ["En contra (tu filtro)", "En contra (todo el historial)"] : ["Con tu filtro", "Apostando todo"];
@@ -1950,11 +2047,11 @@
         <div class="cap-stat"><div class="cap-stat-val">${fmtp(wrPct)}</div><div class="cap-stat-lbl">Winrate (${r.wins}-${r.losses})</div></div>
         <div class="cap-stat"><div class="cap-stat-val red">${fmt(r.drawdown_max)}</div><div class="cap-stat-lbl">Drawdown máx (${fmtp(r.drawdown_pct)})</div></div>
         <div class="cap-stat"><div class="cap-stat-val red">${r.racha_max_perdedora}</div><div class="cap-stat-lbl">Peor racha perdedora</div></div>
-        ${r.capital_simultaneo_max != null ? `<div class="cap-stat"><div class="cap-stat-val">${fmt(r.capital_simultaneo_max)}</div><div class="cap-stat-lbl">💰 Capital máx. en simultáneo</div></div>` : ""}
+        ${r.capital_simultaneo_max != null ? `<div class="cap-stat"><div class="cap-stat-val">${fmt(r.capital_simultaneo_max)}</div><div class="cap-stat-lbl">Capital máx. en simultáneo</div></div>` : ""}
         ${r.simultaneas_max != null ? `<div class="cap-stat"><div class="cap-stat-val">${r.simultaneas_max}</div><div class="cap-stat-lbl">Apuestas vivas a la vez (máx)</div></div>` : ""}
       </div>
       <div style="font-size:11px;color:var(--text-3);margin-top:8px;text-align:center">Winrate real entre ${fmtp(wlow)} y ${fmtp(whigh)} (IC 95% de Wilson)</div>
-      ${r.capital_simultaneo_max != null ? `<div style="font-size:11px;color:var(--text-3);margin-top:6px;text-align:center">💰 <strong>Capital máx. en simultáneo</strong>: el dinero máximo que necesitaste tener disponible a la vez (apuestas vivas al mismo tiempo, desde que registras hasta que se resuelve el partido) para cubrir esta simulación con ese staking.</div>` : ""}
+      ${r.capital_simultaneo_max != null ? `<div style="font-size:11px;color:var(--text-3);margin-top:6px;text-align:center"><strong>Capital máx. en simultáneo</strong>: el dinero máximo que necesitaste tener disponible a la vez (apuestas vivas al mismo tiempo, desde que registras hasta que se resuelve el partido) para cubrir esta simulación con ese staking.</div>` : ""}
     </div>
 
     ${cmp}
@@ -1962,7 +2059,7 @@
     ${btRenderMensual()}
 
     <div class="card">
-      <div class="card-title">📈 Evolución del bank</div>
+      <div class="card-title">Evolución del bank</div>
       <div class="chart-wrap-tall"><canvas id="chartBt"></canvas></div>
     </div>`;
     }
@@ -2000,7 +2097,7 @@
 
       const hero = `
       <div class="capital-hero" style="padding:6px 0 10px">
-        <div class="capital-label">📈 Máximo neto alcanzado${r.pico_neto_fecha ? ` (${esc(r.pico_neto_fecha)})` : ""}</div>
+        <div class="capital-label">Máximo neto alcanzado${r.pico_neto_fecha ? ` (${esc(r.pico_neto_fecha)})` : ""}</div>
         <div class="capital-amount" style="color:${col(r.pico_neto)}">${fmts(r.pico_neto)}</div>
         <div class="capital-sub">el punto más alto que tocó el bank en toda la simulación${r.pico_neto_i ? ` · apuesta #${r.pico_neto_i}` : ""}</div>
       </div>`;
@@ -2019,7 +2116,7 @@
 
       return `
     <div class="card" style="margin-bottom:12px">
-      <div class="card-title">🗓️ Neto por mes <span style="font-weight:500;color:var(--text-3);font-size:11px">(de esta simulación)</span></div>
+      <div class="card-title">Neto por mes <span style="font-weight:500;color:var(--text-3);font-size:11px">(de esta simulación)</span></div>
       ${hero}
       ${resumen}
       <div class="nm-grid" style="margin-top:10px">${cards}</div>
@@ -2038,13 +2135,13 @@
       const labels = Array.from({ length: n }, (_, i) => i === 0 ? "Inicio" : `#${i}`);
       const datasets = [{
         label: fade ? "En contra (tu filtro)" : "Con filtro", data: r.map(p => p.bank),
-        borderColor: "#00CD96", backgroundColor: "rgba(0,205,150,0.08)",
+        borderColor: cssVar("--accent"), backgroundColor: cFill("--accent"),
         borderWidth: 2, pointRadius: 0, fill: true, tension: 0.25,
       }];
       // En modo fade la curva "a favor" sobre el MISMO set es la comparación útil.
       if (d.length) datasets.push({
         label: "A favor (mismas apuestas)", data: d.map(p => p.bank),
-        borderColor: "#F5A623", borderWidth: 2, pointRadius: 0, fill: false, tension: 0.25,
+        borderColor: cssVar("--pend"), borderWidth: 2, pointRadius: 0, fill: false, tension: 0.25,
       });
       if (b.length) datasets.push({
         label: fade ? "En contra (todo)" : "Todo el historial", data: b.map(p => p.bank),
@@ -2056,12 +2153,12 @@
         options: {
           responsive: true, maintainAspectRatio: false,
           plugins: {
-            legend: { display: true, labels: { font: { size: 11, family: "DM Sans" }, boxWidth: 10, padding: 10, color: cssVar("--text-2") } },
+            legend: { display: true, labels: { font: { size: 11, family: CHART_FONT }, boxWidth: 10, padding: 10, color: cssVar("--text-2") } },
             tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${fmt(ctx.parsed.y)}` } },
           },
           scales: {
-            x: { grid: { color: cssVar("--chart-grid") }, ticks: { display: false } },
-            y: { grid: { color: cssVar("--chart-grid") }, ticks: { callback: axisM, font: { size: 10, family: "Space Mono" }, color: cssVar("--chart-tick") } },
+            x: { grid: { display: false }, ticks: { display: false } },
+            y: { grid: { color: cssVar("--chart-grid") }, ticks: { callback: axisM, font: { size: 10, family: CHART_FONT }, color: cssVar("--chart-tick") } },
           },
         },
       });
@@ -2095,7 +2192,7 @@
       const btn = document.querySelector("[data-action='bt-run']");
       const orig = btn ? btn.textContent : "";
       _bt.loading = true;
-      if (btn) { btn.disabled = true; btn.textContent = "⏳ Simulando…"; }
+      if (btn) { btn.disabled = true; btn.textContent = "Simulando…"; }
       haptic("light");
       try {
         const resp = await fetch(`${API_URL}/api/backtest`, { method: "POST", headers: apiHeaders(), body: JSON.stringify(payload) });
@@ -2113,10 +2210,10 @@
         setTimeout(makeChartBacktest, 60);
       } catch (err) {
         haptic("error");
-        errEl("❌ " + err.message);
+        errEl("" + err.message);
       } finally {
         _bt.loading = false;
-        if (btn) { btn.disabled = false; btn.textContent = orig || "▶ Simular"; }
+        if (btn) { btn.disabled = false; btn.textContent = orig || "Simular"; }
       }
     }
 
@@ -2134,7 +2231,7 @@
       const btn = document.querySelector("[data-action='bt-search']");
       const orig = btn ? btn.textContent : "";
       _bt.searching = true;
-      if (btn) { btn.disabled = true; btn.textContent = "⏳ Analizando combinaciones…"; }
+      if (btn) { btn.disabled = true; btn.textContent = "Analizando combinaciones…"; }
       haptic("light");
       try {
         const resp = await fetch(`${API_URL}/api/backtest/search`, { method: "POST", headers: apiHeaders(), body: JSON.stringify(payload) });
@@ -2151,10 +2248,10 @@
         haptic("success");
       } catch (err) {
         haptic("error");
-        errEl("❌ " + err.message);
+        errEl("" + err.message);
       } finally {
         _bt.searching = false;
-        if (btn) { btn.disabled = false; btn.textContent = orig || "🔎 Buscar el mejor filtro automáticamente"; }
+        if (btn) { btn.disabled = false; btn.textContent = orig || "Buscar el mejor filtro automáticamente"; }
       }
     }
 
@@ -2162,13 +2259,13 @@
       const d = _bt.search;
       if (!d) return "";
       if (d.error === "historial_insuficiente") {
-        return `<div class="bt-alert bt-alert-amber" style="margin-top:12px">⚠️ <strong>Historial insuficiente</strong> para el buscador (${d.n_total || 0} apuestas resueltas). Necesitas más datos para partir en train/test y medir significancia. Sigue registrando y vuelve más adelante.</div>`;
+        return `<div class="bt-alert bt-alert-amber" style="margin-top:12px"><strong>Historial insuficiente</strong> para el buscador (${d.n_total || 0} apuestas resueltas). Necesitas más datos para partir en train/test y medir significancia. Sigue registrando y vuelve más adelante.</div>`;
       }
       const sp = d.split || {};
       const cands = d.candidatos || [];
       const resumen = `
     <div class="bt-alert bt-alert-muted" style="margin-top:12px">
-      🔬 Evalué <strong>${d.evaluados}</strong> combinaciones (descarté ${d.descartados_muestra} por muestra &lt; ${d.min_muestra}).
+      Evalué <strong>${d.evaluados}</strong> combinaciones (descarté ${d.descartados_muestra} por muestra &lt; ${d.min_muestra}).
       <strong>${d.robustos}</strong> superan significancia (FDR α=${d.alpha}); <strong>${d.sobreviven_oos}</strong> se mantienen fuera de muestra.
       Descubierto en el ${Math.round((sp.train_frac || 0.7) * 100)}% antiguo (${sp.train_n} bets, hasta ${esc(sp.fecha_corte || "—")}); probado en el ${sp.test_n} más recientes.
       <br><em>Filtrar el pasado es exploración estadística: el rendimiento histórico no garantiza el futuro.</em>
@@ -2225,9 +2322,9 @@
       if (!DATA?.apuestas?.length) return `<div class="section-header">Compounding <span>Tracker</span></div><div class="empty">Sin apuestas registradas todavía.</div>`;
       const capChip = (val, label) => `<button class="bt-chip${_ct.cap === val ? " active" : ""}" data-ct-cap="${val == null ? "" : val}">${label}</button>`;
       return `<div class="section-header">Compounding <span>Tracker</span></div>
-    <div class="explainer" style="margin-bottom:14px">📈 Recorre TODO tu historial real (sin filtros) apostando un % fijo de un bankroll que compone mes a mes, con un tope opcional de unidad máxima. A diferencia del Simulador (what-if con filtros), este siempre usa el historial completo.</div>
+    <div class="explainer" style="margin-bottom:14px">Recorre TODO tu historial real (sin filtros) apostando un % fijo de un bankroll que compone mes a mes, con un tope opcional de unidad máxima. A diferencia del Simulador (what-if con filtros), este siempre usa el historial completo.</div>
     <div class="card" style="margin-bottom:12px">
-      <div class="card-title">⚙️ Parámetros</div>
+      <div class="card-title">Parámetros</div>
       <div class="bt-form">
         <label class="bt-field"><span>Bankroll inicial</span>
           <div class="bt-input-wrap"><span class="bt-prefix">u</span><input class="bt-input" type="text" inputmode="decimal" data-ct-input="bank_inicial" value="${esc(_ct.bank_inicial)}"></div>
@@ -2239,7 +2336,7 @@
       <div class="bt-flbl">Tope de unidad máxima</div>
       <div class="bt-chips">${capChip(500, "500u")}${capChip(1000, "1,000u")}${capChip(2000, "2,000u")}${capChip(null, "Sin tope")}</div>
     </div>
-    <div class="bt-actions"><button class="share-card-btn" style="width:100%" data-action="ct-run">${_ct.loading ? "⏳ Calculando…" : "▶ Calcular"}</button></div>
+    <div class="bt-actions"><button class="bt-run" data-action="ct-run">${_ct.loading ? "Calculando…" : "Calcular"}</button></div>
     <div id="ctResults">${_ct.res ? ctRenderResults() : ""}</div>`;
     }
 
@@ -2264,7 +2361,7 @@
       }).join("")}</tbody>
       </table></div>
     </div>
-    ${r.quiebra ? `<div class="bt-alert bt-alert-danger" style="margin-top:10px">💥 El bankroll llegó a 0u el ${esc(r.fecha_quiebra || "")}. La simulación se detuvo ahí.</div>` : ""}`;
+    ${r.quiebra ? `<div class="bt-alert bt-alert-danger" style="margin-top:10px">El bankroll llegó a 0u el ${esc(r.fecha_quiebra || "")}. La simulación se detuvo ahí.</div>` : ""}`;
     }
 
     async function runCompounding() {
@@ -2278,7 +2375,7 @@
       const btn = document.querySelector("[data-action='ct-run']");
       const orig = btn ? btn.textContent : "";
       _ct.loading = true;
-      if (btn) { btn.disabled = true; btn.textContent = "⏳ Calculando…"; }
+      if (btn) { btn.disabled = true; btn.textContent = "Calculando…"; }
       haptic("light");
       try {
         const resp = await fetch(`${API_URL}/api/backtest`, { method: "POST", headers: apiHeaders(), body: JSON.stringify(payload) });
@@ -2291,10 +2388,10 @@
         setTimeout(makeChartCompounding, 60);
       } catch (err) {
         haptic("error");
-        errEl("❌ " + err.message);
+        errEl("" + err.message);
       } finally {
         _ct.loading = false;
-        if (btn) { btn.disabled = false; btn.textContent = orig || "▶ Calcular"; }
+        if (btn) { btn.disabled = false; btn.textContent = orig || "Calcular"; }
       }
     }
 
@@ -2303,14 +2400,14 @@
       const curva = _ct.res?.curva;
       if (!c || !curva?.length) return;
       destroyChart("ct");
-      charts.ct = new Chart(c, { type: "line", data: { labels: curva.map(p => `#${p.i}`), datasets: [{ label: "Bankroll", data: curva.map(p => p.bank), borderColor: "#00CD96", backgroundColor: "rgba(0,205,150,0.08)", borderWidth: 2, pointRadius: 0, fill: true, tension: 0.2 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => fmtC(ctx.parsed.y) } } }, scales: { x: { grid: { color: cssVar("--chart-grid") }, ticks: { display: false } }, y: { grid: { color: cssVar("--chart-grid") }, ticks: { callback: axisM, font: { size: 10, family: "Space Mono" }, color: cssVar("--chart-tick") } } } } });
+      charts.ct = new Chart(c, { type: "line", data: { labels: curva.map(p => `#${p.i}`), datasets: [{ label: "Bankroll", data: curva.map(p => p.bank), borderColor: cssVar("--accent"), backgroundColor: cFill("--accent"), borderWidth: 2, pointRadius: 0, fill: true, tension: 0.2 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => fmtC(ctx.parsed.y) } } }, scales: { x: { grid: { display: false }, ticks: { display: false } }, y: { grid: { color: cssVar("--chart-grid") }, ticks: { callback: axisM, font: { size: 10, family: CHART_FONT }, color: cssVar("--chart-tick") } } } } });
     }
 
     /* ── Tab: Apuestas ── */
     function renderApuestas() {
       const deportesUnicos = ["Todos", ...new Set(DATA.apuestas.map(a => a.deporte).filter(Boolean))];
-      return `<div class="section-header">Historial de <span>bets</span></div>
-    <div class="search-wrap"><span class="search-icon">🔍</span><input class="search-input" placeholder="Buscar por equipo..." data-search-equipo value="${esc(filtroEquipo)}"></div>
+      return `<div class="section-header">Historial de apuestas</div>
+    <div class="search-wrap"><span class="search-icon">${ico("search")}</span><input class="search-input" placeholder="Buscar por equipo…" data-search-equipo value="${esc(filtroEquipo)}"></div>
     <div class="filter-row">${deportesUnicos.map(d => `<button class="filter-chip ${d === filtroDeporte ? "active" : ""}" data-filtro-deporte="${esc(d)}">${esc(d)}</button>`).join("")}</div>
     <div id="apuestasLista">${renderApuestasList()}</div>`;
     }
@@ -2367,37 +2464,97 @@
         if (va > vb) return 1 * dir;
         return 0;
       });
-      const filtroBanner = momentumActivo ? `<div class="filter-chip active" style="margin-bottom:8px">🎯 Filtrado a picks de Momentum <button data-action="wl-clear-momentum" style="background:none;border:none;color:inherit;margin-left:6px;cursor:pointer">✕</button></div>` : "";
+      const filtroBanner = momentumActivo ? `<div class="filter-chip active" style="margin-bottom:8px">Filtrado a picks de Momentum <button data-action="wl-clear-momentum" style="background:none;border:none;color:inherit;margin-left:6px;cursor:pointer">✕</button></div>` : "";
       if (!ordenado.length) return `${filtroBanner}<div class="empty">Sin resultados</div>`;
       const totalPages = Math.max(1, Math.ceil(ordenado.length / WL_PAGE_SIZE));
       if (wlPage > totalPages) wlPage = totalPages;
       if (wlPage < 1) wlPage = 1;
       const pagina = ordenado.slice((wlPage - 1) * WL_PAGE_SIZE, wlPage * WL_PAGE_SIZE);
-      const th = (col, label) => `<th data-wl-sort="${col}">${label}${wlSortCol === col ? (wlSortDir === "asc" ? " ▲" : " ▼") : ""}</th>`;
-      return `${filtroBanner}<div class="card" style="padding:0">
-      <div class="card-title" style="padding:14px 14px 0">${ordenado.length} apuesta${ordenado.length !== 1 ? "s" : ""}</div>
-      <div class="table-wrap"><table class="data-table wager-log">
-      <thead><tr><th>#</th>${th("fecha", "Fecha")}<th>Liga</th><th>Play</th>${th("monto", "Monto")}<th>To Win</th><th>Tipo</th>${th("cuota", "Cuota")}<th>W/L</th>${th("ganancia", "Return")}<th>Position</th><th>Día</th></tr></thead>
-      <tbody>${pagina.map(a => {
-        const idx = idxMap.get(a.row_id) || "—";
-        const fecha = (a.fecha_partido || a.fecha || "").slice(0, 10) || "—";
-        const esParlay = (a.equipo2 || "").startsWith("PARLAY");
-        const play = esParlay ? `Parlay · ${esc(a.equipo2 || "")}` : `${esc(a.equipo1 || "?")} vs ${esc(a.equipo2 || "?")} · ${esc(formatTipoApuesta(a))}`;
-        const wl = a.status === "win" ? `<span class="green">WIN</span>` : a.status === "loss" ? `<span class="red">LOSS</span>` : a.status === "void" ? "VOID" : "PEND";
-        return `<tr>
-        <td>${idx}</td><td>${fecha}</td><td>${esc(a.liga || "—")}</td><td>${play}</td>
-        <td class="num">${fmt(a.monto)}</td><td class="num">${a.potencial ? fmt(a.potencial) : "—"}</td>
-        <td>${esc(tipoDe(a))}</td><td class="num">${a.cuota || "—"}</td><td>${wl}</td>
-        <td class="num ${signColor(a.ganancia)}">${fmts(a.ganancia)}</td><td>${esc(posicionBet(a))}</td><td>${diaSemanaLabel(a)}</td>
-      </tr>`;
-      }).join("")}</tbody>
+      // INV-MINI-45: sin scroll horizontal. Móvil = lista agrupada por día (todos los
+      // campos del Wager Log en dos líneas); escritorio = tabla compacta de 9 columnas.
+      // Ambas se pintan y el CSS muestra la que corresponde (sin JS de viewport).
+      const flecha = col => wlSortCol === col ? ico(wlSortDir === "asc" ? "up" : "down", "ico-xs") : "";
+      const th = (col, label, cls) => `<th data-wl-sort="${col}"${cls ? ` class="${cls}"` : ""}>${label}${flecha(col)}</th>`;
+      const sortChip = (col, label) => `<button class="range-chip ${wlSortCol === col ? "active" : ""}" data-wl-sort="${col}">${label}${flecha(col)}</button>`;
+      const filas = pagina.map(a => _wlFila(a, idxMap.get(a.row_id)));
+      let lista = "", diaPrev = null;
+      filas.forEach(f => {
+        if (wlSortCol === "fecha" && f.fecha !== diaPrev) {
+          diaPrev = f.fecha;
+          lista += `<div class="wl-day">${_wlFechaLarga(f.fecha)}</div>`;
+        }
+        lista += f.row;
+      });
+      return `${filtroBanner}<div class="card wlog-card">
+      <div class="card-head"><div class="card-title">${ordenado.length} apuesta${ordenado.length !== 1 ? "s" : ""}</div><span class="card-meta">${(wlPage - 1) * WL_PAGE_SIZE + 1}–${Math.min(wlPage * WL_PAGE_SIZE, ordenado.length)}</span></div>
+      <div class="wl-sortbar" aria-label="Ordenar por"><div class="range-sel">${sortChip("fecha", "Fecha")}${sortChip("ganancia", "Return")}${sortChip("monto", "Monto")}${sortChip("cuota", "Cuota")}</div></div>
+      <div class="wl-list">${lista}</div>
+      <div class="wl-table"><table class="data-table wager-log">
+      <thead><tr><th class="wl-idx">#</th>${th("fecha", "Fecha")}<th>Partido</th><th>Mercado</th>${th("cuota", "Cuota", "num")}${th("monto", "Monto", "num")}<th class="num">A ganar</th><th>Resultado</th>${th("ganancia", "Return", "num")}</tr></thead>
+      <tbody>${filas.map(f => f.tr).join("")}</tbody>
       </table></div>
       <div class="wl-pager">
-        <button data-wl-page="-1" ${wlPage <= 1 ? "disabled" : ""}>‹</button>
-        <span>Página ${wlPage} / ${totalPages}</span>
-        <button data-wl-page="1" ${wlPage >= totalPages ? "disabled" : ""}>›</button>
+        <button data-wl-page="-1" aria-label="Página anterior" ${wlPage <= 1 ? "disabled" : ""}>${ico("chevL", "ico-sm")}</button>
+        <span>Página ${wlPage} de ${totalPages}</span>
+        <button data-wl-page="1" aria-label="Página siguiente" ${wlPage >= totalPages ? "disabled" : ""}>${ico("chevR", "ico-sm")}</button>
       </div>
     </div>`;
+    }
+    // Una apuesta del Wager Log en sus dos formas (fila de lista móvil y <tr> de escritorio).
+    function _wlFila(a, idx) {
+      const fecha = (a.fecha_partido || a.fecha || "").slice(0, 10) || "—";
+      const esParlay = (a.equipo2 || "").startsWith("PARLAY");
+      const partido = esParlay ? `Parlay · ${esc(a.equipo2 || "")}` : `${esc(a.equipo1 || "?")} vs ${esc(a.equipo2 || "?")}`;
+      const mercado = esc(formatTipoApuesta(a));
+      const pos = posicionBet(a);
+      const posTag = (pos === "FAV" || pos === "DOG") ? `<span class="wl-tag">${pos}</span>` : "";
+      const cls = a.status === "win" ? "win" : a.status === "loss" ? "loss" : a.status === "void" ? "void" : "pend";
+      const estado = { win: "Ganada", loss: "Perdida", void: "Nula" }[a.status] || "Pendiente";
+      const pend = !["win", "loss", "void"].includes(a.status);
+      const ret = pend ? `<span class="yellow">Pendiente</span>`
+        : a.status === "void" ? `<span class="muted">Nula</span>`
+        : `<span class="${signColor(a.ganancia)}">${fmts(a.ganancia)}</span>`;
+      const aGanar = a.potencial ? fmt(a.potencial) : "—";
+      const cuota = a.cuota ? esc(String(a.cuota)) : "—";
+      const idxTxt = idx ? `#${idx}` : "";
+      const dia = diaSemanaLabel(a);
+      const fechaTag = wlSortCol !== "fecha" ? `<span class="wl-tag">${esc(fecha)} · ${dia}</span>` : "";
+      const row = `<div class="wl-row">
+        <div class="bet-dot ${cls}" title="${estado}" role="img" aria-label="${estado}">${ico(_STATUS_ICO[a.status] || "clock")}</div>
+        <div class="wl-main">
+          <div class="wl-teams">${partido}</div>
+          <div class="wl-meta">${esc(a.liga || a.deporte || "—")} · ${mercado}</div>
+          <div class="wl-tags">${idxTxt ? `<span class="wl-tag">${idxTxt}</span>` : ""}${posTag}${fechaTag}</div>
+        </div>
+        <div class="wl-right">
+          <div class="wl-ret">${ret}</div>
+          <div class="wl-stake">${fmt(a.monto)} @ ${cuota}</div>
+          ${pend && a.potencial ? `<div class="wl-stake">gana ${aGanar}</div>` : ""}
+        </div>
+      </div>`;
+      const tr = `<tr>
+        <td class="wl-idx">${idx || "—"}</td>
+        <td class="wl-fecha"><div>${_wlFechaCorta(fecha)}</div><div class="wlog-sub">${dia}</div></td>
+        <td class="wl-partido"><div class="wl-ellipsis">${partido}</div><div class="wlog-sub wl-ellipsis">${esc(a.liga || a.deporte || "—")}</div></td>
+        <td class="wl-mercado"><div class="wl-ellipsis">${mercado}</div><div class="wlog-sub">${esc(pos)}</div></td>
+        <td class="num">${cuota}</td><td class="num">${fmt(a.monto)}</td><td class="num muted">${aGanar}</td>
+        <td><span class="wl-badge ${cls}">${estado}</span></td>
+        <td class="num wl-ret">${pend || a.status === "void" ? `<span class="muted">—</span>` : ret}</td>
+      </tr>`;
+      return { fecha, row, tr };
+    }
+    function _wlFechaCorta(f) {
+      if (!f || f.length !== 10) return "—";
+      const [y, m, d] = f.split("-").map(Number);
+      return `${d} ${["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"][m - 1]} ${y}`;
+    }
+    function _wlFechaLarga(f) {
+      if (!f || f.length !== 10) return "Sin fecha";
+      const [y, m, d] = f.split("-").map(Number);
+      const dt = new Date(Date.UTC(y, m - 1, d));
+      const dias = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+      const meses = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+      return `${dias[dt.getUTCDay()]} · ${d} ${meses[m - 1]} ${y}`;
     }
     const _RE_SUFIJO_HOME_AWAY = /^((?:Asian\s+Handicap|Handicap|Moneyline|1X2)(?:\s+[+\-]?\d+(?:\.\d+)?)?)\s*-\s*(Home|Away|Draw|Empate|Local|Visitante)\s*$/i;
 
@@ -2442,14 +2599,15 @@
       return null;
     }
 
+    const _STATUS_ICO = { win: "check", loss: "x", void: "minus" };
     function renderBetItem(a) {
-      const icon = a.status === "win" ? "win" : a.status === "loss" ? "loss" : a.status === "void" ? "pend" : "pend";
-      const res = a.status === "win" ? `+${fmt(a.ganancia)}` : a.status === "loss" ? `-${fmt(a.monto)}` : a.status === "void" ? `🔄 Nula` : ` ⏳ ${fmt(a.potencial)}`;
+      const icon = a.status === "win" ? "win" : a.status === "loss" ? "loss" : a.status === "void" ? "void" : "pend";
+      const res = a.status === "win" ? `+${fmt(a.ganancia)}` : a.status === "loss" ? `−${fmt(a.monto)}` : a.status === "void" ? `Nula` : `${fmt(a.potencial)}`;
       const rc = a.status === "win" ? "green" : a.status === "loss" ? "red" : a.status === "void" ? "accent" : "yellow";
       const _stMap = { win: ["Ganada", "win"], loss: ["Perdida", "loss"], void: ["Nula", "void"] };
       const [statusLabel, badgeKey] = _stMap[a.status] || ["Pendiente", "pend"];
       const esParlay = (a.equipo2 || "").startsWith("PARLAY");
-      const teamsLabel = esParlay ? `🎯 Parlay · ${esc(a.equipo2 || "")}` : `${esc(a.equipo1 || "?")} vs ${esc(a.equipo2 || "?")}`;
+      const teamsLabel = esParlay ? `Parlay · ${esc(a.equipo2 || "")}` : `${esc(a.equipo1 || "?")} vs ${esc(a.equipo2 || "?")}`;
       const metaLabel = esParlay ? `${esc(a.deporte)} · Acumulador @ ${esc(a.cuota)} · ${(a.fecha_partido || a.fecha)?.slice(0, 10) || ""}` : `${esc(a.deporte)} · ${esc(formatTipoApuesta(a))} @ ${esc(a.cuota)} · ${(a.fecha_partido || a.fecha)?.slice(0, 10) || ""}`;
       // INV-BIZ-16: patas estructuradas del parlay/combinada. Se muestra cada pick
       // con todos sus datos (antes solo se veía la pata #1 en las columnas planas).
@@ -2469,11 +2627,25 @@
       // INV-XCUT-20: EV del ticket frente a la línea justa de la referencia (1xBet) al registrar el pick.
       const evTxt = _evRefTexto(a);
       const evHtml = evTxt ? `<div class="bet-meta" style="color:${evTxt.color}">${evTxt.html}</div>` : "";
-      return `<div class="bet-item"><div class="bet-dot ${icon}"></div><div class="bet-info"><div class="bet-teams">${teamsLabel}</div><div class="bet-meta">${metaLabel}</div>${clvHtml}${evHtml}${legsHtml}</div><div class="bet-right"><div class="bet-badge bet-badge-${badgeKey}">${statusLabel}</div><div class="bet-monto">${fmt(a.monto)}</div><div class="bet-result ${rc}">${res}</div></div></div>`;
+      return `<div class="bet-item"><div class="bet-dot ${icon}" title="${statusLabel}" role="img" aria-label="${statusLabel}">${ico(_STATUS_ICO[a.status] || "clock")}</div><div class="bet-info"><div class="bet-teams">${teamsLabel}</div><div class="bet-meta">${metaLabel}</div>${clvHtml}${evHtml}${legsHtml}</div><div class="bet-right"><div class="bet-badge bet-badge-${badgeKey}">${statusLabel}</div><div class="bet-monto">${fmt(a.monto)}</div><div class="bet-result ${rc}">${res}</div></div></div>`;
     }
 
     /* ── Charts ── */
     function axisM(v) { const a = Math.abs(v); return a >= 1000 ? `${(v / 1000).toFixed(1)}ku` : `${+Number(v).toFixed(2)}u` }
+    // Colores de gráfica SIEMPRE desde variables del tema (INV-MINI-16/44): nunca hex fijos.
+    const CHART_FONT = "Inter, system-ui, -apple-system, 'Segoe UI', sans-serif";
+    function cAlpha(v, a) { return _hexAlpha(cssVar(v) || "#888888", a); }
+    // Relleno degradado vertical bajo una línea (se resuelve con el área ya medida).
+    function cFill(v) {
+      return ctx => {
+        const ch = ctx.chart, ar = ch.chartArea;
+        if (!ar) return cAlpha(v, 0.1);
+        const g = ch.ctx.createLinearGradient(0, ar.top, 0, ar.bottom);
+        g.addColorStop(0, cAlpha(v, 0.26));
+        g.addColorStop(1, cAlpha(v, 0));
+        return g;
+      };
+    }
     function destroyChart(k) { if (charts[k]) { charts[k].destroy(); delete charts[k]; } }
 
     function makeChartCumulative() {
@@ -2483,7 +2655,7 @@
       destroyChart("cumulative");
       let acum = 0;
       const data = ord.map(a => { acum += netoDe(a); return +acum.toFixed(2); });
-      charts.cumulative = new Chart(c, { type: "line", data: { labels: ord.map((_, i) => `#${i + 1}`), datasets: [{ label: "Ganancia acumulada", data, borderColor: "#00CD96", backgroundColor: "rgba(0,205,150,0.08)", borderWidth: 2, pointRadius: 0, fill: true, tension: 0.25 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => fmts(ctx.parsed.y) } } }, scales: { x: { grid: { color: cssVar("--chart-grid") }, ticks: { display: false } }, y: { grid: { color: cssVar("--chart-grid") }, ticks: { callback: axisM, font: { size: 10, family: "Space Mono" }, color: cssVar("--chart-tick") } } } } });
+      charts.cumulative = new Chart(c, { type: "line", data: { labels: ord.map((_, i) => `#${i + 1}`), datasets: [{ label: "Ganancia acumulada", data, borderColor: cssVar("--accent"), backgroundColor: cFill("--accent"), borderWidth: 2, pointRadius: 0, fill: true, tension: 0.25 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => fmts(ctx.parsed.y) } } }, scales: { x: { grid: { display: false }, ticks: { display: false } }, y: { grid: { color: cssVar("--chart-grid") }, ticks: { callback: axisM, font: { size: 10, family: CHART_FONT }, color: cssVar("--chart-tick") } } } } });
     }
 
     function makeChartMonthlyPL() {
@@ -2493,7 +2665,7 @@
       const datos = monthlyPLVista === "semanal" ? calcSemanal() : DATA.grafica_meses.map(m => ({ periodo: m.mes, neto: m.neto }));
       if (!datos.length) return;
       const labels = datos.map(d => monthlyPLVista === "semanal" ? d.periodo.replace(/^\d{4}-/, "") : mesLabel(d.periodo));
-      charts.monthlypl = new Chart(c, { type: "bar", data: { labels, datasets: [{ label: "Net", data: datos.map(d => +d.neto.toFixed(2)), backgroundColor: datos.map(d => d.neto >= 0 ? "rgba(0,205,150,0.75)" : "rgba(255,61,90,0.75)"), borderRadius: 5, borderSkipped: false }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { color: cssVar("--chart-grid") }, ticks: { font: { size: 10, family: "Space Mono" }, color: cssVar("--chart-tick") } }, y: { grid: { color: cssVar("--chart-grid") }, ticks: { callback: axisM, font: { size: 10, family: "Space Mono" }, color: cssVar("--chart-tick") } } } } });
+      charts.monthlypl = new Chart(c, { type: "bar", data: { labels, datasets: [{ label: "Net", data: datos.map(d => +d.neto.toFixed(2)), backgroundColor: datos.map(d => d.neto >= 0 ? cAlpha("--win", 0.85) : cAlpha("--loss", 0.85)), borderRadius: 6, borderSkipped: false }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false }, ticks: { font: { size: 10, family: CHART_FONT }, color: cssVar("--chart-tick") } }, y: { grid: { color: cssVar("--chart-grid") }, ticks: { callback: axisM, font: { size: 10, family: CHART_FONT }, color: cssVar("--chart-tick") } } } } });
     }
 
     function makeChartNeto() {
@@ -2501,14 +2673,14 @@
       if (!c || !DATA.grafica_meses.length) return;
       destroyChart("neto");
       let acum = 0;
-      charts.neto = new Chart(c, { type: "bar", data: { labels: DATA.grafica_meses.map(m => mesLabel(m.mes)), datasets: [{ label: "Neto acumulado", data: DATA.grafica_meses.map(m => { acum += m.neto; return acum; }), backgroundColor: DATA.grafica_meses.map((_, i, arr) => { let s = 0; arr.slice(0, i + 1).forEach(x => s += x.neto); return s >= 0 ? "rgba(0,205,150,0.75)" : "rgba(255,61,90,0.75)" }), borderRadius: 5, borderSkipped: false }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { color: cssVar("--chart-grid") }, ticks: { font: { size: 10, family: "Space Mono" }, color: cssVar("--chart-tick") } }, y: { grid: { color: cssVar("--chart-grid") }, ticks: { callback: axisM, font: { size: 10, family: "Space Mono" }, color: cssVar("--chart-tick") } } } } });
+      charts.neto = new Chart(c, { type: "bar", data: { labels: DATA.grafica_meses.map(m => mesLabel(m.mes)), datasets: [{ label: "Neto acumulado", data: DATA.grafica_meses.map(m => { acum += m.neto; return acum; }), backgroundColor: DATA.grafica_meses.map((_, i, arr) => { let s = 0; arr.slice(0, i + 1).forEach(x => s += x.neto); return s >= 0 ? cAlpha("--win", 0.85) : cAlpha("--loss", 0.85) }), borderRadius: 6, borderSkipped: false }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false }, ticks: { font: { size: 10, family: CHART_FONT }, color: cssVar("--chart-tick") } }, y: { grid: { color: cssVar("--chart-grid") }, ticks: { callback: axisM, font: { size: 10, family: CHART_FONT }, color: cssVar("--chart-tick") } } } } });
     }
 
     function makeChartMeses() {
       const c = document.getElementById("chartMeses");
       if (!c || !DATA.grafica_meses.length) return;
       destroyChart("meses");
-      charts.meses = new Chart(c, { type: "bar", data: { labels: DATA.grafica_meses.map(m => mesLabel(m.mes)), datasets: [{ label: "Apostado", data: DATA.grafica_meses.map(m => m.apostado), backgroundColor: "rgba(108,99,255,0.6)", borderRadius: 4, borderSkipped: false }, { label: "Ganado", data: DATA.grafica_meses.map(m => m.ganado), backgroundColor: "rgba(0,205,150,0.6)", borderRadius: 4, borderSkipped: false }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true, labels: { font: { size: 11, family: "DM Sans" }, boxWidth: 10, padding: 10, color: cssVar("--text-2") } } }, scales: { x: { grid: { color: cssVar("--chart-grid") }, ticks: { font: { size: 10, family: "Space Mono" }, color: cssVar("--chart-tick") } }, y: { grid: { color: cssVar("--chart-grid") }, ticks: { callback: axisM, font: { size: 10, family: "Space Mono" }, color: cssVar("--chart-tick") } } } } });
+      charts.meses = new Chart(c, { type: "bar", data: { labels: DATA.grafica_meses.map(m => mesLabel(m.mes)), datasets: [{ label: "Apostado", data: DATA.grafica_meses.map(m => m.apostado), backgroundColor: cAlpha("--chart-tick", 0.45), borderRadius: 4, borderSkipped: false }, { label: "Ganado", data: DATA.grafica_meses.map(m => m.ganado), backgroundColor: cAlpha("--accent", 0.9), borderRadius: 4, borderSkipped: false }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true, labels: { font: { size: 11, family: CHART_FONT }, boxWidth: 10, padding: 10, color: cssVar("--text-2") } } }, scales: { x: { grid: { display: false }, ticks: { font: { size: 10, family: CHART_FONT }, color: cssVar("--chart-tick") } }, y: { grid: { color: cssVar("--chart-grid") }, ticks: { callback: axisM, font: { size: 10, family: CHART_FONT }, color: cssVar("--chart-tick") } } } } });
     }
 
     function makeChartDep() {
@@ -2516,7 +2688,7 @@
       if (!c || !DATA.deportes.length) return;
       destroyChart("dep");
       const deps = [...DATA.deportes].sort((a, b) => b.roi - a.roi);
-      charts.dep = new Chart(c, { type: "bar", data: { labels: deps.map(d => d.nombre), datasets: [{ label: "ROI %", data: deps.map(d => parseFloat(d.roi.toFixed(1))), backgroundColor: deps.map(d => d.roi >= 0 ? "rgba(0,205,150,0.75)" : "rgba(255,61,90,0.75)"), borderRadius: 5, borderSkipped: false }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { color: cssVar("--chart-grid") }, ticks: { font: { size: 10, family: "Space Mono" }, color: cssVar("--chart-tick") } }, y: { grid: { color: cssVar("--chart-grid") }, ticks: { callback: v => `${v}%`, font: { size: 10, family: "Space Mono" }, color: cssVar("--chart-tick") } } } } });
+      charts.dep = new Chart(c, { type: "bar", data: { labels: deps.map(d => d.nombre), datasets: [{ label: "ROI %", data: deps.map(d => parseFloat(d.roi.toFixed(1))), backgroundColor: deps.map(d => d.roi >= 0 ? cAlpha("--win", 0.85) : cAlpha("--loss", 0.85)), borderRadius: 6, borderSkipped: false }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false }, ticks: { font: { size: 10, family: CHART_FONT }, color: cssVar("--chart-tick") } }, y: { grid: { color: cssVar("--chart-grid") }, ticks: { callback: v => `${v}%`, font: { size: 10, family: CHART_FONT }, color: cssVar("--chart-tick") } } } } });
     }
 
     function makeChartTipo() {
@@ -2525,7 +2697,7 @@
       destroyChart("tipo");
       const tipos = calcRoiPorTipo();
       if (!tipos.length) return;
-      charts.tipo = new Chart(c, { type: "bar", data: { labels: tipos.map(t => t.tipo), datasets: [{ label: "ROI %", data: tipos.map(t => parseFloat(t.roi.toFixed(1))), backgroundColor: tipos.map(t => t.roi >= 0 ? "rgba(0,205,150,0.75)" : "rgba(255,61,90,0.75)"), borderRadius: 5, borderSkipped: false }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { color: cssVar("--chart-grid") }, ticks: { font: { size: 10, family: "Space Mono" }, color: cssVar("--chart-tick") } }, y: { grid: { color: cssVar("--chart-grid") }, ticks: { callback: v => `${v}%`, font: { size: 10, family: "Space Mono" }, color: cssVar("--chart-tick") } } } } });
+      charts.tipo = new Chart(c, { type: "bar", data: { labels: tipos.map(t => t.tipo), datasets: [{ label: "ROI %", data: tipos.map(t => parseFloat(t.roi.toFixed(1))), backgroundColor: tipos.map(t => t.roi >= 0 ? cAlpha("--win", 0.85) : cAlpha("--loss", 0.85)), borderRadius: 6, borderSkipped: false }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false }, ticks: { font: { size: 10, family: CHART_FONT }, color: cssVar("--chart-tick") } }, y: { grid: { color: cssVar("--chart-grid") }, ticks: { callback: v => `${v}%`, font: { size: 10, family: CHART_FONT }, color: cssVar("--chart-tick") } } } } });
     }
 
     function makeChartRolling() {
@@ -2535,7 +2707,7 @@
       const all = calcRolling(20);
       if (!all.length) return;
       const points = rollingShow >= 9999 ? all : all.slice(-rollingShow);
-      charts.rolling = new Chart(c, { type: "line", data: { labels: points.map(p => `#${p.i + 1}`), datasets: [{ label: "ROI rodante", data: points.map(p => parseFloat(p.roi.toFixed(2))), borderColor: "#00CD96", backgroundColor: "rgba(0,205,150,0.08)", borderWidth: 2, pointRadius: 0, fill: true, tension: 0.3 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `${ctx.parsed.y >= 0 ? "+" : ""}${ctx.parsed.y.toFixed(1)}%` } } }, scales: { x: { grid: { color: cssVar("--chart-grid") }, ticks: { display: false } }, y: { grid: { color: cssVar("--chart-grid") }, ticks: { callback: v => `${v >= 0 ? "+" : ""}${v}%`, font: { size: 10, family: "Space Mono" }, color: cssVar("--chart-tick") }, afterDataLimits: scale => { const pad = Math.abs(scale.max - scale.min) * 0.15; scale.max += pad; scale.min -= pad; } } } } });
+      charts.rolling = new Chart(c, { type: "line", data: { labels: points.map(p => `#${p.i + 1}`), datasets: [{ label: "ROI rodante", data: points.map(p => parseFloat(p.roi.toFixed(2))), borderColor: cssVar("--accent"), backgroundColor: cFill("--accent"), borderWidth: 2, pointRadius: 0, fill: true, tension: 0.3 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `${ctx.parsed.y >= 0 ? "+" : ""}${ctx.parsed.y.toFixed(1)}%` } } }, scales: { x: { grid: { display: false }, ticks: { display: false } }, y: { grid: { color: cssVar("--chart-grid") }, ticks: { callback: v => `${v >= 0 ? "+" : ""}${v}%`, font: { size: 10, family: CHART_FONT }, color: cssVar("--chart-tick") }, afterDataLimits: scale => { const pad = Math.abs(scale.max - scale.min) * 0.15; scale.max += pad; scale.min -= pad; } } } } });
     }
 
     function initCharts() {
@@ -2543,13 +2715,29 @@
       if (_noBlur && window.innerWidth < 768) return; // en Linux/tdesktop los charts son lazy (botón manual) en móvil
       Chart.defaults.color = cssVar("--chart-tick");
       Chart.defaults.borderColor = cssVar("--chart-grid");
+      Chart.defaults.font.family = CHART_FONT;
+      Chart.defaults.font.size = 11;
+      try {
+        Chart.defaults.scale.border.display = false;
+        Chart.defaults.scale.ticks.maxRotation = 0;
+        Chart.defaults.scale.ticks.autoSkipPadding = 14;
+      } catch (_) {}
+      Chart.defaults.elements.line.borderCapStyle = "round";
+      Chart.defaults.elements.point.hoverRadius = 4;
+      Chart.defaults.elements.point.hoverBorderWidth = 2;
       // Tooltips táctiles temáticos (se activan al tocar la gráfica en móvil).
       Chart.defaults.plugins.tooltip.backgroundColor = cssVar("--card2");
-      Chart.defaults.plugins.tooltip.titleColor = cssVar("--text");
+      Chart.defaults.plugins.tooltip.titleColor = cssVar("--text-2");
       Chart.defaults.plugins.tooltip.bodyColor = cssVar("--text");
       Chart.defaults.plugins.tooltip.borderColor = cssVar("--border");
       Chart.defaults.plugins.tooltip.borderWidth = 1;
-      Chart.defaults.plugins.tooltip.padding = 10;
+      Chart.defaults.plugins.tooltip.padding = 12;
+      Chart.defaults.plugins.tooltip.cornerRadius = 12;
+      Chart.defaults.plugins.tooltip.boxPadding = 4;
+      Chart.defaults.plugins.tooltip.titleFont = { weight: "500", size: 11 };
+      Chart.defaults.plugins.tooltip.bodyFont = { weight: "600", size: 13 };
+      Chart.defaults.plugins.legend.labels.usePointStyle = true;
+      Chart.defaults.plugins.legend.labels.pointStyle = "circle";
       Chart.defaults.interaction = { mode: "index", intersect: false };
       if (tabActual === "resumen") { makeChartCumulative(); makeChartMonthlyPL(); makeChartNeto(); makeChartMeses(); }
       if (tabActual === "deportes") { makeChartDep(); }
@@ -2592,7 +2780,17 @@
       const wlClear = e.target.closest("[data-action='wl-clear-momentum']");
       if (wlClear) { filtroMomentumIds = null; wlPage = 1; const l = document.getElementById("apuestasLista"); if (l) l.innerHTML = renderApuestasList(); return; }
       const wlPrev = e.target.closest("[data-wl-page]");
-      if (wlPrev) { wlPage += parseInt(wlPrev.dataset.wlPage, 10); const l = document.getElementById("apuestasLista"); if (l) l.innerHTML = renderApuestasList(); return; }
+      if (wlPrev) {
+        wlPage += parseInt(wlPrev.dataset.wlPage, 10);
+        const l = document.getElementById("apuestasLista");
+        if (l) {
+          l.innerHTML = renderApuestasList();
+          // Al cambiar de página, volver al inicio de la lista (no quedarse al pie).
+          const y = l.getBoundingClientRect().top + window.scrollY - 80;
+          if (window.scrollY > y) window.scrollTo({ top: y, behavior: "smooth" });
+        }
+        return;
+      }
       const wlSort = e.target.closest("[data-wl-sort]");
       if (wlSort) {
         const col = wlSort.dataset.wlSort;
@@ -2721,12 +2919,12 @@
       if (!el) return;
       let chips;
       if (_inAdvanced) {
-        chips = `<button class="sub-chip sub-back" data-advanced-close>‹ Volver</button>`
+        chips = `<button class="sub-chip sub-back" data-advanced-close>${ico("chevL")}Volver</button>`
           + ADVANCED.map(s => `<button class="sub-chip" data-section="${s}">${SECTION_LABELS[s]}</button>`).join("");
       } else {
         const g = NAV_GROUPS.find(x => x.id === currentGroup) || NAV_GROUPS[0];
         chips = g.sections.map(s => `<button class="sub-chip" data-section="${s}">${SECTION_LABELS[s]}</button>`).join("");
-        if (g.more) chips += `<button class="sub-chip sub-more" data-advanced>Más análisis ▾</button>`;
+        if (g.more) chips += `<button class="sub-chip sub-more" data-advanced>Más análisis${ico("chevR")}</button>`;
       }
       el.innerHTML = chips;
       el.style.display = el.querySelectorAll(".sub-chip").length > 1 ? "flex" : "none";
@@ -2794,15 +2992,15 @@
     }
 
     /* ── Compartir imagen: descarga la tarjeta PNG del bot (/api/share-card,
-       misma imagen que el botón 📸 de Telegram) y la comparte con Web Share API
+       misma imagen que el botón de Telegram) y la comparte con Web Share API
        (fallback a descarga). El render vive 100% en el bot (INV-MINI-02). ── */
     let _sharing = false;
     async function shareCard() {
       if (_sharing) return;
       _sharing = true;
       const btn = document.querySelector("[data-action='share-card']");
-      const txt = btn ? btn.textContent : "";
-      if (btn) { btn.disabled = true; btn.style.opacity = "0.6"; btn.textContent = "⏳ Generando imagen…"; }
+      const txt = btn ? btn.innerHTML : "";
+      if (btn) { btn.disabled = true; btn.textContent = "Generando…"; }
       haptic("select");
       // Aviso visible dentro Y fuera de Telegram: tg.showAlert es un NO-OP cuando la app
       // no corre dentro del cliente Telegram (el SDK del CDN crea window.Telegram.WebApp
@@ -2851,7 +3049,7 @@
       } catch (e) {
         notify("Error de conexión al generar la imagen.");
       } finally {
-        if (btn) { btn.disabled = false; btn.style.opacity = ""; btn.textContent = txt; }
+        if (btn) { btn.disabled = false; btn.innerHTML = txt; }
         _sharing = false;
       }
     }
@@ -2875,15 +3073,15 @@
 
     function renderGestion() {
       return `
-  <div class="section-header">Gestión de <span>apuestas</span></div>
+  <div class="section-header">Gestión de apuestas</div>
 
   <div class="g-toolbar">
-    <button class="btn-add" data-action="new-bet">➕ Nueva apuesta</button>
-    <button class="btn-unidad" data-action="open-unidad" title="Cuánto dinero vale 1 unidad">💱 1u = ${esc(fmtEq(1).replace("≈ ", ""))}</button>
-    <span style="font-size:11px;color:var(--text-3)">${DATA?.apuestas?.length ?? 0} registradas</span>
+    <button class="btn-add" data-action="new-bet">${ico("plus", "ico-sm")}Nueva apuesta</button>
+    <button class="btn-unidad" data-action="open-unidad" title="Cuánto dinero vale 1 unidad">${ico("coins", "ico-sm")}1u = ${esc(fmtEq(1).replace("≈ ", ""))}</button>
+    <span class="g-count">${DATA?.apuestas?.length ?? 0} registradas</span>
   </div>
 
-  <div class="search-wrap"><span class="search-icon">🔍</span><input class="search-input" placeholder="Buscar por equipo..." data-search-equipo-gestion value="${esc(filtroEquipoGestion)}"></div>
+  <div class="search-wrap"><span class="search-icon">${ico("search")}</span><input class="search-input" placeholder="Buscar por equipo…" data-search-equipo-gestion value="${esc(filtroEquipoGestion)}"></div>
 
   <div id="gLista">${renderGLista()}</div>`;
     }
@@ -2906,8 +3104,9 @@
     // por el detalle de día del Calendario (INV-MINI-31).
     function renderGCard(a) {
       const rowId = _rowIdOf(a, DATA.apuestas.indexOf(a));
-      const si = a.status === "win" ? "✅" : a.status === "loss" ? "❌" : a.status === "void" ? "🔄" : "⏳";
-      const gStr = a.status === "win" ? ` → +${fmt(a.ganancia)}` : a.status === "loss" ? ` → -${fmt(a.monto)}` : "";
+      const stCls = a.status === "win" ? "win" : a.status === "loss" ? "loss" : a.status === "void" ? "void" : "pend";
+      const stLbl = { win: "Ganada", loss: "Perdida", void: "Nula" }[a.status] || "Pendiente";
+      const gStr = a.status === "win" ? ` · <span class="green">+${fmt(a.ganancia)}</span>` : a.status === "loss" ? ` · <span class="red">−${fmt(a.monto)}</span>` : "";
       // INV-XCUT-16: CLV visible en la tarjeta si la apuesta tiene cierre registrado.
       const clvStr = (typeof a.clv === "number")
         ? ` · <span style="color:${a.clv >= 0 ? "var(--win)" : "var(--loss)"}">CLV ${a.clv >= 0 ? "+" : ""}${(a.clv * 100).toFixed(1)}%</span>` : "";
@@ -2915,13 +3114,16 @@
       const evStr = evTxtG ? ` · <span style="color:${evTxtG.color}">${evTxtG.html}</span>` : "";
       return `<div class="g-card">
       <div class="g-card-head">
-        <div>
-          <div class="g-teams">${si} ${esc(a.equipo1)} vs ${esc(a.equipo2)}</div>
-          <div class="g-meta">${esc(a.deporte || "")}${a.deporte ? " · " : ""}${esc(a.tipo || "")} @ ${esc(String(a.cuota || ""))} · ${fmt(a.monto)}${gStr}${a.fecha_partido ? " · 📅 " + esc(a.fecha_partido) : ""}${clvStr}${evStr}</div>
+        <div class="g-main">
+          <div class="bet-dot ${stCls}" title="${stLbl}" role="img" aria-label="${stLbl}">${ico(_STATUS_ICO[a.status] || "clock")}</div>
+          <div style="min-width:0">
+            <div class="g-teams">${esc(a.equipo1)} vs ${esc(a.equipo2)}</div>
+            <div class="g-meta">${esc(a.deporte || "")}${a.deporte ? " · " : ""}${esc(a.tipo || "")} @ ${esc(String(a.cuota || ""))} · ${fmt(a.monto)}${gStr}${a.fecha_partido ? " · " + esc(a.fecha_partido) : ""}${clvStr}${evStr}</div>
+          </div>
         </div>
         <div class="g-actions">
-          <button class="btn-edit" data-action="edit-bet" data-rowid="${rowId}">✏️</button>
-          <button class="btn-del"  data-action="delete-bet" data-rowid="${rowId}" data-label="${esc(a.equipo1)} vs ${esc(a.equipo2)}">🗑️</button>
+          <button class="btn-edit" data-action="edit-bet" data-rowid="${rowId}" aria-label="Editar" title="Editar">${ico("edit")}</button>
+          <button class="btn-del"  data-action="delete-bet" data-rowid="${rowId}" data-label="${esc(a.equipo1)} vs ${esc(a.equipo2)}" aria-label="Eliminar" title="Eliminar">${ico("trash")}</button>
         </div>
       </div>
     </div>`;
@@ -2934,7 +3136,7 @@
       const visibles = lista.slice(0, _gListLimit);
       const cards = visibles.map(renderGCard).join("");
       const more = lista.length > visibles.length
-        ? `<button class="retry-btn" data-action="load-more-bets" style="width:100%;margin-top:8px">Cargar más (${lista.length - visibles.length} restantes)</button>`
+        ? `<button class="retry-btn ghost" data-action="load-more-bets" style="width:100%;margin-top:8px">Cargar más · ${lista.length - visibles.length} restantes</button>`
         : "";
       return cards + more;
     }
@@ -3001,7 +3203,7 @@
       <div class="m-handle"></div>
       <div class="m-head">
         <div class="m-title">
-          <span>${rowId === null ? "➕ Nueva apuesta" : "✏️ Editar apuesta"}</span>
+          <span>${rowId === null ? "Nueva apuesta" : "Editar apuesta"}</span>
           <button class="m-close" data-action="close-modal">✕</button>
         </div>
       </div>
@@ -3010,17 +3212,17 @@
         <div class="u-zone" id="uZone"
              data-action="trigger-upload"
              data-dropzone>
-          <div class="u-icon">📸</div>
+          <div class="u-icon">${ico("image")}</div>
           <div class="u-text">Foto del ticket → auto-rellena el formulario</div>
           <div class="u-sub">Toca o arrastra la imagen</div>
         </div>
         <input id="uInput" type="file" accept="image/*" style="display:none" data-action="upload-image">
-        <div class="u-analyzing" id="uAn">⏳ Analizando con IA…</div>`: ""}
+        <div class="u-analyzing" id="uAn">Analizando con IA…</div>`: ""}
 
         <!-- Toggle Parlay (solo en creación nueva) -->
         ${rowId === null ? `
         <div class="m-group" style="display:flex;align-items:center;gap:10px;margin-top:8px">
-          <label class="m-label" style="margin:0;flex:1">🎯 Es Parlay / Acumulador</label>
+          <label class="m-label" style="margin:0;flex:1">Es Parlay / Acumulador</label>
           <label style="position:relative;display:inline-block;width:44px;height:24px">
             <input type="checkbox" id="mEsParlay"
                    style="opacity:0;width:0;height:0">
@@ -3051,13 +3253,13 @@
         <!-- Sección Parlay (visible solo en modo parlay) -->
         <div id="parlaySection" style="display:none">
           <div class="m-group" style="background:var(--surface-2,#1e2235);border-radius:10px;padding:10px">
-            <div style="font-size:12px;color:var(--accent);font-weight:700;margin-bottom:8px">🎯 PICKS DEL PARLAY</div>
+            <div style="font-size:12px;color:var(--accent);font-weight:700;margin-bottom:8px">PICKS DEL PARLAY</div>
             <div id="picksContainer"></div>
             <button data-action="add-parlay-pick"
                     style="width:100%;margin-top:8px;padding:8px;border:1px dashed var(--accent);
                            border-radius:8px;background:transparent;color:var(--accent);
                            font-size:13px;cursor:pointer">
-              ➕ Agregar pick
+              Agregar pick
             </button>
           </div>
           <div class="m-row" style="margin-top:8px">
@@ -3068,7 +3270,7 @@
                 <button data-action="calc-cuota"
                         style="padding:8px 10px;border-radius:8px;background:var(--accent);
                                color:#fff;border:none;cursor:pointer;white-space:nowrap;font-size:12px">
-                  🔄 Calcular
+                  Calcular
                 </button>
               </div>
               <div id="cuotaAutoMsg" style="font-size:11px;color:var(--text-2);margin-top:4px;display:none"></div>
@@ -3085,7 +3287,7 @@
         <div class="m-group">
           <label class="m-label">Fecha del partido</label>
           <div class="m-date-row">
-            <button class="m-now-btn" data-action="set-fecha-now">📅 Ahora</button>
+            <button class="m-now-btn" data-action="set-fecha-now">Ahora</button>
             <input id="mFecha" class="m-input" type="date" value="${esc(v.fecha)}" style="flex:1">
           </div>
           <input id="mHora" class="m-input" type="time" value="${esc(v.hora)}" style="margin-top:6px">
@@ -3098,15 +3300,15 @@
         ${rowId !== null ? `
         <div class="m-group"><label class="m-label">Resultado</label>
           <select id="mStatus" class="m-input">
-            <option value="pending" ${v.status === "pending" ? "selected" : ""}>⏳ Pendiente</option>
-            <option value="win"     ${v.status === "win" ? "selected" : ""}>✅ Win</option>
-            <option value="loss"    ${v.status === "loss" ? "selected" : ""}>❌ Loss</option>
-            <option value="void"    ${v.status === "void" ? "selected" : ""}>🔄 Void</option>
+            <option value="pending" ${v.status === "pending" ? "selected" : ""}>Pendiente</option>
+            <option value="win"     ${v.status === "win" ? "selected" : ""}>Win</option>
+            <option value="loss"    ${v.status === "loss" ? "selected" : ""}>Loss</option>
+            <option value="void"    ${v.status === "void" ? "selected" : ""}>Void</option>
           </select></div>`: ""}
       </div>
       <div class="m-foot">
         <div class="m-err" id="mErr"></div>
-        <button class="m-submit" id="mSubmitBtn" data-action="submit-bet">${rowId === null ? "✅ Registrar apuesta" : "💾 Guardar cambios"}</button>
+        <button class="m-submit" id="mSubmitBtn" data-action="submit-bet">${rowId === null ? "Registrar apuesta" : "Guardar cambios"}</button>
       </div>
     </div>
   </div>`;
@@ -3115,7 +3317,7 @@
         window.visualViewport.addEventListener("scroll", syncModalToViewport);
       }
       syncModalToViewport();
-      _setupMainButton(rowId === null ? "✅ Registrar apuesta" : "💾 Guardar cambios");
+      _setupMainButton(rowId === null ? "Registrar apuesta" : "Guardar cambios");
     }
 
     // archivo: index.html
@@ -3143,7 +3345,7 @@
   <div class="m-overlay" id="mOverlay">
     <div class="m-sheet">
       <div class="m-handle"></div>
-      <div class="m-head"><div class="m-title"><span>💱 Valor de la unidad</span>
+      <div class="m-head"><div class="m-title"><span>Valor de la unidad</span>
         <button class="m-close" data-action="close-modal">✕</button></div></div>
       <div class="m-body">
         <p class="unit-help">Las estadísticas de este canal se llevan en <b>unidades</b>. Aquí defines cuánto dinero es 1u: se usa para convertir el importe de los tickets y para mostrar el equivalente en dinero.</p>
@@ -3159,7 +3361,7 @@
       </div>
       <div class="m-foot">
         <div class="m-err" id="mErr"></div>
-        <button class="m-submit" id="uSaveBtn" data-action="save-unidad">💾 Guardar</button>
+        <button class="m-submit" id="uSaveBtn" data-action="save-unidad">Guardar</button>
       </div>
     </div>
   </div>`;
@@ -3181,10 +3383,10 @@
     async function saveUnidad() {
       const raw = (document.getElementById("uValor")?.value || "").trim().replace(",", ".");
       const valor = parseFloat(raw);
-      if (!(valor > 0) || !isFinite(valor)) { showErr("⚠️ El valor debe ser un número mayor que 0."); return; }
+      if (!(valor > 0) || !isFinite(valor)) { showErr("El valor debe ser un número mayor que 0."); return; }
       const reescalar = document.querySelector('input[name="uModo"]:checked')?.value !== "mantener";
       const btn = document.getElementById("uSaveBtn");
-      if (btn) { btn.disabled = true; btn.textContent = "⏳ Guardando…"; }
+      if (btn) { btn.disabled = true; btn.textContent = "Guardando…"; }
       try {
         const resp = await fetch(`${API_URL}/api/config/unidad`, {
           method: "PUT", headers: apiHeaders(), body: JSON.stringify({ valor, reescalar_historial: reescalar }),
@@ -3195,8 +3397,8 @@
         closeModal();
         recargar();
       } catch (err) {
-        if (btn) { btn.disabled = false; btn.textContent = "💾 Guardar"; }
-        showErr("⚠️ " + err.message);
+        if (btn) { btn.disabled = false; btn.textContent = "Guardar"; }
+        showErr("" + err.message);
       }
     }
     // archivo: index.html — funciones del modo Parlay
@@ -3395,7 +3597,7 @@
         </div>`
           ).join("");
           uz.innerHTML = `
-        <div class="u-icon">🎯</div>
+        <div class="u-icon">${ico("layers")}</div>
         <div class="u-text" style="color:var(--accent);font-weight:700">
           Parlay · ${d.picks.length} picks · Cuota total: ${esc(String(d.cuota || ""))}
         </div>
@@ -3406,22 +3608,22 @@
           _ocrCombinadaPicks = d.picks.map(p => ({ tipo_apuesta: p.tipo_apuesta || "" }));
           const sels = d.picks.map(p => esc(p.tipo_apuesta || "?")).join(" + ");
           uz.innerHTML = `
-        <div class="u-icon">🔗</div>
+        <div class="u-icon">${ico("link")}</div>
         <div class="u-text" style="color:var(--accent);font-weight:700">
           Combinada · ${d.picks.length} selecciones · Cuota: ${esc(String(d.cuota || ""))}
         </div>
         <div style="width:100%;margin-top:8px;text-align:left;font-size:11px;padding:4px 0">${sels}</div>
         <div class="u-sub" style="margin-top:6px">Revisa las unidades y guarda ↓</div>`;
         } else {
-          uz.innerHTML = `<div class="u-icon">✅</div><div class="u-text" style="color:var(--win)">Ticket detectado — revisa los campos</div>`;
+          uz.innerHTML = `<div class="u-icon">${ico("check")}</div><div class="u-text" style="color:var(--win)">Ticket detectado — revisa los campos</div>`;
         }
-      } catch (err) { showErr("⚠️ " + err.message); uz.style.opacity = "1"; }
+      } catch (err) { showErr("" + err.message); uz.style.opacity = "1"; }
       finally { an.style.display = "none"; }
     }
 
     // archivo: index.html
     async function submitBet() {
-      if (!_isAuthed()) { showErr("🔑 Inicia sesión para usar esta función."); return; }
+      if (!_isAuthed()) { showErr("Inicia sesión para usar esta función."); return; }
       const esParlay = document.getElementById("mEsParlay")?.checked || false;
       const monto = document.getElementById("mMonto")?.value.trim();
       const dep = document.getElementById("mDep")?.value.trim();
@@ -3431,8 +3633,8 @@
       const st = document.getElementById("mStatus")?.value || "pending";
       const notasVis = document.getElementById("mNotasVisible")?.value.trim() || "";
 
-      if (!monto) { showErr("⚠️ Ingresa las unidades apostadas."); return; }
-      if (!(parseFloat(monto) > 0)) { showErr("⚠️ Las unidades deben ser mayores que 0."); return; }
+      if (!monto) { showErr("Ingresa las unidades apostadas."); return; }
+      if (!(parseFloat(monto) > 0)) { showErr("Las unidades deben ser mayores que 0."); return; }
 
       let payload;
 
@@ -3446,7 +3648,7 @@
         });
 
         const validPicks = _parlayPicks.filter(p => p.equipo1 && p.equipo2 && p.tipo_apuesta && p.cuota);
-        if (validPicks.length < 2) { showErr("⚠️ Un parlay necesita al menos 2 picks completos."); return; }
+        if (validPicks.length < 2) { showErr("Un parlay necesita al menos 2 picks completos."); return; }
 
         const cuotaTotal = parseFloat(document.getElementById("mCuotaTotal")?.value) ||
           validPicks.reduce((a, b) => a * parseFloat(b.cuota || 1), 1);
@@ -3486,7 +3688,7 @@
         const eq2 = document.getElementById("mEq2")?.value.trim();
         const tipo = document.getElementById("mTipo")?.value.trim();
         const cuota = document.getElementById("mCuota")?.value.trim();
-        if (!eq1 || !eq2 || !tipo || !cuota) { showErr("⚠️ Completa: equipos, tipo y cuota."); return; }
+        if (!eq1 || !eq2 || !tipo || !cuota) { showErr("Completa: equipos, tipo y cuota."); return; }
 
         const notas = document.getElementById("mNotas")?.value || notasVis;
         payload = { equipo1: eq1, equipo2: eq2, tipo_apuesta: tipo, cuota, monto, deporte: dep || "Otro", liga, fecha_partido: fecha, hora_partido: hora, notas };
@@ -3506,7 +3708,7 @@
 
       const btn = document.getElementById("mSubmitBtn");
       const originalTxt = btn?.textContent || "";
-      if (btn) { btn.disabled = true; btn.textContent = "⏳ Guardando…"; }
+      if (btn) { btn.disabled = true; btn.textContent = "Guardando…"; }
       const mb = tg?.MainButton;
       if (mb) { try { mb.showProgress(); mb.disable(); } catch (_) {} }
 
@@ -3526,7 +3728,7 @@
               if (!(cuotaEdit > 0) || !(montoEdit > 0)) {
                 if (btn) { btn.disabled = false; btn.textContent = originalTxt; }
                 if (mb) { try { mb.hideProgress(); mb.enable(); } catch (_) {} }
-                showErr("⚠️ Completa cuota y unidades válidas antes de marcar como ganada.");
+                showErr("Completa cuota y unidades válidas antes de marcar como ganada.");
                 return;
               }
               // Retorno bruto: unidades × cuota (4 decimales: los importes van en u).
@@ -3547,7 +3749,7 @@
         _returnToEditOrigin();
       } catch (err) {
         haptic("error");
-        showErr("❌ " + err.message);
+        showErr("" + err.message);
         if (btn) { btn.disabled = false; btn.textContent = originalTxt; }
         if (mb) { try { mb.hideProgress(); mb.enable(); } catch (_) {} }
       }
@@ -3567,7 +3769,7 @@
         if (!j.ok) throw new Error(j.error);
         await recargar();
         _returnToEditOrigin();
-      } catch (err) { alert("❌ " + err.message); }
+      } catch (err) { alert("" + err.message); }
     }
 
     function showErr(msg) { const el = document.getElementById("mErr"); if (el) { el.textContent = msg; el.style.display = "block"; } }
