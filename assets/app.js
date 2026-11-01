@@ -364,6 +364,8 @@
     }
 
     function esc(s) { return s == null ? "" : String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;") }
+    // «A vs B», o solo el nombre si no hay rival (props de un jugador del canal 4). Sin escapar: lo escapa quien lo pinta.
+    function partidoDe(a) { return [a.equipo1, a.equipo2].map(x => String(x || "").trim()).filter(Boolean).join(" vs ") || "?"; }
     // INV-MINI-43: todos los importes de /api/* vienen en UNIDADES (INV-XCUT-22). fmt*/fmtC*
     // muestran unidades ("12.5u"); fmtEq/eqLine, el equivalente en dinero al valor actual
     // de la unidad del canal (DATA.unidad.valor, que el owner fija en Ajustes).
@@ -2504,7 +2506,7 @@
     function _wlFila(a, idx) {
       const fecha = (a.fecha_partido || a.fecha || "").slice(0, 10) || "—";
       const esParlay = (a.equipo2 || "").startsWith("PARLAY");
-      const partido = esParlay ? `Parlay · ${esc(a.equipo2 || "")}` : `${esc(a.equipo1 || "?")} vs ${esc(a.equipo2 || "?")}`;
+      const partido = esParlay ? `Parlay · ${esc(a.equipo2 || "")}` : `${esc(partidoDe(a))}`;
       const mercado = esc(formatTipoApuesta(a));
       const pos = posicionBet(a);
       const posTag = (pos === "FAV" || pos === "DOG") ? `<span class="wl-tag">${pos}</span>` : "";
@@ -2607,13 +2609,13 @@
       const _stMap = { win: ["Ganada", "win"], loss: ["Perdida", "loss"], void: ["Nula", "void"] };
       const [statusLabel, badgeKey] = _stMap[a.status] || ["Pendiente", "pend"];
       const esParlay = (a.equipo2 || "").startsWith("PARLAY");
-      const teamsLabel = esParlay ? `Parlay · ${esc(a.equipo2 || "")}` : `${esc(a.equipo1 || "?")} vs ${esc(a.equipo2 || "?")}`;
+      const teamsLabel = esParlay ? `Parlay · ${esc(a.equipo2 || "")}` : `${esc(partidoDe(a))}`;
       const metaLabel = esParlay ? `${esc(a.deporte)} · Acumulador @ ${esc(a.cuota)} · ${(a.fecha_partido || a.fecha)?.slice(0, 10) || ""}` : `${esc(a.deporte)} · ${esc(formatTipoApuesta(a))} @ ${esc(a.cuota)} · ${(a.fecha_partido || a.fecha)?.slice(0, 10) || ""}`;
       // INV-BIZ-16: patas estructuradas del parlay/combinada. Se muestra cada pick
       // con todos sus datos (antes solo se veía la pata #1 en las columnas planas).
       const legs = Array.isArray(a.legs) ? a.legs : [];
       const legsHtml = legs.length ? `<div class="bet-legs" style="margin-top:5px;font-size:11px;color:var(--text-2);line-height:1.55">${legs.map((p, i) => {
-        const teams = (p.equipo1 || p.equipo2) ? `${esc(p.equipo1 || "?")} vs ${esc(p.equipo2 || "?")} · ` : "";
+        const teams = (p.equipo1 || p.equipo2) ? `${esc(partidoDe(p))} · ` : "";
         const ctx = [p.deporte, p.liga].filter(Boolean).map(esc).join(" · ");
         const ctxHtml = ctx ? `<span style="opacity:.7">${ctx} · </span>` : "";
         const cuota = p.cuota ? ` @ ${esc(String(p.cuota))}` : "";
@@ -3117,13 +3119,13 @@
         <div class="g-main">
           <div class="bet-dot ${stCls}" title="${stLbl}" role="img" aria-label="${stLbl}">${ico(_STATUS_ICO[a.status] || "clock")}</div>
           <div style="min-width:0">
-            <div class="g-teams">${esc(a.equipo1)} vs ${esc(a.equipo2)}</div>
+            <div class="g-teams">${esc(partidoDe(a))}</div>
             <div class="g-meta">${esc(a.deporte || "")}${a.deporte ? " · " : ""}${esc(a.tipo || "")} @ ${esc(String(a.cuota || ""))} · ${fmt(a.monto)}${gStr}${a.fecha_partido ? " · " + esc(a.fecha_partido) : ""}${clvStr}${evStr}</div>
           </div>
         </div>
         <div class="g-actions">
           <button class="btn-edit" data-action="edit-bet" data-rowid="${rowId}" aria-label="Editar" title="Editar">${ico("edit")}</button>
-          <button class="btn-del"  data-action="delete-bet" data-rowid="${rowId}" data-label="${esc(a.equipo1)} vs ${esc(a.equipo2)}" aria-label="Eliminar" title="Eliminar">${ico("trash")}</button>
+          <button class="btn-del"  data-action="delete-bet" data-rowid="${rowId}" data-label="${esc(partidoDe(a))}" aria-label="Eliminar" title="Eliminar">${ico("trash")}</button>
         </div>
       </div>
     </div>`;
@@ -3592,7 +3594,7 @@
           if (ctEl && d.cuota) ctEl.value = String(d.cuota);   // cuota total del ticket
           const picksHtml = d.picks.map((p, i) =>
             `<div style="font-size:11px;padding:3px 0;border-bottom:1px solid var(--border)">
-          <b>#${i + 1}</b> ${esc(p.equipo1 || "?")} vs ${esc(p.equipo2 || "?")}
+          <b>#${i + 1}</b> ${esc(partidoDe(p))}
           <span style="color:var(--text-2)"> | ${esc(p.tipo_apuesta || "")} @ ${esc(String(p.cuota || ""))}</span>
         </div>`
           ).join("");
@@ -3654,7 +3656,7 @@
           validPicks.reduce((a, b) => a * parseFloat(b.cuota || 1), 1);
 
         const notasPicks = validPicks.map((p, i) =>
-          `#${i + 1}: ${p.equipo1} vs ${p.equipo2} | ${p.tipo_apuesta} @ ${p.cuota}`
+          `#${i + 1}: ${partidoDe(p)} | ${p.tipo_apuesta} @ ${p.cuota}`
         ).join(" || ");
 
         const notas = notasVis ? `${notasPicks} || Nota: ${notasVis}` : notasPicks;
