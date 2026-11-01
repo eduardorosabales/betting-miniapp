@@ -2526,6 +2526,7 @@
         <div class="wl-main">
           <div class="wl-teams">${partido}</div>
           <div class="wl-meta">${esc(a.liga || a.deporte || "—")} · ${mercado}</div>
+          ${suspensionHtml(a)}
           <div class="wl-tags">${idxTxt ? `<span class="wl-tag">${idxTxt}</span>` : ""}${posTag}${fechaTag}</div>
         </div>
         <div class="wl-right">
@@ -2602,6 +2603,24 @@
     }
 
     const _STATUS_ICO = { win: "check", loss: "x", void: "minus" };
+    // INV-MINI-46: partido aplazado, suspendido, abandonado… con motivo y fecha nueva. Vacío en un partido normal.
+    function _fechaSuspension(s) {
+      if (!s) return "";
+      if (String(s).length <= 10) return String(s);
+      const d = new Date(s);
+      return isNaN(d) ? "" : d.toLocaleString("es-MX", { timeZone: "America/Mexico_City", dateStyle: "short", timeStyle: "short" });
+    }
+    function suspensionHtml(a) {
+      const s = a.suspension || {};
+      if (!s.estado || ["win", "loss", "void"].includes(a.status)) return "";
+      const fecha = _fechaSuspension(s.nueva_fecha);
+      const partes = s.jugado
+        ? [`Ya se jugó: ${esc(s.marcador || "")}. Liquídalo a mano.`]
+        : [esc(s.estado[0].toUpperCase() + s.estado.slice(1)), s.motivo ? esc(s.motivo) : "Motivo aún no publicado",
+           fecha ? `Nueva fecha: ${esc(fecha)}` : (["aplazado", "suspendido", "interrumpido"].includes(s.estado) ? "Sin fecha anunciada" : "")];
+      const url = /^https:\/\/[^\s"'<>]+$/.test(s.fuente_url || "") ? ` · <a href="${esc(s.fuente_url)}" target="_blank" rel="noopener noreferrer">fuente</a>` : "";
+      return `<div class="bet-meta" style="color:var(--pend)">${partes.filter(Boolean).join(" · ")}${url}</div>`;
+    }
     function renderBetItem(a) {
       const icon = a.status === "win" ? "win" : a.status === "loss" ? "loss" : a.status === "void" ? "void" : "pend";
       const res = a.status === "win" ? `+${fmt(a.ganancia)}` : a.status === "loss" ? `−${fmt(a.monto)}` : a.status === "void" ? `Nula` : `${fmt(a.potencial)}`;
@@ -2629,7 +2648,7 @@
       // INV-XCUT-20: EV del ticket frente a la línea justa de la referencia (1xBet) al registrar el pick.
       const evTxt = _evRefTexto(a);
       const evHtml = evTxt ? `<div class="bet-meta" style="color:${evTxt.color}">${evTxt.html}</div>` : "";
-      return `<div class="bet-item"><div class="bet-dot ${icon}" title="${statusLabel}" role="img" aria-label="${statusLabel}">${ico(_STATUS_ICO[a.status] || "clock")}</div><div class="bet-info"><div class="bet-teams">${teamsLabel}</div><div class="bet-meta">${metaLabel}</div>${clvHtml}${evHtml}${legsHtml}</div><div class="bet-right"><div class="bet-badge bet-badge-${badgeKey}">${statusLabel}</div><div class="bet-monto">${fmt(a.monto)}</div><div class="bet-result ${rc}">${res}</div></div></div>`;
+      return `<div class="bet-item"><div class="bet-dot ${icon}" title="${statusLabel}" role="img" aria-label="${statusLabel}">${ico(_STATUS_ICO[a.status] || "clock")}</div><div class="bet-info"><div class="bet-teams">${teamsLabel}</div><div class="bet-meta">${metaLabel}</div>${suspensionHtml(a)}${clvHtml}${evHtml}${legsHtml}</div><div class="bet-right"><div class="bet-badge bet-badge-${badgeKey}">${statusLabel}</div><div class="bet-monto">${fmt(a.monto)}</div><div class="bet-result ${rc}">${res}</div></div></div>`;
     }
 
     /* ── Charts ── */
@@ -3121,6 +3140,7 @@
           <div style="min-width:0">
             <div class="g-teams">${esc(partidoDe(a))}</div>
             <div class="g-meta">${esc(a.deporte || "")}${a.deporte ? " · " : ""}${esc(a.tipo || "")} @ ${esc(String(a.cuota || ""))} · ${fmt(a.monto)}${gStr}${a.fecha_partido ? " · " + esc(a.fecha_partido) : ""}${clvStr}${evStr}</div>
+            ${suspensionHtml(a)}
           </div>
         </div>
         <div class="g-actions">
