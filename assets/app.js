@@ -510,14 +510,14 @@
       // Parlay: puede contener "winner", "over", etc. en sus picks
       if (/parlay|combo|acumulad|multi.?bet|\bsgp\b|same.?game/.test(t)) return "Parlay";
       // Futuro / Outright
-      if (/\boutright\b|futures?|to win the|championship|tournament winner|season (wins?|points?|goals?)|award|mvp|heisman|ballon/.test(t)) return "Futuro";
+      if (/\boutright\b|futures?|to win the|championship|tournament winner|season (wins?|points?|goals?)|\bawards?\b|mvp|heisman|ballon/.test(t)) return "Futuro";
       // Córners / Tarjetas — mercados secundarios: categoría propia ANTES de Moneyline/Handicap/Total O/U
       // (gemelo de analytics.py _RE_CORNERS/_RE_TARJETAS, INV-BIZ-21 / INV-XCUT-02).
       if (/\bcorners?\b|córner|saques? de esquina|tiros? de esquina/.test(t)) return "Córners";
       if (/\bcards?\b|tarjeta|booking|amonestac/.test(t)) return "Tarjetas";
       // Mercados de evento con palabras de Moneyline/Total ("to win both halves", "Aces ML",
       // "Shots - Total Over"): Props ANTES de Moneyline (gemelo de _RE_PROPS_ESPECIAL).
-      if (/both halves|ambas mitades|\baces?\b|\bshots?\b/.test(t)) return "Props";
+      if (/both halves|ambas mitades|\baces?\b|\bshots?\b|penalt(y|ies) awarded|penalti/.test(t)) return "Props";
       // Doble oportunidad — va ANTES de Moneyline: "Double Chance - Home/Draw" no debe
       // caer en Moneyline por el sufijo home/draw (gemelo de analytics.py _RE_DOBLE_OPORTUNIDAD).
       // Incluye fraseo "Team Win or Draw" / "Team or Draw" (equivalente a X2/1X en texto libre).
